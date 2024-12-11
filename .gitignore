@@ -1,0 +1,38 @@
+# Dependencies
+node_modules/
+/client/node_modules/
+/server/node_modules/
+vendor/
+.env
+
+# Build outputs
+dist/
+build/
+*.log
+
+# IDE and Editor files
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+
+# Compiled files
+*.class
+*.pyc
+__pycache__/
+*.o
+
+# Logs and databases
+*.log
+*.sql
+*.sqlite
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
