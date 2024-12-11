@@ -2,7 +2,7 @@ import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import { AppShell } from '@/components/layout/AppShell';
 import { InvoicesPage, NewInvoice } from './screens';
 import { HomePage } from './screens';
-
+import { Auth } from './screens/auth/Auth';
 const router = createBrowserRouter([
   {
     path: '/',
@@ -19,6 +19,10 @@ const router = createBrowserRouter([
       {
         path: '/invoices/new',
         element: <NewInvoice />,
+      },
+      {
+        path: '/auth',
+        element: <Auth />,
       },
       // Add other routes here
     ],
