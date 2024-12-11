@@ -35,7 +35,7 @@ export const HomePage = () => {
         {/* Header with time range selector */}
         <div className="flex justify-between items-center mb-12">
           <div>
-            <h1 className="text-[22px] text-gray-900">Good morning, Alex 👋</h1>
+            <h1 className="text-[22px] text-gray-900">Good morning, Koushith 👋</h1>
             <p className="text-gray-500 text-sm mt-1">Here's what's happening with your invoices today.</p>
           </div>
           <div className="flex items-center space-x-2">

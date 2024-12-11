@@ -39,6 +39,14 @@ interface InvoiceData {
 const cardStyles = 'border-border/40 shadow-sm'; // Subtle border
 const previewCardStyles = 'bg-white shadow-sm border-border/40 print:shadow-none'; // Cleaner preview background
 
+export type InvoiceStyle = 'classic' | 'modern' | 'minimal' | 'professional' | 'creative';
+
+export interface InvoiceStyleProps {
+  logo: string | null;
+  invoiceData: InvoiceData;
+  paymentDetails: PaymentDetails;
+}
+
 export const NewInvoice = () => {
   const [logo, setLogo] = useState<string | null>(null);
   const [invoiceData, setInvoiceData] = useState({

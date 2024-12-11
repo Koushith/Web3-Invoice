@@ -30,9 +30,9 @@ import {
 
 // Mock user data - replace with your actual user data
 const user = {
-  name: 'John Doe',
-  email: 'john@example.com',
-  imageUrl: 'https://github.com/shadcn.png', // Replace with actual user image
+  name: 'Koushith Amin',
+  email: 'koushith@def.com',
+  imageUrl: 'https://pbs.twimg.com/profile_images/1733931010977640448/KTlA02mC_400x400.jpg', // Replace with actual user image
 };
 
 function Logo() {
@@ -55,7 +55,7 @@ export function AppShell() {
       <div className="flex">
         <AppSidebar isMobileMenuOpen={isMobileMenuOpen} />
         <main className="md:ml-[280px] flex-1 min-h-screen bg-white">
-          <div className="p-8 max-w-[1400px] mx-auto">
+          <div className="p-8 max-w-[1500px] mx-auto">
             <Outlet />
           </div>
         </main>
@@ -134,7 +134,7 @@ function NavItem({ icon, label, to }: { icon: React.ReactNode; label: string; to
       className={({ isActive }) =>
         cn(
           'flex items-center gap-3 w-full px-3 py-2 text-[13px] rounded-md transition-colors',
-          isActive ? 'bg-gray-100 text-gray-900 font-medium' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+          isActive ? 'bg-gray-100 text-[#5851ea] font-medium' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
         )
       }
     >

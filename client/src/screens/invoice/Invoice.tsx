@@ -144,7 +144,6 @@ export const InvoicesPage = () => {
                   <th className="px-5 py-3 text-left text-[13px] font-medium text-gray-500">Amount</th>
                   <th className="px-5 py-3 text-left text-[13px] font-medium text-gray-500">Status</th>
                   <th className="px-5 py-3 text-left text-[13px] font-medium text-gray-500">Date</th>
-                  <th className="px-5 py-3 text-right text-[13px] font-medium text-gray-500">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -175,26 +174,6 @@ export const InvoicesPage = () => {
                         day: 'numeric',
                         year: 'numeric',
                       })}
-                    </td>
-                    <td className="px-5 py-3 text-right">
-                      <div className="flex justify-end gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="h-7 px-3 text-[13px] font-medium text-gray-700 bg-white border-gray-300 
-                            hover:bg-gray-50 hover:text-gray-900"
-                        >
-                          View
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="h-7 px-3 text-[13px] font-medium text-gray-700 bg-white border-gray-300 
-                            hover:bg-gray-50 hover:text-gray-900"
-                        >
-                          Edit
-                        </Button>
-                      </div>
                     </td>
                   </tr>
                 ))}
