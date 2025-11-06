@@ -33,21 +33,21 @@ export const HomePage = () => {
     <div className="min-h-screen bg-white">
       <div className="w-full px-8 py-10">
         {/* Header with time range selector */}
-        <div className="flex justify-between items-center mb-12">
+        <div className="flex justify-between items-center mb-8">
           <div>
-            <h1 className="text-[22px] text-gray-900">Good morning, Koushith 👋</h1>
-            <p className="text-gray-500 text-sm mt-1">Here's what's happening with your invoices today.</p>
+            <h1 className="text-[26px] font-bold text-gray-900 tracking-tight">Good morning, Koushith 👋</h1>
+            <p className="text-gray-500 text-sm mt-1.5">Here's what's happening with your invoices today.</p>
           </div>
-          <div className="flex items-center space-x-2">
-            <button className="text-sm text-gray-600 px-3 py-1.5 hover:bg-gray-50 rounded-md">Today</button>
-            <button className="text-sm text-white px-3 py-1.5 bg-[#635bff] rounded-md">Week</button>
-            <button className="text-sm text-gray-600 px-3 py-1.5 hover:bg-gray-50 rounded-md">Month</button>
-            <button className="text-sm text-gray-600 px-3 py-1.5 hover:bg-gray-50 rounded-md">Year</button>
+          <div className="flex items-center gap-1 bg-white/80 backdrop-blur-sm border border-gray-200/60 rounded-lg p-1 shadow-sm">
+            <button className="text-sm text-gray-600 px-4 py-2 hover:bg-gray-50 rounded-md transition-all font-medium">Today</button>
+            <button className="text-sm text-white px-4 py-2 bg-gradient-to-r from-[#635bff] to-[#5045e5] rounded-md shadow-sm font-medium">Week</button>
+            <button className="text-sm text-gray-600 px-4 py-2 hover:bg-gray-50 rounded-md transition-all font-medium">Month</button>
+            <button className="text-sm text-gray-600 px-4 py-2 hover:bg-gray-50 rounded-md transition-all font-medium">Year</button>
           </div>
         </div>
 
         {/* Key Metrics */}
-        <div className="grid grid-cols-4 gap-6 mb-12 w-full">
+        <div className="grid grid-cols-4 gap-5 mb-12 w-full">
           {[
             {
               label: 'Total Revenue',
@@ -55,20 +55,26 @@ export const HomePage = () => {
               change: '+12%',
               trend: '↗',
               trendColor: 'text-green-500',
+              bgGradient: 'from-emerald-50 to-green-50/50',
+              iconColor: 'text-emerald-600',
             },
             {
               label: 'Average Invoice',
               value: '$2,150.00',
               change: '+5%',
               trend: '↗',
-              trendColor: 'text-green-500',
+              trendColor: 'text-blue-500',
+              bgGradient: 'from-blue-50 to-indigo-50/50',
+              iconColor: 'text-blue-600',
             },
             {
               label: 'Outstanding',
               value: '$12,350.00',
               subtext: '8 invoices',
-              trend: '↘',
-              trendColor: 'text-red-500',
+              trend: '→',
+              trendColor: 'text-orange-500',
+              bgGradient: 'from-orange-50 to-amber-50/50',
+              iconColor: 'text-orange-600',
             },
             {
               label: 'Paid',
@@ -76,35 +82,40 @@ export const HomePage = () => {
               subtext: '23 invoices',
               trend: '↗',
               trendColor: 'text-green-500',
+              bgGradient: 'from-violet-50 to-purple-50/50',
+              iconColor: 'text-violet-600',
             },
           ].map((metric) => (
             <div
               key={metric.label}
-              className="border border-gray-100 rounded-lg p-6 hover:border-[#635bff] transition-colors"
+              className={`relative bg-gradient-to-br ${metric.bgGradient} border border-gray-200/50 rounded-xl p-6 hover:shadow-lg hover:scale-[1.02] transition-all duration-300 group cursor-pointer overflow-hidden`}
             >
-              <div className="flex justify-between items-start">
-                <p className="text-sm text-gray-500">{metric.label}</p>
-                <span className={`text-xl ${metric.trendColor}`}>{metric.trend}</span>
+              <div className="absolute inset-0 bg-white/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+              <div className="relative z-10">
+                <div className="flex justify-between items-start mb-4">
+                  <p className="text-[13px] font-semibold text-gray-600 uppercase tracking-wide">{metric.label}</p>
+                  <span className={`text-2xl ${metric.trendColor} font-bold`}>{metric.trend}</span>
+                </div>
+                <p className="text-3xl font-bold text-gray-900 mb-2">{metric.value}</p>
+                <p className="text-sm text-gray-600">
+                  {metric.change && <span className={`font-semibold ${metric.trendColor}`}>{metric.change}</span>}
+                  {metric.subtext && <span className="text-gray-500">{metric.subtext}</span>}
+                </p>
               </div>
-              <p className="text-2xl mt-2 text-gray-900">{metric.value}</p>
-              <p className="text-sm mt-1 text-gray-500">
-                {metric.change && <span className="text-green-600">{metric.change}</span>}
-                {metric.subtext && metric.subtext}
-              </p>
             </div>
           ))}
         </div>
 
         {/* Main Charts Section */}
-        <div className="grid grid-cols-2 gap-8 mb-12 w-full">
+        <div className="grid grid-cols-2 gap-6 mb-12 w-full">
           {/* Revenue Chart */}
-          <div className="border border-gray-200 rounded-lg p-6">
+          <div className="bg-white/80 backdrop-blur-sm border border-gray-200/60 rounded-xl p-7 shadow-sm hover:shadow-md transition-shadow">
             <div className="flex justify-between items-center mb-6">
               <div>
-                <h2 className="text-[15px] font-medium text-gray-900">Revenue</h2>
-                <p className="text-sm text-gray-500 mt-1">Daily revenue overview</p>
+                <h2 className="text-[17px] font-semibold text-gray-900">Revenue</h2>
+                <p className="text-[13px] text-gray-500 mt-1">Daily revenue overview</p>
               </div>
-              <select className="text-sm border-gray-200 rounded-md px-3 py-1.5">
+              <select className="text-sm border-gray-200 rounded-lg px-4 py-2 bg-gray-50/50 hover:bg-gray-100 transition-colors font-medium cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#635bff]/20">
                 <option>Last 7 days</option>
                 <option>Last 30 days</option>
                 <option>Last 90 days</option>
@@ -135,10 +146,10 @@ export const HomePage = () => {
           </div>
 
           {/* Status Chart */}
-          <div className="border border-gray-200 rounded-lg p-6">
+          <div className="bg-white/80 backdrop-blur-sm border border-gray-200/60 rounded-xl p-7 shadow-sm hover:shadow-md transition-shadow">
             <div className="mb-6">
-              <h2 className="text-[15px] font-medium text-gray-900">Invoice Status</h2>
-              <p className="text-sm text-gray-500 mt-1">Distribution overview</p>
+              <h2 className="text-[17px] font-semibold text-gray-900">Invoice Status</h2>
+              <p className="text-[13px] text-gray-500 mt-1">Distribution overview</p>
             </div>
             <div className="h-[300px] w-full">
               <ResponsiveContainer width="100%" height="100%">
@@ -175,16 +186,25 @@ export const HomePage = () => {
         </div>
 
         {/* Bottom Section */}
-        <div className="w-full border border-gray-200 rounded-lg p-6">
-          <h3 className="text-[15px] font-medium text-gray-900 mb-4">Recent Activity</h3>
-          <div className="space-y-4">
-            {[1, 2, 3, 4, 5].map((_, i) => (
-              <div key={i} className="flex items-center justify-between py-3 border-b border-gray-100 last:border-0">
-                <div className="flex items-center space-x-3">
-                  <div className="w-2 h-2 rounded-full bg-green-500" />
-                  <span className="text-sm text-gray-900">Invoice #1234 paid</span>
+        <div className="w-full bg-white/80 backdrop-blur-sm border border-gray-200/60 rounded-xl p-7 shadow-sm">
+          <h3 className="text-[17px] font-semibold text-gray-900 mb-6">Recent Activity</h3>
+          <div className="space-y-0">
+            {[
+              { status: 'paid', invoice: '#1234', time: '2h ago', color: 'bg-green-500' },
+              { status: 'sent', invoice: '#1235', time: '4h ago', color: 'bg-blue-500' },
+              { status: 'created', invoice: '#1236', time: '5h ago', color: 'bg-purple-500' },
+              { status: 'paid', invoice: '#1237', time: '1d ago', color: 'bg-green-500' },
+              { status: 'viewed', invoice: '#1238', time: '2d ago', color: 'bg-orange-500' },
+            ].map((activity, i) => (
+              <div key={i} className="flex items-center justify-between py-4 border-b border-gray-100 last:border-0 hover:bg-gray-50/50 transition-colors rounded-lg px-2">
+                <div className="flex items-center space-x-4">
+                  <div className={`w-2.5 h-2.5 rounded-full ${activity.color} ring-4 ring-${activity.color}/10`} />
+                  <div>
+                    <span className="text-sm font-medium text-gray-900">Invoice {activity.invoice} {activity.status}</span>
+                    <p className="text-xs text-gray-500 mt-0.5">{activity.time}</p>
+                  </div>
                 </div>
-                <span className="text-sm text-gray-500">2h ago</span>
+                <button className="text-xs text-gray-500 hover:text-gray-900 font-medium">View →</button>
               </div>
             ))}
           </div>

@@ -77,13 +77,13 @@ export const InvoicesPage = () => {
     <div className="min-h-screen">
       <div className="max-w-[1300px] mx-auto px-8 py-12">
         {/* Header */}
-        <div className="flex justify-between items-center mb-6">
+        <div className="flex justify-between items-center mb-8">
           <div>
-            <h1 className="text-[22px] font-semibold text-gray-900">Invoices</h1>
-            <p className="text-[13px] text-gray-500 mt-1">Manage your billing and payment history</p>
+            <h1 className="text-[26px] font-bold text-gray-900 tracking-tight">Invoices</h1>
+            <p className="text-[14px] text-gray-500 mt-1.5">Manage your billing and payment history</p>
           </div>
           <Button
-            className="bg-[#635bff] hover:bg-[#5851ea] text-white rounded-md h-9 px-4 text-[13px]"
+            className="bg-gradient-to-r from-[#635bff] to-[#5045e5] hover:from-[#5045e5] hover:to-[#3d38d1] text-white rounded-lg h-10 px-5 text-[13px] font-semibold shadow-lg shadow-[#635bff]/20 hover:shadow-xl transition-all"
             onClick={() => navigate('/invoices/new')}
           >
             <Plus className="w-4 h-4 mr-2" />
@@ -92,17 +92,17 @@ export const InvoicesPage = () => {
         </div>
 
         {/* Card Container */}
-        <div className="bg-white">
+        <div className="bg-white/80 backdrop-blur-sm border border-gray-200/60 rounded-xl shadow-sm overflow-hidden">
           {/* Filters */}
-          <div className="px-5 py-3.5 border-b border-gray-200">
+          <div className="px-6 py-4 border-b border-gray-200/60 bg-gray-50/30">
             <div className="flex items-center gap-4">
               <div className="relative flex-1 max-w-xs">
                 <Search className="absolute left-2.5 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                 <Input
                   placeholder="Search invoices..."
-                  className="h-9 w-full pl-9 text-[13px] bg-white border border-gray-300 rounded-md 
-                    focus-visible:ring-1 focus-visible:ring-[#635bff] focus-visible:border-[#635bff]
-                    placeholder:text-gray-500"
+                  className="h-10 w-full pl-9 text-[13px] bg-white border border-gray-300 rounded-lg
+                    focus-visible:ring-2 focus-visible:ring-[#635bff]/20 focus-visible:border-[#635bff]
+                    placeholder:text-gray-400 transition-all"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
@@ -110,9 +110,9 @@ export const InvoicesPage = () => {
 
               <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value)}>
                 <SelectTrigger
-                  className="h-9 w-[160px] text-[13px] border border-gray-300 rounded-md
-                  focus:ring-1 focus:ring-[#635bff] focus:border-[#635bff]
-                  bg-white"
+                  className="h-10 w-[160px] text-[13px] border border-gray-300 rounded-lg
+                  focus:ring-2 focus:ring-[#635bff]/20 focus:border-[#635bff]
+                  bg-white font-medium transition-all"
                 >
                   <SelectValue placeholder="All Status" />
                 </SelectTrigger>
@@ -148,20 +148,20 @@ export const InvoicesPage = () => {
               </thead>
               <tbody>
                 {filteredInvoices.map((invoice) => (
-                  <tr key={invoice.id} className="border-b border-gray-200 hover:bg-gray-50 transition-colors">
-                    <td className="px-5 py-3 text-[13px] font-medium text-gray-900">{invoice.number}</td>
-                    <td className="px-5 py-3 text-[13px] text-gray-600">{invoice.customer}</td>
-                    <td className="px-5 py-3 text-[13px] text-gray-900">${invoice.amount.toFixed(2)}</td>
-                    <td className="px-5 py-3">
+                  <tr key={invoice.id} className="border-b border-gray-100 hover:bg-gradient-to-r hover:from-gray-50 hover:to-transparent transition-all cursor-pointer group">
+                    <td className="px-6 py-4 text-[13px] font-semibold text-gray-900 group-hover:text-[#635bff]">{invoice.number}</td>
+                    <td className="px-6 py-4 text-[13px] text-gray-600">{invoice.customer}</td>
+                    <td className="px-6 py-4 text-[13px] font-semibold text-gray-900">${invoice.amount.toFixed(2)}</td>
+                    <td className="px-6 py-4">
                       <span
                         className={`
-                          inline-flex items-center px-2 py-0.5 text-[12px] font-medium rounded-full
+                          inline-flex items-center px-3 py-1 text-[11px] font-semibold rounded-full
                           ${
                             invoice.status === 'paid'
-                              ? 'bg-green-50 text-green-700'
+                              ? 'bg-gradient-to-r from-green-50 to-emerald-50 text-green-700 ring-1 ring-green-200/50'
                               : invoice.status === 'pending'
-                              ? 'bg-yellow-50 text-yellow-700'
-                              : 'bg-red-50 text-red-700'
+                              ? 'bg-gradient-to-r from-yellow-50 to-amber-50 text-yellow-700 ring-1 ring-yellow-200/50'
+                              : 'bg-gradient-to-r from-red-50 to-rose-50 text-red-700 ring-1 ring-red-200/50'
                           }
                         `}
                       >
