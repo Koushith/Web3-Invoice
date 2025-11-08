@@ -1,21 +1,38 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Plus, Search, Loader2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 import { useGetCustomersQuery } from '@/services/api.service';
 import { format } from 'date-fns';
+import { auth } from '@/lib/firebase';
 
 export const CustomersScreen = () => {
   const [searchQuery, setSearchQuery] = useState('');
+  const [isAuthReady, setIsAuthReady] = useState(false);
   const navigate = useNavigate();
 
-  // Fetch customers from API
-  const { data, isLoading, error } = useGetCustomersQuery({
-    search: searchQuery,
-    page: 1,
-    limit: 100,
-  });
+  // Wait for Firebase auth to be ready
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged((user) => {
+      if (user) {
+        setIsAuthReady(true);
+      }
+    });
+    return () => unsubscribe();
+  }, []);
+
+  // Fetch customers from API only when auth is ready
+  const { data, isLoading, error } = useGetCustomersQuery(
+    {
+      search: searchQuery,
+      page: 1,
+      limit: 100,
+    },
+    {
+      skip: !isAuthReady, // Skip the query until auth is ready
+    }
+  );
 
   const customers = data?.data || [];
 
@@ -60,7 +77,7 @@ export const CustomersScreen = () => {
           </div>
 
           {/* Loading State */}
-          {isLoading && (
+          {(!isAuthReady || isLoading) && (
             <div className="flex items-center justify-center py-12">
               <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
             </div>
@@ -74,7 +91,7 @@ export const CustomersScreen = () => {
           )}
 
           {/* Empty State */}
-          {!isLoading && !error && customers.length === 0 && (
+          {isAuthReady && !isLoading && !error && customers.length === 0 && (
             <div className="px-6 py-12 text-center">
               <p className="text-sm text-gray-500 mb-4">
                 {searchQuery ? 'No customers found matching your search.' : 'No customers yet.'}
@@ -93,7 +110,7 @@ export const CustomersScreen = () => {
           )}
 
           {/* Table */}
-          {!isLoading && !error && customers.length > 0 && (
+          {isAuthReady && !isLoading && !error && customers.length > 0 && (
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
@@ -101,7 +118,7 @@ export const CustomersScreen = () => {
                     <th className="px-5 py-3 text-left text-[13px] font-medium text-gray-500">Name</th>
                     <th className="px-5 py-3 text-left text-[13px] font-medium text-gray-500">Email</th>
                     <th className="px-5 py-3 text-left text-[13px] font-medium text-gray-500">Company</th>
-                    <th className="px-5 py-3 text-left text-[13px] font-medium text-gray-500">Phone</th>
+                    <th className="px-5 py-3 text-left text-[13px] font-medium text-gray-500">Payment Method</th>
                     <th className="px-5 py-3 text-right text-[13px] font-medium text-gray-500">Total Invoiced</th>
                     <th className="px-5 py-3 text-left text-[13px] font-medium text-gray-500">Created</th>
                   </tr>
@@ -116,7 +133,13 @@ export const CustomersScreen = () => {
                       <td className="px-5 py-3 text-[13px] font-medium text-gray-900">{customer.name}</td>
                       <td className="px-5 py-3 text-[13px] text-gray-600">{customer.email}</td>
                       <td className="px-5 py-3 text-[13px] text-gray-600">{customer.company || '-'}</td>
-                      <td className="px-5 py-3 text-[13px] text-gray-600">{customer.phone || '-'}</td>
+                      <td className="px-5 py-3 text-[13px] text-gray-600">
+                        {customer.preferredPaymentMethod
+                          ? customer.preferredPaymentMethod
+                              .replace(/_/g, ' ')
+                              .replace(/\b\w/g, (l: string) => l.toUpperCase())
+                          : '-'}
+                      </td>
                       <td className="px-5 py-3 text-[13px] text-gray-900 text-right">
                         ${(customer.totalInvoiced || 0).toLocaleString()}
                       </td>

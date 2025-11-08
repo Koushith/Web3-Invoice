@@ -11,6 +11,7 @@ export interface ICustomer extends Document {
   taxId?: string;
   notes?: string;
   tags?: string[];
+  preferredPaymentMethod?: string; // Preferred payment method
   walletAddress?: string; // For crypto payments
   totalInvoiced: number;
   totalPaid: number;
@@ -64,6 +65,11 @@ const CustomerSchema: Schema = new Schema(
       type: String,
       trim: true,
     }],
+    preferredPaymentMethod: {
+      type: String,
+      enum: ['none', 'bank_transfer', 'credit_card', 'digital_currency', 'wire_transfer', 'check', 'ach', 'paypal'],
+      trim: true,
+    },
     walletAddress: {
       type: String, // Ethereum/crypto wallet
       trim: true,

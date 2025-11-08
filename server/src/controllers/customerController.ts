@@ -37,7 +37,7 @@ export const getCustomers = asyncHandler(async (req: Request, res: Response) => 
   const total = await Customer.countDocuments(query);
 
   res.json({
-    customers,
+    data: customers,
     pagination: {
       total,
       page: Number(page),
@@ -67,7 +67,7 @@ export const getCustomer = asyncHandler(async (req: Request, res: Response) => {
     throw new AppError('Customer not found', 404, 'CUSTOMER_NOT_FOUND');
   }
 
-  res.json({ customer });
+  res.json({ data: customer });
 });
 
 /**
@@ -75,7 +75,7 @@ export const getCustomer = asyncHandler(async (req: Request, res: Response) => {
  */
 export const createCustomer = asyncHandler(async (req: Request, res: Response) => {
   const user = req.user?.user;
-  const { name, email, phone, company, address, taxId, notes, tags, walletAddress } = req.body;
+  const { name, email, phone, company, address, taxId, notes, tags, preferredPaymentMethod, walletAddress } = req.body;
 
   if (!user?.organizationId) {
     throw new AppError('Organization not found', 404, 'ORG_NOT_FOUND');
@@ -95,6 +95,7 @@ export const createCustomer = asyncHandler(async (req: Request, res: Response) =
     taxId,
     notes,
     tags,
+    preferredPaymentMethod,
     walletAddress,
   });
 
@@ -110,7 +111,7 @@ export const createCustomer = asyncHandler(async (req: Request, res: Response) =
 export const updateCustomer = asyncHandler(async (req: Request, res: Response) => {
   const user = req.user?.user;
   const { id } = req.params;
-  const { name, email, phone, company, address, taxId, notes, tags, walletAddress } = req.body;
+  const { name, email, phone, company, address, taxId, notes, tags, preferredPaymentMethod, walletAddress } = req.body;
 
   if (!user?.organizationId) {
     throw new AppError('Organization not found', 404, 'ORG_NOT_FOUND');
@@ -118,7 +119,7 @@ export const updateCustomer = asyncHandler(async (req: Request, res: Response) =
 
   const customer = await Customer.findOneAndUpdate(
     { _id: id, organizationId: user.organizationId },
-    { name, email, phone, company, address, taxId, notes, tags, walletAddress },
+    { name, email, phone, company, address, taxId, notes, tags, preferredPaymentMethod, walletAddress },
     { new: true, runValidators: true }
   );
 

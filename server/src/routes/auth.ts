@@ -1,6 +1,7 @@
 import express, { Request, Response } from 'express';
 import { authenticate, verifyFirebaseToken } from '../middleware/auth.js';
 import User from '../models/User.js';
+import Organization from '../models/Organization.js';
 
 const router = express.Router();
 
@@ -89,6 +90,13 @@ router.post('/sync', verifyFirebaseToken, async (req: Request, res: Response) =>
     let user = await User.findOne({ firebaseUid });
 
     if (!user) {
+      // Create new organization for the user
+      const organization = await Organization.create({
+        name: `${displayName || email.split('@')[0]}'s Organization`,
+        email: email,
+        ownerId: firebaseUid,
+      });
+
       // Create new user if doesn't exist
       user = await User.create({
         firebaseUid,
@@ -97,8 +105,9 @@ router.post('/sync', verifyFirebaseToken, async (req: Request, res: Response) =>
         photoURL: photoURL || undefined,
         role: 'owner', // Default role for new users
         isActive: true,
+        organizationId: organization._id,
       });
-      console.log(`[Auth] New user created: ${email}`);
+      console.log(`[Auth] New user and organization created: ${email}`);
     } else {
       // Update existing user
       const updateData: any = {};

@@ -4,7 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ArrowLeft, Building2, Mail, MapPin, CreditCard, Settings2, Loader2 } from 'lucide-react';
+import { ArrowLeft, Building2, MapPin, CreditCard, Settings2, Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useCreateCustomerMutation } from '@/services/api.service';
 import { toast } from 'sonner';
@@ -27,6 +27,7 @@ export const NewCustomerScreen = () => {
       zipCode: '',
       country: '',
     },
+    preferredPaymentMethod: '',
     walletAddress: '',
     notes: '',
   });
@@ -59,6 +60,7 @@ export const NewCustomerScreen = () => {
         phone: formData.phone || undefined,
         taxId: formData.taxId || undefined,
         address: formData.address.street ? formData.address : undefined,
+        preferredPaymentMethod: formData.preferredPaymentMethod || undefined,
         walletAddress: formData.walletAddress || undefined,
         notes: formData.notes || undefined,
       };
@@ -272,18 +274,44 @@ export const NewCustomerScreen = () => {
 
             <div className="grid grid-cols-2 gap-5">
               <div className="col-span-2">
-                <Label htmlFor="wallet" className="text-sm font-semibold text-gray-700 mb-2 block">
-                  Payment Address (Optional)
+                <Label htmlFor="payment-method" className="text-sm font-semibold text-gray-700 mb-2 block">
+                  Preferred Payment Method (Optional)
                 </Label>
-                <Input
-                  id="wallet"
-                  placeholder="Enter payment address"
-                  value={formData.walletAddress}
-                  onChange={(e) => handleInputChange('walletAddress', e.target.value)}
-                  className="h-11 border-gray-300 rounded-lg focus:ring-2 focus:ring-[#635bff]/20 focus:border-[#635bff] transition-all font-mono text-sm"
-                />
-                <p className="text-xs text-gray-500 mt-1.5">For digital currency payments</p>
+                <Select
+                  value={formData.preferredPaymentMethod}
+                  onValueChange={(value) => handleInputChange('preferredPaymentMethod', value)}
+                >
+                  <SelectTrigger className="h-11 border-gray-300 rounded-lg focus:ring-2 focus:ring-[#635bff]/20">
+                    <SelectValue placeholder="Select payment method" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">No Preference</SelectItem>
+                    <SelectItem value="bank_transfer">Bank Transfer</SelectItem>
+                    <SelectItem value="credit_card">Credit Card</SelectItem>
+                    <SelectItem value="digital_currency">Digital Currency</SelectItem>
+                    <SelectItem value="wire_transfer">Wire Transfer</SelectItem>
+                    <SelectItem value="check">Check</SelectItem>
+                    <SelectItem value="ach">ACH</SelectItem>
+                    <SelectItem value="paypal">PayPal</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
+
+              {formData.preferredPaymentMethod === 'digital_currency' && (
+                <div className="col-span-2">
+                  <Label htmlFor="wallet" className="text-sm font-semibold text-gray-700 mb-2 block">
+                    Payment Address (Optional)
+                  </Label>
+                  <Input
+                    id="wallet"
+                    placeholder="Enter payment address"
+                    value={formData.walletAddress}
+                    onChange={(e) => handleInputChange('walletAddress', e.target.value)}
+                    className="h-11 border-gray-300 rounded-lg focus:ring-2 focus:ring-[#635bff]/20 focus:border-[#635bff] transition-all font-mono text-sm"
+                  />
+                  <p className="text-xs text-gray-500 mt-1.5">For digital currency payments</p>
+                </div>
+              )}
             </div>
           </div>
 

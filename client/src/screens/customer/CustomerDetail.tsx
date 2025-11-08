@@ -1,56 +1,79 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Edit, Trash2, Plus, Mail, Phone, MapPin, DollarSign, FileText, TrendingUp } from 'lucide-react';
+import { ArrowLeft, Edit, Trash2, Plus, Mail, Phone, MapPin, DollarSign, FileText, TrendingUp, Building2, Loader2 } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
-
-interface Invoice {
-  id: string;
-  number: string;
-  amount: number;
-  status: 'paid' | 'pending' | 'overdue';
-  date: string;
-  dueDate: string;
-}
+import { useGetCustomerQuery, useDeleteCustomerMutation } from '@/services/api.service';
+import { format } from 'date-fns';
+import { toast } from 'sonner';
+import { auth } from '@/lib/firebase';
 
 export const CustomerDetailScreen = () => {
   const navigate = useNavigate();
-  const { id } = useParams();
+  const { id } = useParams<{ id: string }>();
+  const [isAuthReady, setIsAuthReady] = useState(false);
+  const [deleteCustomer, { isLoading: isDeleting }] = useDeleteCustomerMutation();
 
-  // Mock data - replace with API call
-  const customer = {
-    id: '1',
-    name: 'Acme Corporation',
-    email: 'contact@acme.com',
-    phone: '+1 (555) 123-4567',
-    address: '123 Main Street\nSan Francisco, CA 94103\nUnited States',
-    taxId: '12-3456789',
-    currency: 'USD',
-    paymentTerms: 'Net 30',
-    created: '2023-01-10',
-    totalSpent: 45000,
-    outstandingBalance: 5000,
-    invoiceCount: 12,
-    lastPayment: '2024-02-15',
+  // Wait for Firebase auth to be ready
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged((user) => {
+      if (user) {
+        setIsAuthReady(true);
+      }
+    });
+    return () => unsubscribe();
+  }, []);
+
+  // Fetch customer data
+  const { data: customer, isLoading, error } = useGetCustomerQuery(id!, {
+    skip: !isAuthReady || !id,
+  });
+
+  const handleDelete = async () => {
+    if (!confirm('Are you sure you want to delete this customer? This action cannot be undone.')) {
+      return;
+    }
+
+    try {
+      await deleteCustomer(id!).unwrap();
+      toast.success('Customer deleted successfully');
+      navigate('/customers');
+    } catch (error: any) {
+      console.error('Delete customer error:', error);
+      toast.error(error?.data?.message || 'Failed to delete customer');
+    }
   };
 
-  const invoices: Invoice[] = [
-    { id: '1', number: 'INV-001', amount: 12650, status: 'paid', date: '2024-02-15', dueDate: '2024-03-15' },
-    { id: '2', number: 'INV-002', amount: 8500, status: 'pending', date: '2024-02-10', dueDate: '2024-03-10' },
-    { id: '3', number: 'INV-003', amount: 15000, status: 'paid', date: '2024-01-20', dueDate: '2024-02-20' },
-    { id: '4', number: 'INV-004', amount: 3500, status: 'overdue', date: '2024-01-05', dueDate: '2024-02-05' },
-  ];
+  if (!isAuthReady || isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
+      </div>
+    );
+  }
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'paid':
-        return 'bg-green-50 text-green-700 ring-1 ring-green-200/50';
-      case 'pending':
-        return 'bg-yellow-50 text-yellow-700 ring-1 ring-yellow-200/50';
-      case 'overdue':
-        return 'bg-red-50 text-red-700 ring-1 ring-red-200/50';
-      default:
-        return 'bg-gray-50 text-gray-700 ring-1 ring-gray-200/50';
-    }
+  if (error || !customer) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-red-600 mb-4">Failed to load customer details</p>
+          <Button onClick={() => navigate('/customers')}>Back to Customers</Button>
+        </div>
+      </div>
+    );
+  }
+
+  const formatAddress = () => {
+    if (!customer.address?.street) return 'No address provided';
+
+    const parts = [
+      customer.address.street,
+      [customer.address.city, customer.address.state, customer.address.zipCode]
+        .filter(Boolean)
+        .join(', '),
+      customer.address.country,
+    ].filter(Boolean);
+
+    return parts.join('\n');
   };
 
   return (
@@ -70,7 +93,7 @@ export const CustomerDetailScreen = () => {
             <div>
               <h1 className="text-[28px] font-bold text-gray-900 tracking-tight">{customer.name}</h1>
               <p className="text-sm text-gray-500 mt-1">
-                Customer since {new Date(customer.created).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+                Customer since {format(new Date(customer.createdAt), 'MMMM yyyy')}
               </p>
             </div>
 
@@ -107,8 +130,8 @@ export const CustomerDetailScreen = () => {
                     <DollarSign className="w-5 h-5 text-green-600" />
                   </div>
                 </div>
-                <p className="text-2xl font-bold text-gray-900">${customer.totalSpent.toLocaleString()}</p>
-                <p className="text-xs text-gray-500 mt-1">Total Spent</p>
+                <p className="text-2xl font-bold text-gray-900">${(customer.totalInvoiced || 0).toLocaleString()}</p>
+                <p className="text-xs text-gray-500 mt-1">Total Invoiced</p>
               </div>
 
               <div className="bg-white/80 backdrop-blur-sm border border-gray-200/60 rounded-xl p-5 shadow-sm">
@@ -117,8 +140,8 @@ export const CustomerDetailScreen = () => {
                     <TrendingUp className="w-5 h-5 text-orange-600" />
                   </div>
                 </div>
-                <p className="text-2xl font-bold text-gray-900">${customer.outstandingBalance.toLocaleString()}</p>
-                <p className="text-xs text-gray-500 mt-1">Outstanding</p>
+                <p className="text-2xl font-bold text-gray-900">${(customer.totalPaid || 0).toLocaleString()}</p>
+                <p className="text-xs text-gray-500 mt-1">Total Paid</p>
               </div>
 
               <div className="bg-white/80 backdrop-blur-sm border border-gray-200/60 rounded-xl p-5 shadow-sm">
@@ -127,7 +150,7 @@ export const CustomerDetailScreen = () => {
                     <FileText className="w-5 h-5 text-blue-600" />
                   </div>
                 </div>
-                <p className="text-2xl font-bold text-gray-900">{customer.invoiceCount}</p>
+                <p className="text-2xl font-bold text-gray-900">0</p>
                 <p className="text-xs text-gray-500 mt-1">Invoices</p>
               </div>
             </div>
@@ -139,50 +162,16 @@ export const CustomerDetailScreen = () => {
                 <p className="text-sm text-gray-500 mt-1">All invoices for this customer</p>
               </div>
 
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b border-gray-200">
-                      <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Invoice</th>
-                      <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Date</th>
-                      <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Due Date</th>
-                      <th className="px-6 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wide">Amount</th>
-                      <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Status</th>
-                      <th className="px-6 py-3"></th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {invoices.map((invoice) => (
-                      <tr key={invoice.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
-                        <td className="px-6 py-4 text-sm font-semibold text-gray-900">{invoice.number}</td>
-                        <td className="px-6 py-4 text-sm text-gray-600">
-                          {new Date(invoice.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-                        </td>
-                        <td className="px-6 py-4 text-sm text-gray-600">
-                          {new Date(invoice.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-                        </td>
-                        <td className="px-6 py-4 text-sm font-semibold text-gray-900 text-right">
-                          ${invoice.amount.toLocaleString()}
-                        </td>
-                        <td className="px-6 py-4">
-                          <span className={`inline-flex items-center px-2.5 py-0.5 text-xs font-semibold rounded-full ${getStatusColor(invoice.status)}`}>
-                            {invoice.status.charAt(0).toUpperCase() + invoice.status.slice(1)}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 text-right">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => navigate(`/invoices/${invoice.id}`)}
-                            className="h-8 px-3 border-gray-300 rounded-lg text-xs"
-                          >
-                            View
-                          </Button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+              <div className="px-6 py-12 text-center">
+                <FileText className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+                <p className="text-sm text-gray-500">No invoices yet</p>
+                <Button
+                  onClick={() => navigate('/invoices/new')}
+                  className="mt-4 h-10 px-4 bg-gradient-to-r from-[#635bff] to-[#5045e5] hover:from-[#5045e5] hover:to-[#3d38d1] text-white rounded-lg font-semibold"
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Create First Invoice
+                </Button>
               </div>
             </div>
           </div>
@@ -193,58 +182,85 @@ export const CustomerDetailScreen = () => {
             <div className="bg-white/80 backdrop-blur-sm border border-gray-200/60 rounded-xl p-6 shadow-sm">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Contact Information</h3>
               <div className="space-y-4">
+                {customer.company && (
+                  <div className="flex items-start gap-3">
+                    <Building2 className="w-5 h-5 text-gray-400 mt-0.5 flex-shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-0.5">Company</p>
+                      <p className="text-sm text-gray-900">{customer.company}</p>
+                    </div>
+                  </div>
+                )}
+
                 <div className="flex items-start gap-3">
                   <Mail className="w-5 h-5 text-gray-400 mt-0.5 flex-shrink-0" />
                   <div className="flex-1 min-w-0">
                     <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-0.5">Email</p>
-                    <a href={`mailto:${customer.email}`} className="text-sm text-blue-600 hover:text-blue-700">
+                    <a href={`mailto:${customer.email}`} className="text-sm text-blue-600 hover:text-blue-700 break-all">
                       {customer.email}
                     </a>
                   </div>
                 </div>
 
-                <div className="flex items-start gap-3">
-                  <Phone className="w-5 h-5 text-gray-400 mt-0.5 flex-shrink-0" />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-0.5">Phone</p>
-                    <a href={`tel:${customer.phone}`} className="text-sm text-gray-900">
-                      {customer.phone}
-                    </a>
+                {customer.phone && (
+                  <div className="flex items-start gap-3">
+                    <Phone className="w-5 h-5 text-gray-400 mt-0.5 flex-shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-0.5">Phone</p>
+                      <a href={`tel:${customer.phone}`} className="text-sm text-gray-900">
+                        {customer.phone}
+                      </a>
+                    </div>
                   </div>
-                </div>
+                )}
 
-                <div className="flex items-start gap-3">
-                  <MapPin className="w-5 h-5 text-gray-400 mt-0.5 flex-shrink-0" />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-0.5">Address</p>
-                    <p className="text-sm text-gray-900 whitespace-pre-line">{customer.address}</p>
+                {customer.address?.street && (
+                  <div className="flex items-start gap-3">
+                    <MapPin className="w-5 h-5 text-gray-400 mt-0.5 flex-shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-0.5">Address</p>
+                      <p className="text-sm text-gray-900 whitespace-pre-line">{formatAddress()}</p>
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
             </div>
 
             {/* Payment Details */}
             <div className="bg-white/80 backdrop-blur-sm border border-gray-200/60 rounded-xl p-6 shadow-sm">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Payment Details</h3>
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Additional Details</h3>
               <div className="space-y-3">
-                <div>
-                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Currency</p>
-                  <p className="text-sm text-gray-900">{customer.currency}</p>
-                </div>
-                <div>
-                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Payment Terms</p>
-                  <p className="text-sm text-gray-900">{customer.paymentTerms}</p>
-                </div>
-                <div>
-                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Tax ID</p>
-                  <p className="text-sm text-gray-900 font-mono">{customer.taxId}</p>
-                </div>
-                <div>
-                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Last Payment</p>
-                  <p className="text-sm text-gray-900">
-                    {new Date(customer.lastPayment).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
-                  </p>
-                </div>
+                {customer.preferredPaymentMethod && customer.preferredPaymentMethod !== 'none' && (
+                  <div>
+                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Payment Method</p>
+                    <p className="text-sm text-gray-900">
+                      {customer.preferredPaymentMethod
+                        .replace(/_/g, ' ')
+                        .replace(/\b\w/g, (l: string) => l.toUpperCase())}
+                    </p>
+                  </div>
+                )}
+
+                {customer.taxId && (
+                  <div>
+                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Tax ID</p>
+                    <p className="text-sm text-gray-900 font-mono">{customer.taxId}</p>
+                  </div>
+                )}
+
+                {customer.walletAddress && (
+                  <div>
+                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Payment Address</p>
+                    <p className="text-sm text-gray-900 font-mono break-all">{customer.walletAddress}</p>
+                  </div>
+                )}
+
+                {customer.notes && (
+                  <div>
+                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Notes</p>
+                    <p className="text-sm text-gray-900 whitespace-pre-line">{customer.notes}</p>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -263,9 +279,20 @@ export const CustomerDetailScreen = () => {
                 <Button
                   variant="outline"
                   className="w-full h-10 justify-start border-red-200 text-red-600 hover:bg-red-50 rounded-lg"
+                  onClick={handleDelete}
+                  disabled={isDeleting}
                 >
-                  <Trash2 className="w-4 h-4 mr-2" />
-                  Delete Customer
+                  {isDeleting ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Deleting...
+                    </>
+                  ) : (
+                    <>
+                      <Trash2 className="w-4 h-4 mr-2" />
+                      Delete Customer
+                    </>
+                  )}
                 </Button>
               </div>
             </div>
