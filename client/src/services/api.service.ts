@@ -20,6 +20,7 @@ import type {
   Webhook,
   ApiKey,
   TeamMember,
+  Passkey,
 } from '@/types/models';
 
 // ==================== Base Query Configuration ====================
@@ -86,7 +87,7 @@ const baseQueryWithReauth: BaseQueryFn<
 export const apiService = createApi({
   reducerPath: 'api',
   baseQuery: baseQueryWithReauth,
-  tagTypes: ['User', 'Invoice', 'Customer', 'Payment', 'Webhook', 'ApiKey', 'Team', 'Dashboard'],
+  tagTypes: ['User', 'Invoice', 'Customer', 'Payment', 'Webhook', 'ApiKey', 'Team', 'Dashboard', 'Passkey'],
   endpoints: (builder) => ({
     // ==================== Auth Endpoints ====================
 
@@ -395,6 +396,22 @@ export const apiService = createApi({
       }),
       invalidatesTags: ['Team'],
     }),
+
+    // ==================== Passkey Endpoints ====================
+
+    getPasskeys: builder.query<Passkey[], void>({
+      query: () => '/passkeys',
+      transformResponse: (response: ApiResponse<Passkey[]>) => response.data!,
+      providesTags: ['Passkey'],
+    }),
+
+    deletePasskey: builder.mutation<void, string>({
+      query: (id) => ({
+        url: `/passkeys/${id}`,
+        method: 'DELETE',
+      }),
+      invalidatesTags: ['Passkey'],
+    }),
   }),
 });
 
@@ -447,6 +464,10 @@ export const {
   useInviteTeamMemberMutation,
   useUpdateTeamMemberMutation,
   useRemoveTeamMemberMutation,
+
+  // Passkeys
+  useGetPasskeysQuery,
+  useDeletePasskeyMutation,
 } = apiService;
 
 // ==================== Export Utilities ====================

@@ -1,10 +1,16 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Eye, EyeOff, Sparkles, Zap, Shield } from 'lucide-react';
+import { Eye, EyeOff, Sparkles, Zap, Shield, Fingerprint } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
+import { startAuthentication, type PublicKeyCredentialRequestOptionsJSON } from '@simplewebauthn/browser';
+import { signInWithCustomToken } from 'firebase/auth';
+import { auth } from '@/lib/firebase';
+import { useAppDispatch } from '@/store/store';
+import { setToken } from '@/store/slices/auth.slice';
+import { apiService } from '@/services/api.service';
 
 export const LoginScreen = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -12,6 +18,7 @@ export const LoginScreen = () => {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const dispatch = useAppDispatch();
   const { login, loginWithGoogle } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -44,6 +51,143 @@ export const LoginScreen = () => {
     }
   };
 
+  const handlePasskeyLogin = async () => {
+    try {
+      setLoading(true);
+
+      // If no email provided, try discoverable credentials (resident keys)
+      if (!email) {
+        try {
+          // Get authentication options from backend (without email)
+          const optionsResponse = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5001/api'}/passkeys/auth-options`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({}), // No email = usernameless
+          });
+
+          if (!optionsResponse.ok) {
+            const error = await optionsResponse.json();
+            throw new Error(error.message || 'Failed to get authentication options');
+          }
+
+          const { data: options } = await optionsResponse.json() as { data: PublicKeyCredentialRequestOptionsJSON };
+
+          // Start WebAuthn authentication
+          const authResponse = await startAuthentication({ optionsJSON: options });
+
+          // Verify authentication with backend (without email)
+          const verifyResponse = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5001/api'}/passkeys/auth`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              response: authResponse,
+              // No email for usernameless authentication
+            }),
+          });
+
+          if (!verifyResponse.ok) {
+            throw new Error('Passkey not found. Please enter your email or register a passkey first.');
+          }
+
+          const { data } = await verifyResponse.json() as { data: { customToken: string; user: any } };
+
+          // Sign in with Firebase using custom token
+          const userCredential = await signInWithCustomToken(auth, data.customToken);
+          const firebaseUser = userCredential.user;
+
+          // Get ID token and sync with backend
+          const token = await firebaseUser.getIdToken();
+          dispatch(setToken(token));
+
+          // Sync user with backend
+          const syncResult = await dispatch(
+            apiService.endpoints.syncUser.initiate({})
+          );
+
+          if (!('data' in syncResult) || !syncResult.data) {
+            throw new Error('Failed to sync user with backend');
+          }
+
+          toast.success('Welcome back!');
+          navigate('/');
+          return;
+        } catch (error: any) {
+          // If discoverable credential fails, show actual error
+          console.error('Usernameless passkey login error:', error);
+          if (error.name === 'NotAllowedError') {
+            toast.error('Passkey authentication was cancelled');
+          } else {
+            toast.error(error.message || 'Passkey authentication failed');
+          }
+          return;
+        }
+      }
+
+      // Email provided - use traditional flow
+      // Get authentication options from backend
+      const optionsResponse = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5001/api'}/passkeys/auth-options`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      });
+
+      if (!optionsResponse.ok) {
+        const error = await optionsResponse.json();
+        throw new Error(error.message || 'Failed to get authentication options');
+      }
+
+      const { data: options } = await optionsResponse.json() as { data: PublicKeyCredentialRequestOptionsJSON };
+
+      // Start WebAuthn authentication
+      const authResponse = await startAuthentication({ optionsJSON: options });
+
+      // Verify authentication with backend
+      const verifyResponse = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5001/api'}/passkeys/auth`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          response: authResponse,
+          email,
+        }),
+      });
+
+      if (!verifyResponse.ok) {
+        throw new Error('Failed to verify passkey authentication');
+      }
+
+      const { data } = await verifyResponse.json() as { data: { customToken: string; user: any } };
+
+      // Sign in with Firebase using custom token
+      const userCredential = await signInWithCustomToken(auth, data.customToken);
+      const firebaseUser = userCredential.user;
+
+      // Get ID token and sync with backend
+      const token = await firebaseUser.getIdToken();
+      dispatch(setToken(token));
+
+      // Sync user with backend
+      const syncResult = await dispatch(
+        apiService.endpoints.syncUser.initiate({})
+      );
+
+      if (!('data' in syncResult) || !syncResult.data) {
+        throw new Error('Failed to sync user with backend');
+      }
+
+      toast.success('Welcome back!');
+      navigate('/');
+    } catch (error: any) {
+      console.error('Passkey login error:', error);
+      if (error.name === 'NotAllowedError') {
+        toast.error('Passkey authentication was cancelled');
+      } else {
+        toast.error(error.message || 'Failed to sign in with passkey');
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen flex">
       {/* Left Side - Branding */}
@@ -63,10 +207,10 @@ export const LoginScreen = () => {
 
         <div className="relative z-10">
           <h1 className="text-5xl font-bold text-white mb-6 leading-tight">
-            Web3 invoicing,<br />simplified.
+            Modern invoicing,<br />simplified.
           </h1>
           <p className="text-white/70 text-lg mb-12 max-w-md leading-relaxed">
-            Create, send, and track crypto invoices in minutes. Get paid faster with blockchain technology.
+            Create, send, and track invoices in minutes. Get paid faster with flexible payment options.
           </p>
 
           <div className="space-y-6">
@@ -86,7 +230,7 @@ export const LoginScreen = () => {
               </div>
               <div>
                 <h3 className="text-white font-semibold mb-1 text-base">Secure & Transparent</h3>
-                <p className="text-white/60 text-sm leading-relaxed">Blockchain-verified transactions</p>
+                <p className="text-white/60 text-sm leading-relaxed">Bank-grade security for your data</p>
               </div>
             </div>
 
@@ -131,7 +275,7 @@ export const LoginScreen = () => {
             variant="outline"
             disabled={loading}
             onClick={handleGoogleLogin}
-            className="w-full h-12 border-2 border-[#E3E8EF] hover:bg-[#F6F9FC] rounded-lg text-base font-medium mb-6"
+            className="w-full h-12 border-2 border-[#E3E8EF] hover:bg-[#F6F9FC] rounded-lg text-base font-medium mb-3"
           >
             <svg className="w-5 h-5 mr-3" viewBox="0 0 24 24">
               <path
@@ -152,6 +296,18 @@ export const LoginScreen = () => {
               />
             </svg>
             Continue with Google
+          </Button>
+
+          {/* Passkey Sign In - Always visible */}
+          <Button
+            type="button"
+            variant="outline"
+            disabled={loading}
+            onClick={handlePasskeyLogin}
+            className="w-full h-12 border-2 border-[#E3E8EF] hover:bg-[#F6F9FC] rounded-lg text-base font-medium mb-6"
+          >
+            <Fingerprint className="w-5 h-5 mr-3" />
+            Sign in with Passkey
           </Button>
 
           <div className="relative mb-6">
@@ -175,7 +331,6 @@ export const LoginScreen = () => {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="h-12 border-2 border-[#E3E8EF] rounded-lg focus:ring-2 focus:ring-[#635BFF] focus:border-[#635BFF] text-base"
-                required
               />
             </div>
 

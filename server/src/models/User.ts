@@ -1,5 +1,5 @@
 import mongoose, { Document, Schema } from 'mongoose';
-import type { AuthenticatorTransportFuture, CredentialDeviceType } from '@simplewebauthn/types';
+import type { AuthenticatorTransportFuture, CredentialDeviceType } from '@simplewebauthn/server';
 
 export interface IPasskey {
   id: string;

@@ -222,7 +222,7 @@ export const PaymentsScreen = () => {
                 <SelectContent>
                   <SelectItem value="all">All Methods</SelectItem>
                   <SelectItem value="bank">Bank Transfer</SelectItem>
-                  <SelectItem value="crypto">Cryptocurrency</SelectItem>
+                  <SelectItem value="crypto">Digital Currency</SelectItem>
                   <SelectItem value="card">Credit Card</SelectItem>
                   <SelectItem value="other">Other</SelectItem>
                 </SelectContent>

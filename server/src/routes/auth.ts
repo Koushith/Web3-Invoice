@@ -1,5 +1,5 @@
 import express, { Request, Response } from 'express';
-import { authenticate } from '../middleware/auth.js';
+import { authenticate, verifyFirebaseToken } from '../middleware/auth.js';
 import User from '../models/User.js';
 
 const router = express.Router();
@@ -13,7 +13,7 @@ router.get('/me', authenticate, async (req: Request, res: Response) => {
   try {
     res.json({
       success: true,
-      data: req.user,
+      data: req.user?.user,
     });
   } catch (error: any) {
     console.error('Get profile error:', error);
@@ -32,15 +32,22 @@ router.get('/me', authenticate, async (req: Request, res: Response) => {
  */
 router.put('/me', authenticate, async (req: Request, res: Response) => {
   try {
-    const { displayName, organization, preferences } = req.body;
+    const { displayName, organizationId } = req.body;
+    const mongoUser = req.user?.user;
+
+    if (!mongoUser) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found',
+      });
+    }
 
     const updateData: any = {};
     if (displayName) updateData.displayName = displayName;
-    if (organization) updateData.organization = organization;
-    if (preferences) updateData.preferences = { ...req.user.preferences, ...preferences };
+    if (organizationId) updateData.organizationId = organizationId;
 
     const updatedUser = await User.findByIdAndUpdate(
-      req.user._id,
+      mongoUser._id,
       { $set: updateData },
       { new: true, runValidators: true }
     );
@@ -62,26 +69,66 @@ router.put('/me', authenticate, async (req: Request, res: Response) => {
 
 /**
  * @route   POST /api/auth/sync
- * @desc    Sync user data from Firebase to MongoDB
+ * @desc    Sync user data from Firebase to MongoDB (creates user if doesn't exist)
  * @access  Private
  */
-router.post('/sync', authenticate, async (req: Request, res: Response) => {
+router.post('/sync', verifyFirebaseToken, async (req: Request, res: Response) => {
   try {
-    const { organization } = req.body;
+    const { displayName, photoURL, organization } = req.body;
+    const firebaseUid = req.user?.uid;
+    const email = req.user?.email;
 
-    // Update user with additional data
-    if (organization) {
-      req.user.organization = organization;
-      await req.user.save();
+    if (!firebaseUid || !email) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid authentication data',
+      });
+    }
+
+    // Find or create user
+    let user = await User.findOne({ firebaseUid });
+
+    if (!user) {
+      // Create new user if doesn't exist
+      user = await User.create({
+        firebaseUid,
+        email,
+        displayName: displayName || email.split('@')[0],
+        photoURL: photoURL || undefined,
+        role: 'owner', // Default role for new users
+        isActive: true,
+      });
+      console.log(`[Auth] New user created: ${email}`);
+    } else {
+      // Update existing user
+      const updateData: any = {};
+      if (displayName && displayName !== user.displayName) {
+        updateData.displayName = displayName;
+      }
+      if (photoURL && photoURL !== user.photoURL) {
+        updateData.photoURL = photoURL;
+      }
+      if (organization) {
+        updateData.organizationId = organization;
+      }
+
+      if (Object.keys(updateData).length > 0) {
+        user = await User.findByIdAndUpdate(
+          user._id,
+          { $set: updateData },
+          { new: true }
+        );
+      }
+      console.log(`[Auth] User synced: ${email}`);
     }
 
     res.json({
       success: true,
       message: 'User data synced successfully',
-      data: req.user,
+      data: user,
     });
   } catch (error: any) {
-    console.error('Sync error:', error);
+    console.error('[Auth] Sync error:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to sync user data',
@@ -97,9 +144,17 @@ router.post('/sync', authenticate, async (req: Request, res: Response) => {
  */
 router.delete('/me', authenticate, async (req: Request, res: Response) => {
   try {
-    // Soft delete - mark as deleted
-    req.user.status = 'deleted';
-    await req.user.save();
+    const mongoUser = req.user?.user;
+
+    if (!mongoUser) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found',
+      });
+    }
+
+    // Soft delete - mark as inactive
+    await User.findByIdAndUpdate(mongoUser._id, { isActive: false });
 
     res.json({
       success: true,

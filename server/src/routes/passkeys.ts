@@ -9,21 +9,22 @@ import {
   verifyRegistrationResponse,
   generateAuthenticationOptions,
   verifyAuthenticationResponse,
+  type RegistrationResponseJSON,
+  type AuthenticationResponseJSON,
 } from '@simplewebauthn/server';
-import type {
-  RegistrationResponseJSON,
-  AuthenticationResponseJSON,
-} from '@simplewebauthn/types';
 import { authenticate } from '../middleware/auth.js';
 import User from '../models/User.js';
 import { isoBase64URL } from '@simplewebauthn/server/helpers';
+import { auth } from '../config/firebase.js';
 
 const router = express.Router();
 
 // Relying Party configuration
 const RP_NAME = process.env.RP_NAME || 'DefInvoice';
 const RP_ID = process.env.RP_ID || 'localhost';
-const ORIGIN = process.env.ORIGIN || 'http://localhost:5174';
+const ALLOWED_ORIGINS = process.env.ALLOWED_ORIGINS
+  ? process.env.ALLOWED_ORIGINS.split(',').map(o => o.trim())
+  : ['http://localhost:5173', 'http://localhost:5174'];
 
 // Store challenges temporarily (in production, use Redis)
 const challenges = new Map<string, string>();
@@ -51,7 +52,7 @@ router.post('/register-options', authenticate, async (req: Request, res: Respons
       userDisplayName: user.displayName || user.email,
       attestationType: 'none',
       excludeCredentials: user.passkeys.map((passkey) => ({
-        id: isoBase64URL.toBuffer(passkey.credentialID),
+        id: passkey.credentialID, // Already a Base64URLString
         transports: passkey.transports,
       })),
       authenticatorSelection: {
@@ -100,7 +101,7 @@ router.post('/register', authenticate, async (req: Request, res: Response) => {
     const verification = await verifyRegistrationResponse({
       response,
       expectedChallenge,
-      expectedOrigin: ORIGIN,
+      expectedOrigin: ALLOWED_ORIGINS,
       expectedRPID: RP_ID,
     });
 
@@ -108,17 +109,17 @@ router.post('/register', authenticate, async (req: Request, res: Response) => {
       return res.status(400).json({ success: false, message: 'Verification failed' });
     }
 
-    const { credential } = verification.registrationInfo;
+    const { credential, credentialDeviceType, credentialBackedUp } = verification.registrationInfo;
 
     // Save passkey
     user.passkeys.push({
       id: crypto.randomUUID(),
-      credentialID: isoBase64URL.fromBuffer(credential.id),
-      credentialPublicKey: isoBase64URL.fromBuffer(credential.publicKey),
+      credentialID: credential.id, // Already a Base64URLString
+      credentialPublicKey: isoBase64URL.fromBuffer(credential.publicKey), // Convert Uint8Array to Base64URLString
       counter: credential.counter,
-      credentialDeviceType: credential.deviceType,
-      credentialBackedUp: credential.backedUp,
-      transports: response.response.transports,
+      credentialDeviceType: credentialDeviceType,
+      credentialBackedUp: credentialBackedUp,
+      transports: credential.transports,
       name: name || 'Passkey',
       createdAt: new Date(),
     });
@@ -144,15 +145,27 @@ router.post('/register', authenticate, async (req: Request, res: Response) => {
 /**
  * POST /api/passkeys/auth-options
  * Generate passkey authentication options
+ * Supports both username (email) and usernameless (discoverable) authentication
  */
 router.post('/auth-options', async (req: Request, res: Response) => {
   try {
-    const { email } = req.body as { email: string };
+    const { email } = req.body as { email?: string };
 
+    // Usernameless authentication (discoverable credentials)
     if (!email) {
-      return res.status(400).json({ success: false, message: 'Email required' });
+      const options = await generateAuthenticationOptions({
+        rpID: RP_ID,
+        allowCredentials: [], // Empty array = show all passkeys on device
+        userVerification: 'preferred',
+      });
+
+      // Store challenge with a temporary key
+      challenges.set(`auth:usernameless:${options.challenge}`, options.challenge);
+
+      return res.json({ success: true, data: options });
     }
 
+    // Traditional authentication with email
     const user = await User.findOne({ email: email.toLowerCase() });
     if (!user || user.passkeys.length === 0) {
       return res.status(404).json({ success: false, message: 'No passkeys found for this user' });
@@ -161,13 +174,13 @@ router.post('/auth-options', async (req: Request, res: Response) => {
     const options = await generateAuthenticationOptions({
       rpID: RP_ID,
       allowCredentials: user.passkeys.map((passkey) => ({
-        id: isoBase64URL.toBuffer(passkey.credentialID),
+        id: passkey.credentialID, // Already a Base64URLString
         transports: passkey.transports,
       })),
       userVerification: 'preferred',
     });
 
-    // Store challenge with email as key (since user is not authenticated yet)
+    // Store challenge with email as key
     challenges.set(`auth:${email.toLowerCase()}`, options.challenge);
 
     res.json({ success: true, data: options });
@@ -180,32 +193,63 @@ router.post('/auth-options', async (req: Request, res: Response) => {
 /**
  * POST /api/passkeys/auth
  * Verify passkey authentication
+ * Supports both email-based and usernameless (discoverable) authentication
  */
 router.post('/auth', async (req: Request, res: Response) => {
   try {
     const { response, email } = req.body as {
       response: AuthenticationResponseJSON;
-      email: string;
+      email?: string;
     };
 
+    let user;
+    let expectedChallenge;
+    let passkey;
+
+    // Usernameless authentication - find user by credential ID
     if (!email) {
-      return res.status(400).json({ success: false, message: 'Email required' });
-    }
+      // Find user with matching credential ID
+      user = await User.findOne({
+        'passkeys.credentialID': response.rawId,
+      });
 
-    const user = await User.findOne({ email: email.toLowerCase() });
-    if (!user) {
-      return res.status(404).json({ success: false, message: 'User not found' });
-    }
+      if (!user) {
+        return res.status(404).json({ success: false, message: 'Passkey not found' });
+      }
 
-    const expectedChallenge = challenges.get(`auth:${email.toLowerCase()}`);
-    if (!expectedChallenge) {
-      return res.status(400).json({ success: false, message: 'Challenge not found' });
-    }
+      // Try to find challenge with usernameless key pattern
+      // We need to check all usernameless challenges to find the right one
+      let foundChallenge = false;
+      for (const [key, value] of challenges.entries()) {
+        if (key.startsWith('auth:usernameless:')) {
+          expectedChallenge = value;
+          challenges.delete(key); // Clean up immediately
+          foundChallenge = true;
+          break;
+        }
+      }
 
-    // Find the passkey
-    const passkey = user.passkeys.find(
-      (p) => p.credentialID === isoBase64URL.fromBuffer(response.rawId)
-    );
+      if (!foundChallenge || !expectedChallenge) {
+        return res.status(400).json({ success: false, message: 'Challenge not found or expired' });
+      }
+
+      // Find the specific passkey
+      passkey = user.passkeys.find((p) => p.credentialID === response.rawId);
+    } else {
+      // Traditional email-based authentication
+      user = await User.findOne({ email: email.toLowerCase() });
+      if (!user) {
+        return res.status(404).json({ success: false, message: 'User not found' });
+      }
+
+      expectedChallenge = challenges.get(`auth:${email.toLowerCase()}`);
+      if (!expectedChallenge) {
+        return res.status(400).json({ success: false, message: 'Challenge not found' });
+      }
+
+      // Find the passkey (response.rawId is already a Base64URLString)
+      passkey = user.passkeys.find((p) => p.credentialID === response.rawId);
+    }
 
     if (!passkey) {
       return res.status(404).json({ success: false, message: 'Passkey not found' });
@@ -214,11 +258,11 @@ router.post('/auth', async (req: Request, res: Response) => {
     const verification = await verifyAuthenticationResponse({
       response,
       expectedChallenge,
-      expectedOrigin: ORIGIN,
+      expectedOrigin: ALLOWED_ORIGINS,
       expectedRPID: RP_ID,
       credential: {
-        id: isoBase64URL.toBuffer(passkey.credentialID),
-        publicKey: isoBase64URL.toBuffer(passkey.credentialPublicKey),
+        id: passkey.credentialID, // Already a Base64URLString
+        publicKey: isoBase64URL.toBuffer(passkey.credentialPublicKey), // Convert Base64URLString to Uint8Array
         counter: passkey.counter,
       },
     });
@@ -232,13 +276,19 @@ router.post('/auth', async (req: Request, res: Response) => {
     passkey.lastUsedAt = new Date();
     await user.save();
 
-    // Clean up challenge
-    challenges.delete(`auth:${email.toLowerCase()}`);
+    // Clean up challenge (usernameless challenge already cleaned up above)
+    if (email) {
+      challenges.delete(`auth:${email.toLowerCase()}`);
+    }
 
-    // Return user data (frontend will sync with Firebase)
+    // Generate Firebase custom token for authentication
+    const customToken = await auth.createCustomToken(user.firebaseUid);
+
+    // Return custom token for Firebase authentication
     res.json({
       success: true,
       data: {
+        customToken,
         user: {
           id: user._id,
           email: user.email,

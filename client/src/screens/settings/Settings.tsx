@@ -4,6 +4,7 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Building, Globe, DollarSign, Bell, Shield, Palette } from 'lucide-react';
+import { PasskeyManagement } from '@/components/passkey/PasskeyManagement';
 
 export const SettingsScreen = () => {
   return (
@@ -223,7 +224,10 @@ export const SettingsScreen = () => {
             </div>
 
             <div className="space-y-4">
-              <div className="flex items-center justify-between">
+              {/* Passkeys */}
+              <PasskeyManagement />
+
+              <div className="flex items-center justify-between pt-3 border-t border-gray-100">
                 <div>
                   <p className="text-sm font-medium text-gray-900">Two-Factor Authentication</p>
                   <p className="text-xs text-gray-500 mt-0.5">Add an extra layer of security to your account</p>

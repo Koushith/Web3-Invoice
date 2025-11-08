@@ -463,7 +463,7 @@ export const NewInvoice = () => {
                     </div>
                     <div className="flex items-center space-x-2">
                       <RadioGroupItem value="crypto" id="crypto" />
-                      <Label htmlFor="crypto" className="cursor-pointer">Cryptocurrency</Label>
+                      <Label htmlFor="crypto" className="cursor-pointer">Digital Currency</Label>
                     </div>
                     <div className="flex items-center space-x-2">
                       <RadioGroupItem value="other" id="other" />
@@ -549,7 +549,7 @@ export const NewInvoice = () => {
                   <div className="space-y-4">
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <Label className="text-sm font-semibold text-gray-700 mb-2 block">Cryptocurrency</Label>
+                        <Label className="text-sm font-semibold text-gray-700 mb-2 block">Currency</Label>
                         <Select
                           value={paymentDetails.cryptoDetails?.currency}
                           onValueChange={(value) =>
@@ -563,7 +563,7 @@ export const NewInvoice = () => {
                           }
                         >
                           <SelectTrigger className="h-11 border-gray-300 rounded-lg">
-                            <SelectValue placeholder="Select cryptocurrency" />
+                            <SelectValue placeholder="Select currency" />
                           </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="BTC">Bitcoin (BTC)</SelectItem>
@@ -592,7 +592,7 @@ export const NewInvoice = () => {
                       </div>
                     </div>
                     <div>
-                      <Label className="text-sm font-semibold text-gray-700 mb-2 block">Wallet Address</Label>
+                      <Label className="text-sm font-semibold text-gray-700 mb-2 block">Payment Address</Label>
                       <Input
                         value={paymentDetails.cryptoDetails?.walletAddress}
                         onChange={(e) =>
@@ -604,7 +604,7 @@ export const NewInvoice = () => {
                             },
                           })
                         }
-                        placeholder="Enter wallet address"
+                        placeholder="Enter payment address"
                         className="h-11 border-gray-300 rounded-lg font-mono text-sm"
                       />
                     </div>

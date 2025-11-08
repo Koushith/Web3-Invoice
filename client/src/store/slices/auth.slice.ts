@@ -143,6 +143,7 @@ export const signup = createAsyncThunk(
       const result = await dispatch(
         apiService.endpoints.syncUser.initiate({
           displayName,
+          photoURL: firebaseUser.photoURL || undefined,
         })
       );
 
@@ -188,6 +189,7 @@ export const loginWithGoogle = createAsyncThunk(
       const result = await dispatch(
         apiService.endpoints.syncUser.initiate({
           displayName: firebaseUser.displayName || undefined,
+          photoURL: firebaseUser.photoURL || undefined,
         })
       );
 

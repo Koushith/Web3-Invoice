@@ -173,7 +173,7 @@ export function StandardTemplate({ logo, invoiceData, paymentDetails }: Template
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1">
-                <p className="text-sm text-muted-foreground">Cryptocurrency</p>
+                <p className="text-sm text-muted-foreground">Currency</p>
                 <p className="font-medium">{paymentDetails.cryptoDetails.currency}</p>
               </div>
               {paymentDetails.cryptoDetails.network && (
@@ -184,7 +184,7 @@ export function StandardTemplate({ logo, invoiceData, paymentDetails }: Template
               )}
             </div>
             <div className="space-y-2">
-              <p className="text-sm text-muted-foreground">Wallet Address</p>
+              <p className="text-sm text-muted-foreground">Payment Address</p>
               <p className="font-medium font-mono text-sm break-all">
                 {paymentDetails.cryptoDetails.walletAddress}
               </p>

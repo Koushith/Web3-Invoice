@@ -6,9 +6,10 @@
 // ==================== Enums ====================
 
 export enum UserRole {
-  USER = 'user',
+  OWNER = 'owner',
   ADMIN = 'admin',
-  SUPER_ADMIN = 'superadmin',
+  ACCOUNTANT = 'accountant',
+  VIEWER = 'viewer',
 }
 
 export enum UserStatus {
@@ -99,6 +100,15 @@ export interface UserPreferences {
     sms?: boolean;
   };
   timezone?: string;
+}
+
+export interface Passkey {
+  id: string;
+  name?: string;
+  createdAt: Date | string;
+  lastUsedAt?: Date | string;
+  deviceType: 'singleDevice' | 'multiDevice';
+  backedUp: boolean;
 }
 
 export interface AuthState {
