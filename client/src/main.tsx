@@ -1,6 +1,9 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { Component, ReactNode } from 'react';
+import { Provider } from 'react-redux';
+import { PersistGate } from 'redux-persist/integration/react';
+import { store, persistor } from './store/store';
 import './index.css';
 import App from './App.tsx';
 
@@ -52,8 +55,12 @@ class ErrorBoundary extends Component<{ children: ReactNode }, { hasError: boole
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <ErrorBoundary>
-      <App />
-    </ErrorBoundary>
+    <Provider store={store}>
+      <PersistGate loading={null} persistor={persistor}>
+        <ErrorBoundary>
+          <App />
+        </ErrorBoundary>
+      </PersistGate>
+    </Provider>
   </StrictMode>
 );

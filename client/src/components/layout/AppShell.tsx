@@ -1,37 +1,29 @@
 import { Button } from '@/components/ui/button';
 import {
-  Menu,
   LayoutDashboard,
   FileText,
   Users,
   Settings,
   LogOut,
-  Receipt,
   Key,
   Webhook,
-  FileCode,
   UserCircle,
-  CreditCard,
   Users2,
-  Gauge,
   DollarSign,
   BarChart3,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { Outlet, Link, NavLink, useNavigate } from 'react-router-dom';
+import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
-
 
 function Logo() {
   return (
@@ -40,9 +32,7 @@ function Logo() {
         <span className="text-white text-lg font-bold">D</span>
       </div>
       <div className="flex flex-col">
-        <span className="font-semibold text-base leading-none text-[#0A2540]">
-          DefInvoice
-        </span>
+        <span className="font-semibold text-base leading-none text-[#0A2540]">DefInvoice</span>
       </div>
     </div>
   );

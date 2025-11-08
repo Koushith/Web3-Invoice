@@ -17,6 +17,8 @@
     "@requestnetwork/payment-processor": "^0.57.0",
     "@requestnetwork/request-client.js": "^0.59.0",
     "@requestnetwork/types": "^0.54.0",
+    "@simplewebauthn/browser": "^13.2.2",
+    "@simplewebauthn/server": "^13.2.2",
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",
     "ethers": "^5.8.0",

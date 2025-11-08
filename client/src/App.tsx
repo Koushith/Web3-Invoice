@@ -1,6 +1,7 @@
+import { useEffect } from 'react';
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import { AppShell } from '@/components/layout/AppShell';
-import { CustomersScreen, ErrorScreen, InvoicesPage, NewCustomerScreen, NewInvoice } from './screens';
+import { ErrorScreen, InvoicesPage, NewCustomerScreen, NewInvoice } from './screens';
 import { HomePage } from './screens';
 import { Auth } from './screens/auth/Auth';
 import { LoginScreen } from './screens/auth/Login';
@@ -15,9 +16,11 @@ import { SettingsScreen } from './screens/settings/Settings';
 import { ApiKeysScreen } from './screens/api-keys/ApiKeys';
 import { WebhooksScreen } from './screens/webhooks/Webhooks';
 import { ProfileScreen } from './screens/profile/Profile';
-import { AuthProvider } from './contexts/AuthContext';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
 import { Toaster } from 'sonner';
+import { CustomersScreen } from './screens/customer/Customer';
+import { useAppDispatch } from '@/store/store';
+import { initializeAuth } from '@/store/slices/auth.slice';
 
 const router = createBrowserRouter([
   {
@@ -124,11 +127,18 @@ const router = createBrowserRouter([
 ]);
 
 function App() {
+  const dispatch = useAppDispatch();
+
+  // Initialize auth once when app starts
+  useEffect(() => {
+    dispatch(initializeAuth());
+  }, [dispatch]);
+
   return (
-    <AuthProvider>
+    <>
       <RouterProvider router={router} />
       <Toaster position="top-right" richColors />
-    </AuthProvider>
+    </>
   );
 }
 

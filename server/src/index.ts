@@ -7,6 +7,7 @@ import cors from 'cors';
 import { connectDatabase } from './config/database.js';
 import authRoutes from './routes/auth.js';
 import userRoutes from './routes/users.js';
+import passkeyRoutes from './routes/passkeys.js';
 
 // Initialize express app
 const app = express();
@@ -37,6 +38,7 @@ app.get('/health', (req: Request, res: Response) => {
 // API Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/passkeys', passkeyRoutes);
 
 // 404 handler
 app.use((req: Request, res: Response) => {
