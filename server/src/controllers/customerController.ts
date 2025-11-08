@@ -85,6 +85,17 @@ export const createCustomer = asyncHandler(async (req: Request, res: Response) =
     throw new AppError('Customer name and email are required', 400, 'MISSING_REQUIRED_FIELDS');
   }
 
+  // Check if active customer with this email already exists
+  const existingCustomer = await Customer.findOne({
+    organizationId: user.organizationId,
+    email: email.toLowerCase(),
+    isActive: true,
+  });
+
+  if (existingCustomer) {
+    throw new AppError('A customer with this email already exists', 409, 'DUPLICATE_CUSTOMER');
+  }
+
   const customer = await Customer.create({
     organizationId: user.organizationId,
     name,
@@ -101,7 +112,7 @@ export const createCustomer = asyncHandler(async (req: Request, res: Response) =
 
   res.status(201).json({
     message: 'Customer created successfully',
-    customer,
+    data: customer,
   });
 });
 
@@ -117,6 +128,20 @@ export const updateCustomer = asyncHandler(async (req: Request, res: Response) =
     throw new AppError('Organization not found', 404, 'ORG_NOT_FOUND');
   }
 
+  // Check if another active customer with this email already exists
+  if (email) {
+    const existingCustomer = await Customer.findOne({
+      organizationId: user.organizationId,
+      email: email.toLowerCase(),
+      _id: { $ne: id },
+      isActive: true,
+    });
+
+    if (existingCustomer) {
+      throw new AppError('A customer with this email already exists', 409, 'DUPLICATE_CUSTOMER');
+    }
+  }
+
   const customer = await Customer.findOneAndUpdate(
     { _id: id, organizationId: user.organizationId },
     { name, email, phone, company, address, taxId, notes, tags, preferredPaymentMethod, walletAddress },
@@ -129,7 +154,7 @@ export const updateCustomer = asyncHandler(async (req: Request, res: Response) =
 
   res.json({
     message: 'Customer updated successfully',
-    customer,
+    data: customer,
   });
 });
 

@@ -93,7 +93,11 @@ const CustomerSchema: Schema = new Schema(
 );
 
 // Compound indexes
-CustomerSchema.index({ organizationId: 1, email: 1 }, { unique: true });
+// Partial unique index - only enforce uniqueness for active customers
+CustomerSchema.index(
+  { organizationId: 1, email: 1 },
+  { unique: true, partialFilterExpression: { isActive: true } }
+);
 CustomerSchema.index({ organizationId: 1, name: 1 });
 CustomerSchema.index({ tags: 1 });
 
