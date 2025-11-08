@@ -1,106 +1,92 @@
-import express, { Application, Request, Response } from 'express';
-import cors from 'cors';
+// Load environment variables FIRST before any other imports
 import dotenv from 'dotenv';
-import { connectDatabase } from './config/database';
-import { initializeFirebase } from './config/firebase';
-import { errorHandler } from './middleware';
-
-// Load environment variables
 dotenv.config();
 
-const app: Application = express();
-const PORT = process.env.PORT || 5000;
+import express, { Request, Response, NextFunction } from 'express';
+import cors from 'cors';
+import { connectDatabase } from './config/database.js';
+import authRoutes from './routes/auth.js';
+import userRoutes from './routes/users.js';
+
+// Initialize express app
+const app = express();
 
 // Middleware
 app.use(cors({
-  origin: process.env.ALLOWED_ORIGINS?.split(',') || ['http://localhost:5173'],
+  origin: process.env.CLIENT_URL || 'http://localhost:5173',
   credentials: true,
 }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Health check route
+// Request logging middleware
+app.use((req: Request, res: Response, next: NextFunction) => {
+  console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
+  next();
+});
+
+// Health check endpoint
 app.get('/health', (req: Request, res: Response) => {
   res.json({
-    status: 'ok',
-    message: 'DefInvoice API is running',
+    success: true,
+    message: 'Server is running',
     timestamp: new Date().toISOString(),
   });
 });
 
-// Import routes
-import {
-  authRoutes,
-  customerRoutes,
-  invoiceRoutes,
-  paymentRoutes,
-  dashboardRoutes,
-} from './routes';
-
 // API Routes
-app.get('/api/v1', (req: Request, res: Response) => {
-  res.json({
-    message: 'DefInvoice API v1',
-    version: '1.0.0',
-    endpoints: {
-      auth: '/api/v1/auth',
-      customers: '/api/v1/customers',
-      invoices: '/api/v1/invoices',
-      payments: '/api/v1/payments',
-      dashboard: '/api/v1/dashboard',
-    },
-  });
-});
-
-app.use('/api/v1/auth', authRoutes);
-app.use('/api/v1/customers', customerRoutes);
-app.use('/api/v1/invoices', invoiceRoutes);
-app.use('/api/v1/payments', paymentRoutes);
-app.use('/api/v1/dashboard', dashboardRoutes);
-
-// Error handling middleware (must be last)
-app.use(errorHandler);
+app.use('/api/auth', authRoutes);
+app.use('/api/users', userRoutes);
 
 // 404 handler
 app.use((req: Request, res: Response) => {
   res.status(404).json({
-    error: {
-      message: 'Route not found',
-      status: 404,
-    },
+    success: false,
+    message: 'Route not found',
   });
 });
 
-// Start server
+// Error handling middleware
+app.use((err: any, req: Request, res: Response, next: NextFunction) => {
+  console.error('Error:', err);
+  res.status(err.status || 500).json({
+    success: false,
+    message: err.message || 'Internal server error',
+    error: process.env.NODE_ENV === 'development' ? err : {},
+  });
+});
+
+// Connect to database and start server
+const PORT = process.env.PORT || 5000;
+
 const startServer = async () => {
   try {
-    // Connect to database
+    // Connect to MongoDB
     await connectDatabase();
 
-    // Initialize Firebase (optional - only if credentials are provided)
-    try {
-      if (process.env.FIREBASE_PROJECT_ID) {
-        initializeFirebase();
-      } else {
-        console.warn('⚠️  Firebase credentials not configured - authentication will not work');
-      }
-    } catch (firebaseError) {
-      console.warn('⚠️  Firebase initialization failed:', firebaseError);
-      console.warn('   Server will continue but authentication will not work');
-    }
-
+    // Start Express server
     app.listen(PORT, () => {
-      console.log('=================================');
-      console.log(`🚀 Server is running on port ${PORT}`);
-      console.log(`📍 Environment: ${process.env.NODE_ENV}`);
-      console.log(`🔗 Health check: http://localhost:${PORT}/health`);
-      console.log(`📚 API v1: http://localhost:${PORT}/api/v1`);
-      console.log('=================================');
+      console.log(`
+╔════════════════════════════════════════╗
+║   DeFInvoice API Server                ║
+║   Running on port ${PORT}               ║
+║   Environment: ${process.env.NODE_ENV || 'development'}            ║
+║   MongoDB: Connected                    ║
+║   Firebase: Initialized                 ║
+╚════════════════════════════════════════╝
+      `);
     });
   } catch (error) {
-    console.error('❌ Failed to start server:', error);
+    console.error('Failed to start server:', error);
     process.exit(1);
   }
 };
 
+// Handle unhandled promise rejections
+process.on('unhandledRejection', (err: Error) => {
+  console.error('Unhandled Promise Rejection:', err);
+  process.exit(1);
+});
+
+// Start the server
 startServer();

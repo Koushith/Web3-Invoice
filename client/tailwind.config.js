@@ -4,12 +4,23 @@ module.exports = {
     content: ['./index.html', './src/**/*.{ts,tsx,js,jsx}'],
   theme: {
   	extend: {
+  		fontFamily: {
+  			sans: ['Space Grotesk', 'sans-serif'],
+  		},
   		borderRadius: {
   			lg: 'var(--radius)',
   			md: 'calc(var(--radius) - 2px)',
   			sm: 'calc(var(--radius) - 4px)'
   		},
   		colors: {
+  			// Stripe Official Colors
+  			stripe: {
+  				purple: '#635BFF',
+  				blurple: '#0A2540',
+  				green: '#00D924',
+  				red: '#DF1B41',
+  				yellow: '#FFC043',
+  			},
   			background: 'hsl(var(--background))',
   			foreground: 'hsl(var(--foreground))',
   			card: {
@@ -21,8 +32,8 @@ module.exports = {
   				foreground: 'hsl(var(--popover-foreground))'
   			},
   			primary: {
-  				DEFAULT: 'hsl(var(--primary))',
-  				foreground: 'hsl(var(--primary-foreground))'
+  				DEFAULT: '#635BFF',
+  				foreground: '#ffffff'
   			},
   			secondary: {
   				DEFAULT: 'hsl(var(--secondary))',

@@ -1,11 +1,12 @@
 {
   "name": "invoice-backend",
   "version": "1.0.0",
-  "main": "dist/index.js",
+  "main": "src/index.ts",
+  "type": "module",
   "scripts": {
-    "dev": "nodemon --exec ts-node src/index.ts",
+    "dev": "nodemon --exec tsx src/index.ts",
+    "start": "tsx src/index.ts",
     "build": "tsc",
-    "start": "node dist/index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
@@ -29,6 +30,7 @@
     "@types/node": "^24.10.0",
     "nodemon": "^3.1.10",
     "ts-node": "^10.9.2",
+    "tsx": "^4.20.6",
     "typescript": "^5.9.3"
   }
 }

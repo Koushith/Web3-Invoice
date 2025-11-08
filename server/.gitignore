@@ -27,6 +27,7 @@ Thumbs.db
 
 # Firebase
 firebase-adminsdk-*.json
+firebase-credentials.json
 serviceAccountKey.json
 
 # Misc

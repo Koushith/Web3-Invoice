@@ -3,21 +3,55 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Eye, EyeOff, ArrowRight, Lock, Mail, User, Building } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
+import { toast } from 'sonner';
 
 export const SignupScreen = () => {
   const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     organization: '',
     password: '',
   });
+  const navigate = useNavigate();
+  const { signup, loginWithGoogle } = useAuth();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Handle signup logic here
-    console.log('Signup:', formData);
+
+    if (formData.password.length < 8) {
+      toast.error('Password must be at least 8 characters long');
+      return;
+    }
+
+    try {
+      setLoading(true);
+      await signup(formData.email, formData.password, formData.name);
+      toast.success('Account created successfully!');
+      navigate('/');
+    } catch (error: any) {
+      console.error('Signup error:', error);
+      toast.error(error.message || 'Failed to create account. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGoogleSignup = async () => {
+    try {
+      setLoading(true);
+      await loginWithGoogle();
+      toast.success('Account created successfully!');
+      navigate('/');
+    } catch (error: any) {
+      console.error('Google signup error:', error);
+      toast.error(error.message || 'Failed to sign up with Google.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -153,10 +187,11 @@ export const SignupScreen = () => {
             {/* Submit Button */}
             <Button
               type="submit"
-              className="w-full h-12 bg-gradient-to-r from-[#635bff] to-[#5045e5] hover:from-[#5045e5] hover:to-[#3d38d1] text-white rounded-lg font-semibold shadow-lg shadow-[#635bff]/20 hover:shadow-xl transition-all"
+              disabled={loading}
+              className="w-full h-12 bg-gradient-to-r from-[#635bff] to-[#5045e5] hover:from-[#5045e5] hover:to-[#3d38d1] text-white rounded-lg font-semibold shadow-lg shadow-[#635bff]/20 hover:shadow-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Create Account
-              <ArrowRight className="w-5 h-5 ml-2" />
+              {loading ? 'Creating Account...' : 'Create Account'}
+              {!loading && <ArrowRight className="w-5 h-5 ml-2" />}
             </Button>
           </form>
 
@@ -175,7 +210,9 @@ export const SignupScreen = () => {
             <Button
               type="button"
               variant="outline"
-              className="h-11 border-gray-300 hover:bg-gray-50 rounded-lg font-medium"
+              disabled={loading}
+              onClick={handleGoogleSignup}
+              className="h-11 border-gray-300 hover:bg-gray-50 rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
                 <path

@@ -15,11 +15,18 @@ import { SettingsScreen } from './screens/settings/Settings';
 import { ApiKeysScreen } from './screens/api-keys/ApiKeys';
 import { WebhooksScreen } from './screens/webhooks/Webhooks';
 import { ProfileScreen } from './screens/profile/Profile';
+import { AuthProvider } from './contexts/AuthContext';
+import { ProtectedRoute } from './components/auth/ProtectedRoute';
+import { Toaster } from 'sonner';
 
 const router = createBrowserRouter([
   {
     path: '/',
-    element: <AppShell />,
+    element: (
+      <ProtectedRoute>
+        <AppShell />
+      </ProtectedRoute>
+    ),
     errorElement: <ErrorScreen />,
     children: [
       {
@@ -117,7 +124,12 @@ const router = createBrowserRouter([
 ]);
 
 function App() {
-  return <RouterProvider router={router} />;
+  return (
+    <AuthProvider>
+      <RouterProvider router={router} />
+      <Toaster position="top-right" richColors />
+    </AuthProvider>
+  );
 }
 
 export default App;

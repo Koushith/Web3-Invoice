@@ -5,7 +5,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { ImagePlus, Trash2, Plus, Download, Printer, Eye, ArrowLeft, FileText, Building2, DollarSign, CreditCard, MessageSquare } from 'lucide-react';
+import { ImagePlus, Trash2, Plus, Download, Printer, Eye, ArrowLeft, FileText, Building2, DollarSign, CreditCard, MessageSquare, Type } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { QRCode } from 'react-qr-code';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
@@ -14,6 +14,7 @@ import { useReactToPrint } from 'react-to-print';
 import { toPng } from 'html-to-image';
 import { jsPDF } from 'jspdf';
 import { useNavigate } from 'react-router-dom';
+import { StandardTemplate, ModernTemplate, MinimalTemplate, ArtisticTemplate } from '@/components/invoice/InvoiceTemplates';
 
 interface InvoiceItem {
   description: string;
@@ -57,7 +58,7 @@ interface PaymentDetails {
   otherDetails?: string;
 }
 
-export type InvoiceStyle = 'classic' | 'modern' | 'minimal' | 'professional' | 'creative';
+export type InvoiceStyle = 'standard' | 'modern' | 'minimal' | 'artistic';
 
 export interface InvoiceStyleProps {
   logo: string | null;
@@ -67,6 +68,8 @@ export interface InvoiceStyleProps {
 
 export const NewInvoice = () => {
   const [logo, setLogo] = useState<string | null>(null);
+  const [invoiceFont, setInvoiceFont] = useState<string>('default');
+  const [invoiceStyle, setInvoiceStyle] = useState<InvoiceStyle>('standard');
   const [invoiceData, setInvoiceData] = useState({
     invoiceNumber: '',
     date: '',
@@ -90,6 +93,16 @@ export const NewInvoice = () => {
   });
 
   const printRef = useRef<HTMLDivElement>(null);
+
+  const getFontFamily = () => {
+    switch (invoiceFont) {
+      case 'apercu':
+        return "'Apercu Mono Pro', monospace";
+      case 'default':
+      default:
+        return 'inherit';
+    }
+  };
 
   const handlePrint = useReactToPrint({
     content: () => printRef.current,
@@ -678,7 +691,7 @@ export const NewInvoice = () => {
           <div className="space-y-6">
             {/* Preview Actions */}
             <div className="bg-white/80 backdrop-blur-sm border border-gray-200/60 rounded-xl p-5 shadow-sm">
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between mb-4">
                 <div>
                   <h3 className="text-lg font-semibold text-gray-900">Invoice Preview</h3>
                   <p className="text-xs text-gray-500 mt-0.5">Live preview of your invoice</p>
@@ -704,202 +717,93 @@ export const NewInvoice = () => {
                   </Button>
                 </div>
               </div>
+
+              {/* Template Selector */}
+              <div className="pt-4 border-t border-gray-200">
+                <Label className="text-sm font-semibold text-gray-700 mb-3 block">Template Style</Label>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    onClick={() => setInvoiceStyle('standard')}
+                    className={cn(
+                      'p-3 rounded-lg border-2 transition-all text-left',
+                      invoiceStyle === 'standard'
+                        ? 'border-[#635bff] bg-[#635bff]/5'
+                        : 'border-gray-200 hover:border-gray-300'
+                    )}
+                  >
+                    <div className="font-semibold text-sm text-gray-900">Standard</div>
+                    <div className="text-xs text-gray-500 mt-0.5">Classic & professional</div>
+                  </button>
+                  <button
+                    onClick={() => setInvoiceStyle('modern')}
+                    className={cn(
+                      'p-3 rounded-lg border-2 transition-all text-left',
+                      invoiceStyle === 'modern'
+                        ? 'border-[#635bff] bg-[#635bff]/5'
+                        : 'border-gray-200 hover:border-gray-300'
+                    )}
+                  >
+                    <div className="font-semibold text-sm text-gray-900">Modern</div>
+                    <div className="text-xs text-gray-500 mt-0.5">Bold & colorful</div>
+                  </button>
+                  <button
+                    onClick={() => setInvoiceStyle('minimal')}
+                    className={cn(
+                      'p-3 rounded-lg border-2 transition-all text-left',
+                      invoiceStyle === 'minimal'
+                        ? 'border-[#635bff] bg-[#635bff]/5'
+                        : 'border-gray-200 hover:border-gray-300'
+                    )}
+                  >
+                    <div className="font-semibold text-sm text-gray-900">Minimal</div>
+                    <div className="text-xs text-gray-500 mt-0.5">Clean & simple</div>
+                  </button>
+                  <button
+                    onClick={() => setInvoiceStyle('artistic')}
+                    className={cn(
+                      'p-3 rounded-lg border-2 transition-all text-left',
+                      invoiceStyle === 'artistic'
+                        ? 'border-[#635bff] bg-[#635bff]/5'
+                        : 'border-gray-200 hover:border-gray-300'
+                    )}
+                  >
+                    <div className="font-semibold text-sm text-gray-900">Artistic</div>
+                    <div className="text-xs text-gray-500 mt-0.5">Creative & unique</div>
+                  </button>
+                </div>
+              </div>
+
+              {/* Font Selector */}
+              <div className="flex items-center gap-3 pt-4 border-t border-gray-200 mt-4">
+                <Type className="h-4 w-4 text-gray-500" />
+                <Label className="text-sm font-medium text-gray-700">Font</Label>
+                <Select value={invoiceFont} onValueChange={setInvoiceFont}>
+                  <SelectTrigger className="h-9 w-[180px] border-gray-300 rounded-lg">
+                    <SelectValue placeholder="Select font" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="default">System Default</SelectItem>
+                    <SelectItem value="apercu">Apercu Mono Pro</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
 
             {/* Preview Content */}
             <div className="bg-white border border-gray-200/60 rounded-xl shadow-sm overflow-hidden print:shadow-none">
-            <div ref={printRef} className="aspect-[1/1.4142] bg-white mx-auto w-full max-w-[210mm]">
-              {/* Existing preview content */}
-              <div className="p-[25mm] space-y-8">
-                {/* Header Section */}
-                <div className="flex justify-between items-start">
-                  <div className="space-y-4">
-                    {logo && (
-                      <div className="w-32 h-16">
-                        <img src={logo} alt="Company Logo" className="w-full h-full object-contain" />
-                      </div>
-                    )}
-                    <div>
-                      <h1 className="text-3xl font-semibold text-gray-900">INVOICE</h1>
-                      <p className="text-sm text-muted-foreground mt-1">#{invoiceData.invoiceNumber || '000000'}</p>
-                    </div>
-                  </div>
-
-                  <div className="text-right space-y-1">
-                    <div className="space-y-1">
-                      <p className="text-sm text-muted-foreground">Issue Date</p>
-                      <p className="font-medium">
-                        {invoiceData.date
-                          ? new Date(invoiceData.date).toLocaleDateString('en-US', {
-                              month: 'long',
-                              day: 'numeric',
-                              year: 'numeric',
-                            })
-                          : 'Not specified'}
-                      </p>
-                    </div>
-                    {invoiceData.dueDate && (
-                      <div className="space-y-1 mt-4">
-                        <p className="text-sm text-muted-foreground">Due Date</p>
-                        <p className="font-medium">
-                          {new Date(invoiceData.dueDate).toLocaleDateString('en-US', {
-                            month: 'long',
-                            day: 'numeric',
-                            year: 'numeric',
-                          })}
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* Addresses */}
-                <div className="grid grid-cols-2 gap-12">
-                  <div className="space-y-3">
-                    <p className="text-sm font-medium text-muted-foreground">From</p>
-                    <div className="space-y-1">
-                      <p className="font-semibold text-gray-900">{invoiceData.fromCompany || 'Your Company Name'}</p>
-                      <p className="text-sm text-gray-600 whitespace-pre-line">
-                        {invoiceData.fromAddress || 'Your Address'}
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="space-y-3">
-                    <p className="text-sm font-medium text-muted-foreground">Bill To</p>
-                    <div className="space-y-1">
-                      <p className="font-semibold text-gray-900">{invoiceData.toCompany || 'Client Company Name'}</p>
-                      <p className="text-sm text-gray-600 whitespace-pre-line">
-                        {invoiceData.toAddress || 'Client Address'}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Memo if present */}
-                {invoiceData.memo && (
-                  <div className="space-y-2">
-                    <p className="text-sm font-medium text-muted-foreground">Memo</p>
-                    <p className="text-sm text-gray-600">{invoiceData.memo}</p>
-                  </div>
+              <div ref={printRef} className="aspect-[1/1.4142] bg-white mx-auto w-full max-w-[210mm]" style={{ fontFamily: getFontFamily() }}>
+                {invoiceStyle === 'standard' && (
+                  <StandardTemplate logo={logo} invoiceData={invoiceData} paymentDetails={paymentDetails} />
                 )}
-
-                {/* Items Table */}
-                <div className="mt-8">
-                  <table className="w-full">
-                    <thead>
-                      <tr className="border-b border-border/50">
-                        <th className="py-3 text-left text-sm font-medium text-muted-foreground">Description</th>
-                        <th className="py-3 text-right text-sm font-medium text-muted-foreground w-24">Qty</th>
-                        <th className="py-3 text-right text-sm font-medium text-muted-foreground w-32">Price</th>
-                        <th className="py-3 text-right text-sm font-medium text-muted-foreground w-32">Amount</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-border/50">
-                      {invoiceData.items.map((item, index) => (
-                        <tr key={index}>
-                          <td className="py-4 text-sm">{item.description || 'Item description'}</td>
-                          <td className="py-4 text-sm text-right">{item.quantity}</td>
-                          <td className="py-4 text-sm text-right">${item.price.toFixed(2)}</td>
-                          <td className="py-4 text-sm text-right">${(item.quantity * item.price).toFixed(2)}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                    <tfoot>
-                      <tr className="border-t border-border">
-                        <td colSpan={3} className="py-4 text-right font-medium">
-                          Total
-                        </td>
-                        <td className="py-4 text-right font-semibold text-lg">
-                          ${invoiceData.items.reduce((sum, item) => sum + item.quantity * item.price, 0).toFixed(2)}
-                        </td>
-                      </tr>
-                    </tfoot>
-                  </table>
-                </div>
-
-                {/* Notes & Terms */}
-                <div className="grid grid-cols-2 gap-12 pt-8 border-t border-border/50">
-                  {invoiceData.notes && (
-                    <div className="space-y-2">
-                      <p className="text-sm font-medium text-muted-foreground">Notes</p>
-                      <p className="text-sm text-gray-600 whitespace-pre-line">{invoiceData.notes}</p>
-                    </div>
-                  )}
-
-                  {invoiceData.terms && (
-                    <div className="space-y-2">
-                      <p className="text-sm font-medium text-muted-foreground">Terms & Conditions</p>
-                      <p className="text-sm text-gray-600 whitespace-pre-line">{invoiceData.terms}</p>
-                    </div>
-                  )}
-                </div>
-
-                {/* Add this before Notes & Terms in the preview */}
-                <div className="space-y-4 pt-8 border-t border-border/50">
-                  <p className="text-sm font-medium text-muted-foreground">Payment Details</p>
-
-                  {paymentDetails.method === 'bank' && paymentDetails.bankDetails && (
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-1">
-                        <p className="text-sm text-muted-foreground">Bank Name</p>
-                        <p className="font-medium">{paymentDetails.bankDetails.bankName}</p>
-                      </div>
-                      <div className="space-y-1">
-                        <p className="text-sm text-muted-foreground">Account Name</p>
-                        <p className="font-medium">{paymentDetails.bankDetails.accountName}</p>
-                      </div>
-                      <div className="space-y-1">
-                        <p className="text-sm text-muted-foreground">Account Number</p>
-                        <p className="font-medium">{paymentDetails.bankDetails.accountNumber}</p>
-                      </div>
-                      {paymentDetails.bankDetails.swiftCode && (
-                        <div className="space-y-1">
-                          <p className="text-sm text-muted-foreground">SWIFT/BIC</p>
-                          <p className="font-medium">{paymentDetails.bankDetails.swiftCode}</p>
-                        </div>
-                      )}
-                    </div>
-                  )}
-
-                  {paymentDetails.method === 'crypto' && paymentDetails.cryptoDetails && (
-                    <div className="space-y-4">
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-1">
-                          <p className="text-sm text-muted-foreground">Cryptocurrency</p>
-                          <p className="font-medium">{paymentDetails.cryptoDetails.currency}</p>
-                        </div>
-                        {paymentDetails.cryptoDetails.network && (
-                          <div className="space-y-1">
-                            <p className="text-sm text-muted-foreground">Network</p>
-                            <p className="font-medium">{paymentDetails.cryptoDetails.network}</p>
-                          </div>
-                        )}
-                      </div>
-                      <div className="space-y-2">
-                        <p className="text-sm text-muted-foreground">Wallet Address</p>
-                        <p className="font-medium font-mono text-sm break-all">
-                          {paymentDetails.cryptoDetails.walletAddress}
-                        </p>
-                        {paymentDetails.cryptoDetails.walletAddress && (
-                          <div className="mt-2 bg-white p-2 inline-block rounded-lg">
-                            <QRCode
-                              value={paymentDetails.cryptoDetails.walletAddress}
-                              size={120}
-                              level="M"
-                              className="h-32 w-32"
-                            />
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  )}
-
-                  {paymentDetails.method === 'other' && paymentDetails.otherDetails && (
-                    <p className="text-sm whitespace-pre-line">{paymentDetails.otherDetails}</p>
-                  )}
-                  </div>
-                </div>
+                {invoiceStyle === 'modern' && (
+                  <ModernTemplate logo={logo} invoiceData={invoiceData} paymentDetails={paymentDetails} />
+                )}
+                {invoiceStyle === 'minimal' && (
+                  <MinimalTemplate logo={logo} invoiceData={invoiceData} paymentDetails={paymentDetails} />
+                )}
+                {invoiceStyle === 'artistic' && (
+                  <ArtisticTemplate logo={logo} invoiceData={invoiceData} paymentDetails={paymentDetails} />
+                )}
               </div>
             </div>
           </div>
