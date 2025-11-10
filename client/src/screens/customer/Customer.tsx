@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Plus, Search, Loader2 } from 'lucide-react';
+import { Plus, Search, Loader2, MoreVertical, Filter } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
@@ -30,129 +30,196 @@ export const CustomersScreen = () => {
       limit: 100,
     },
     {
-      skip: !isAuthReady, // Skip the query until auth is ready
+      skip: !isAuthReady,
     }
   );
 
   const customers = data?.data || [];
 
   return (
-    <div className="min-h-screen">
-      <div className="max-w-[1300px] mx-auto px-8 py-12">
-        {/* Header */}
-        <div className="flex justify-between items-center mb-8">
-          <div>
-            <h1 className="text-[26px] font-bold text-gray-900 tracking-tight">Customers</h1>
-            <p className="text-[14px] text-gray-500 mt-1.5">
-              View and manage your customer information
-              {data && ` • ${data.pagination.total} total`}
-            </p>
-          </div>
-          <Button
-            className="bg-gradient-to-r from-[#635bff] to-[#5045e5] hover:from-[#5045e5] hover:to-[#3d38d1] text-white rounded-lg h-10 px-5 text-[13px] font-semibold shadow-lg shadow-[#635bff]/20 hover:shadow-xl transition-all"
-            onClick={() => navigate('/customers/new')}
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Add Customer
-          </Button>
-        </div>
-
-        {/* Card Container */}
-        <div className="bg-white/80 backdrop-blur-sm border border-gray-200/60 rounded-xl shadow-sm overflow-hidden">
-          {/* Search */}
-          <div className="px-6 py-4 border-b border-gray-200/60 bg-gray-50/30">
-            <div className="flex items-center gap-4">
-              <div className="relative flex-1 max-w-xs">
-                <Search className="absolute left-2.5 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                <Input
-                  placeholder="Search customers..."
-                  className="h-10 w-full pl-9 text-[13px] bg-white border border-gray-300 rounded-lg
-                    focus-visible:ring-2 focus-visible:ring-[#635bff]/20 focus-visible:border-[#635bff]
-                    placeholder:text-gray-400 transition-all"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
+    <div className="min-h-screen bg-gray-50">
+      <div className="border-b border-gray-200">
+        <div className="max-w-[1400px] mx-auto px-6 sm:px-8 lg:px-12">
+          {/* Header */}
+          <div className="py-8">
+            <div className="flex items-center justify-between">
+              <div className="flex-1">
+                <h1 className="text-2xl font-semibold text-gray-900">Customers</h1>
+                {data && (
+                  <p className="text-sm text-gray-500 mt-1">
+                    {data.pagination.total} {data.pagination.total === 1 ? 'customer' : 'customers'}
+                  </p>
+                )}
               </div>
+              <Button
+                onClick={() => navigate('/customers/new')}
+                className="bg-[#635bff] hover:bg-[#0a2540] text-white text-sm font-medium px-4 h-9 rounded-md transition-colors"
+              >
+                <Plus className="w-4 h-4 mr-1.5" />
+                New
+              </Button>
             </div>
           </div>
 
-          {/* Loading State */}
-          {(!isAuthReady || isLoading) && (
-            <div className="flex items-center justify-center py-12">
-              <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+          {/* Filters Bar */}
+          <div className="flex items-center gap-3 pb-4">
+            <div className="relative flex-1 max-w-xs">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <Input
+                placeholder="Search"
+                className="h-9 w-full pl-9 pr-3 text-sm bg-white border border-gray-300 rounded-md
+                  focus-visible:ring-1 focus-visible:ring-[#635bff] focus-visible:border-[#635bff]
+                  placeholder:text-gray-400"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
             </div>
-          )}
+            <Button
+              variant="outline"
+              className="h-9 px-3 text-sm font-medium border-gray-300 rounded-md hover:bg-gray-50"
+            >
+              <Filter className="w-4 h-4 mr-1.5" />
+              More filters
+            </Button>
+          </div>
+        </div>
+      </div>
 
-          {/* Error State */}
-          {error && (
-            <div className="px-6 py-12 text-center">
-              <p className="text-sm text-red-600">Failed to load customers. Please try again.</p>
+      {/* Content */}
+      <div className="max-w-[1400px] mx-auto px-6 sm:px-8 lg:px-12">
+        {/* Loading State */}
+        {(!isAuthReady || isLoading) && (
+          <div className="flex items-center justify-center py-24">
+            <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+          </div>
+        )}
+
+        {/* Error State */}
+        {error && (
+          <div className="py-24 text-center">
+            <p className="text-sm text-red-600">Failed to load customers. Please try again.</p>
+          </div>
+        )}
+
+        {/* Empty State */}
+        {isAuthReady && !isLoading && !error && customers.length === 0 && (
+          <div className="py-24 text-center">
+            <div className="mx-auto w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center mb-4">
+              <Plus className="w-6 h-6 text-gray-400" />
             </div>
-          )}
+            <h3 className="text-sm font-medium text-gray-900 mb-1">
+              {searchQuery ? 'No customers found' : 'No customers yet'}
+            </h3>
+            <p className="text-sm text-gray-500 mb-6">
+              {searchQuery
+                ? 'Try adjusting your search to find what you are looking for.'
+                : 'Get started by creating a new customer.'}
+            </p>
+            {!searchQuery && (
+              <Button
+                onClick={() => navigate('/customers/new')}
+                className="bg-[#635bff] hover:bg-[#0a2540] text-white text-sm font-medium px-4 h-9 rounded-md"
+              >
+                <Plus className="w-4 h-4 mr-1.5" />
+                New customer
+              </Button>
+            )}
+          </div>
+        )}
 
-          {/* Empty State */}
-          {isAuthReady && !isLoading && !error && customers.length === 0 && (
-            <div className="px-6 py-12 text-center">
-              <p className="text-sm text-gray-500 mb-4">
-                {searchQuery ? 'No customers found matching your search.' : 'No customers yet.'}
-              </p>
-              {!searchQuery && (
-                <Button
-                  variant="outline"
-                  onClick={() => navigate('/customers/new')}
-                  className="h-10 px-5 text-[13px]"
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  Add Your First Customer
-                </Button>
-              )}
-            </div>
-          )}
-
-          {/* Table */}
-          {isAuthReady && !isLoading && !error && customers.length > 0 && (
+        {/* Table */}
+        {isAuthReady && !isLoading && !error && customers.length > 0 && (
+          <div className="mt-6">
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
                   <tr className="border-b border-gray-200">
-                    <th className="px-5 py-3 text-left text-[13px] font-medium text-gray-500">Name</th>
-                    <th className="px-5 py-3 text-left text-[13px] font-medium text-gray-500">Email</th>
-                    <th className="px-5 py-3 text-left text-[13px] font-medium text-gray-500">Company</th>
-                    <th className="px-5 py-3 text-left text-[13px] font-medium text-gray-500">Payment Method</th>
-                    <th className="px-5 py-3 text-right text-[13px] font-medium text-gray-500">Total Invoiced</th>
-                    <th className="px-5 py-3 text-left text-[13px] font-medium text-gray-500">Created</th>
+                    <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Name
+                    </th>
+                    <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Email
+                    </th>
+                    <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Company
+                    </th>
+                    <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Default payment method
+                    </th>
+                    <th className="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Total invoiced
+                    </th>
+                    <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Created
+                    </th>
+                    <th className="px-3 py-3"></th>
                   </tr>
                 </thead>
-                <tbody>
+                <tbody className="divide-y divide-gray-200">
                   {customers.map((customer: any) => (
                     <tr
                       key={customer.id || customer._id}
-                      className="border-b border-gray-200 hover:bg-gray-50 transition-colors cursor-pointer"
+                      className="hover:bg-gray-50 transition-colors cursor-pointer"
                       onClick={() => navigate(`/customers/${customer.id || customer._id}`)}
                     >
-                      <td className="px-5 py-3 text-[13px] font-medium text-gray-900">{customer.name}</td>
-                      <td className="px-5 py-3 text-[13px] text-gray-600">{customer.email}</td>
-                      <td className="px-5 py-3 text-[13px] text-gray-600">{customer.company || '-'}</td>
-                      <td className="px-5 py-3 text-[13px] text-gray-600">
-                        {customer.preferredPaymentMethod
-                          ? customer.preferredPaymentMethod
-                              .replace(/_/g, ' ')
-                              .replace(/\b\w/g, (l: string) => l.toUpperCase())
-                          : '-'}
+                      <td className="px-3 py-4">
+                        <div className="text-sm font-medium text-[#635bff] hover:text-[#0a2540]">
+                          {customer.name}
+                        </div>
                       </td>
-                      <td className="px-5 py-3 text-[13px] text-gray-900 text-right">
-                        ${(customer.totalInvoiced || 0).toLocaleString()}
+                      <td className="px-3 py-4">
+                        <div className="text-sm text-gray-600">{customer.email}</div>
                       </td>
-                      <td className="px-5 py-3 text-[13px] text-gray-600">
-                        {customer.createdAt ? format(new Date(customer.createdAt), 'MMM d, yyyy') : '-'}
+                      <td className="px-3 py-4">
+                        <div className="text-sm text-gray-900">
+                          {customer.company || '—'}
+                        </div>
+                      </td>
+                      <td className="px-3 py-4">
+                        <div className="text-sm text-gray-600">
+                          {customer.preferredPaymentMethod && customer.preferredPaymentMethod !== 'none'
+                            ? customer.preferredPaymentMethod
+                                .replace(/_/g, ' ')
+                                .replace(/\b\w/g, (l: string) => l.toUpperCase())
+                            : '—'}
+                        </div>
+                      </td>
+                      <td className="px-3 py-4 text-right">
+                        <div className="text-sm font-medium text-gray-900">
+                          ${(customer.totalInvoiced || 0).toLocaleString('en-US', {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          })}
+                        </div>
+                      </td>
+                      <td className="px-3 py-4">
+                        <div className="text-sm text-gray-600">
+                          {customer.createdAt ? format(new Date(customer.createdAt), 'MMM d, yyyy') : '—'}
+                        </div>
+                      </td>
+                      <td className="px-3 py-4">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            // Add menu logic here
+                          }}
+                          className="text-gray-400 hover:text-gray-600 p-1 rounded hover:bg-gray-100"
+                        >
+                          <MoreVertical className="w-4 h-4" />
+                        </button>
                       </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
-          )}
-        </div>
+
+            {/* Results count */}
+            <div className="mt-6 pb-8 text-sm text-gray-500">
+              Showing {customers.length} {customers.length === 1 ? 'result' : 'results'}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

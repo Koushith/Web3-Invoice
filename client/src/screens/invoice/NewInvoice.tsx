@@ -1,11 +1,11 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { ImagePlus, Trash2, Plus, Download, Printer, Eye, ArrowLeft, FileText, Building2, DollarSign, CreditCard, MessageSquare, Type } from 'lucide-react';
+import { ImagePlus, Trash2, Plus, Download, Printer, Eye, ArrowLeft, FileText, Building2, DollarSign, CreditCard, MessageSquare, Type, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { QRCode } from 'react-qr-code';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
@@ -15,6 +15,9 @@ import { toPng } from 'html-to-image';
 import { jsPDF } from 'jspdf';
 import { useNavigate } from 'react-router-dom';
 import { StandardTemplate, ModernTemplate, MinimalTemplate, ArtisticTemplate } from '@/components/invoice/InvoiceTemplates';
+import { useGetCustomersQuery, useCreateInvoiceMutation } from '@/services/api.service';
+import { toast } from 'sonner';
+import { auth } from '@/lib/firebase';
 
 interface InvoiceItem {
   description: string;
@@ -67,12 +70,15 @@ export interface InvoiceStyleProps {
 }
 
 export const NewInvoice = () => {
+  const navigate = useNavigate();
+  const [isAuthReady, setIsAuthReady] = useState(false);
+  const [selectedCustomerId, setSelectedCustomerId] = useState<string>('');
   const [logo, setLogo] = useState<string | null>(null);
   const [invoiceFont, setInvoiceFont] = useState<string>('default');
   const [invoiceStyle, setInvoiceStyle] = useState<InvoiceStyle>('standard');
   const [invoiceData, setInvoiceData] = useState({
     invoiceNumber: '',
-    date: '',
+    date: new Date().toISOString().split('T')[0],
     dueDate: '',
     fromCompany: '',
     fromAddress: '',
@@ -93,6 +99,42 @@ export const NewInvoice = () => {
   });
 
   const printRef = useRef<HTMLDivElement>(null);
+
+  // Wait for Firebase auth
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged((user) => {
+      if (user) {
+        setIsAuthReady(true);
+      }
+    });
+    return () => unsubscribe();
+  }, []);
+
+  // Fetch customers
+  const { data: customersData } = useGetCustomersQuery(
+    { page: 1, limit: 100 },
+    { skip: !isAuthReady }
+  );
+  const customers = customersData?.data || [];
+
+  // Create invoice mutation
+  const [createInvoice, { isLoading: isCreating }] = useCreateInvoiceMutation();
+
+  // Update customer details when customer is selected
+  useEffect(() => {
+    if (selectedCustomerId) {
+      const customer = customers.find((c: any) => (c._id || c.id) === selectedCustomerId);
+      if (customer) {
+        setInvoiceData(prev => ({
+          ...prev,
+          toCompany: customer.company || customer.name,
+          toAddress: customer.address?.street
+            ? `${customer.address.street}\n${customer.address.city}, ${customer.address.state} ${customer.address.zipCode}\n${customer.address.country}`
+            : '',
+        }));
+      }
+    }
+  }, [selectedCustomerId, customers]);
 
   const getFontFamily = () => {
     switch (invoiceFont) {
@@ -182,7 +224,43 @@ export const NewInvoice = () => {
     });
   };
 
-  const navigate = useNavigate();
+  const handleCreateInvoice = async () => {
+    if (!selectedCustomerId) {
+      toast.error('Please select a customer');
+      return;
+    }
+
+    if (invoiceData.items.length === 0) {
+      toast.error('Please add at least one line item');
+      return;
+    }
+
+    try {
+      const invoicePayload = {
+        customerId: selectedCustomerId,
+        issueDate: invoiceData.date,
+        dueDate: invoiceData.dueDate || undefined,
+        currency: 'USD',
+        lineItems: invoiceData.items.map(item => ({
+          description: item.description,
+          quantity: item.quantity,
+          unitPrice: item.price,
+          amount: item.quantity * item.price,
+        })),
+        notes: invoiceData.notes || undefined,
+        terms: invoiceData.terms || undefined,
+        allowedPaymentMethods: paymentDetails.method === 'bank' ? ['bank_transfer'] :
+                               paymentDetails.method === 'crypto' ? ['crypto'] : ['other'],
+      };
+
+      await createInvoice(invoicePayload).unwrap();
+      toast.success('Invoice created successfully');
+      navigate('/invoices');
+    } catch (error: any) {
+      console.error('Create invoice error:', error);
+      toast.error(error?.data?.message || 'Failed to create invoice');
+    }
+  };
 
   return (
     <div className="min-h-screen">
@@ -287,6 +365,27 @@ export const NewInvoice = () => {
               </div>
 
               <div className="space-y-6">
+                {/* Customer Selector */}
+                <div>
+                  <Label htmlFor="customer" className="text-sm font-semibold text-gray-700 mb-2 block">
+                    Select Customer *
+                  </Label>
+                  <Select value={selectedCustomerId} onValueChange={setSelectedCustomerId}>
+                    <SelectTrigger className="h-11 border-gray-300 rounded-lg">
+                      <SelectValue placeholder="Choose a customer" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {customers.map((customer: any) => (
+                        <SelectItem key={customer._id || customer.id} value={customer._id || customer.id}>
+                          {customer.company || customer.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <Separator />
+
                 {/* From Section */}
                 <div>
                   <h3 className="text-sm font-semibold text-gray-700 mb-3">From (Your Company)</h3>
@@ -672,16 +771,32 @@ export const NewInvoice = () => {
               <Button
                 variant="outline"
                 onClick={() => navigate('/invoices')}
+                disabled={isCreating}
                 className="h-11 px-6 border-gray-300 hover:bg-gray-50 rounded-lg"
               >
                 Cancel
               </Button>
               <div className="flex gap-3">
-                <Button variant="outline" className="h-11 px-6 border-gray-300 hover:bg-gray-50 rounded-lg">
+                <Button
+                  variant="outline"
+                  disabled={isCreating}
+                  className="h-11 px-6 border-gray-300 hover:bg-gray-50 rounded-lg"
+                >
                   Save Draft
                 </Button>
-                <Button className="h-11 px-8 bg-gradient-to-r from-[#635bff] to-[#5045e5] hover:from-[#5045e5] hover:to-[#3d38d1] text-white rounded-lg font-semibold shadow-lg shadow-[#635bff]/20">
-                  Create Invoice
+                <Button
+                  onClick={handleCreateInvoice}
+                  disabled={isCreating}
+                  className="h-11 px-8 bg-gradient-to-r from-[#635bff] to-[#5045e5] hover:from-[#5045e5] hover:to-[#3d38d1] text-white rounded-lg font-semibold shadow-lg shadow-[#635bff]/20"
+                >
+                  {isCreating ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Creating...
+                    </>
+                  ) : (
+                    'Create Invoice'
+                  )}
                 </Button>
               </div>
             </div>

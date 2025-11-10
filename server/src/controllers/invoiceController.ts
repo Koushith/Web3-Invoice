@@ -43,7 +43,7 @@ export const getInvoices = asyncHandler(async (req: Request, res: Response) => {
   const total = await Invoice.countDocuments(query);
 
   res.json({
-    invoices,
+    data: invoices,
     pagination: {
       total,
       page: Number(page),
@@ -75,7 +75,7 @@ export const getInvoice = asyncHandler(async (req: Request, res: Response) => {
     throw new AppError('Invoice not found', 404, 'INVOICE_NOT_FOUND');
   }
 
-  res.json({ invoice });
+  res.json({ data: invoice });
 });
 
 /**
@@ -132,7 +132,7 @@ export const createInvoice = asyncHandler(async (req: Request, res: Response) =>
     amount: item.quantity * item.unitPrice,
   }));
 
-  // Create invoice
+  // Create invoice (stored only in MongoDB - no blockchain gas fees!)
   const invoice = await Invoice.create({
     organizationId: user.organizationId,
     customerId,
@@ -144,18 +144,20 @@ export const createInvoice = asyncHandler(async (req: Request, res: Response) =>
     taxRate: taxRate || organization.settings.defaultTaxRate || 0,
     notes,
     terms,
-    allowedPaymentMethods: allowedPaymentMethods || ['stripe'],
+    allowedPaymentMethods: allowedPaymentMethods || ['bank_transfer'],
     createdBy: user._id,
     subtotal: 0, // Will be calculated by pre-save hook
     taxAmount: 0,
     total: 0,
     amountPaid: 0,
     amountDue: 0,
+    // Store payment address for crypto payments (customer pays gas, not you!)
+    cryptoPaymentAddress: organization.walletAddress,
   });
 
   res.status(201).json({
     message: 'Invoice created successfully',
-    invoice,
+    data: invoice,
   });
 });
 
@@ -200,7 +202,7 @@ export const updateInvoice = asyncHandler(async (req: Request, res: Response) =>
 
   res.json({
     message: 'Invoice updated successfully',
-    invoice,
+    data: invoice,
   });
 });
 
@@ -277,6 +279,73 @@ export const updateInvoiceStatus = asyncHandler(async (req: Request, res: Respon
 
   res.json({
     message: 'Invoice status updated successfully',
-    invoice,
+    data: invoice,
+  });
+});
+
+/**
+ * Manually mark invoice as paid
+ * Fallback when automatic payment detection fails
+ */
+export const markInvoiceAsPaid = asyncHandler(async (req: Request, res: Response) => {
+  const user = req.user?.user;
+  const { id } = req.params;
+  const {
+    amountPaid,
+    paymentMethod,
+    transactionReference,
+    paymentDate,
+    notes
+  } = req.body;
+
+  if (!user?.organizationId) {
+    throw new AppError('Organization not found', 404, 'ORG_NOT_FOUND');
+  }
+
+  const invoice = await Invoice.findOne({
+    _id: id,
+    organizationId: user.organizationId,
+  });
+
+  if (!invoice) {
+    throw new AppError('Invoice not found', 404, 'INVOICE_NOT_FOUND');
+  }
+
+  if (invoice.status === 'paid') {
+    throw new AppError('Invoice is already marked as paid', 400, 'ALREADY_PAID');
+  }
+
+  // Update payment details
+  const paymentAmount = amountPaid || invoice.total;
+  invoice.amountPaid += paymentAmount;
+  invoice.amountDue = invoice.total - invoice.amountPaid;
+
+  // Update status based on payment
+  if (invoice.amountDue <= 0) {
+    invoice.status = 'paid';
+    invoice.paidAt = paymentDate ? new Date(paymentDate) : new Date();
+  } else {
+    invoice.status = 'partial';
+  }
+
+  // Add payment note to invoice
+  if (notes || transactionReference) {
+    const paymentNote = `Manual payment recorded by ${user.displayName || user.email}
+Amount: ${paymentAmount} ${invoice.currency}
+Method: ${paymentMethod || 'Not specified'}
+${transactionReference ? `Reference: ${transactionReference}` : ''}
+${notes ? `Notes: ${notes}` : ''}
+Date: ${new Date().toISOString()}`;
+
+    invoice.notes = invoice.notes
+      ? `${invoice.notes}\n\n---\n${paymentNote}`
+      : paymentNote;
+  }
+
+  await invoice.save();
+
+  res.json({
+    message: 'Invoice marked as paid successfully',
+    data: invoice,
   });
 });

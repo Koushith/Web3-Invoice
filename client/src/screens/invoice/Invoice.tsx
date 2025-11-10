@@ -1,186 +1,260 @@
-import { useState } from 'react';
-import { Plus, Search } from 'lucide-react'; // For icons
+import { useState, useEffect } from 'react';
+import { Plus, Search, Loader2, MoreVertical, Filter, Download } from 'lucide-react';
 import { Input } from '@/components/ui/input';
-import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useNavigate } from 'react-router-dom';
-
-interface Invoice {
-  id: string;
-  number: string;
-  customer: string;
-  amount: number;
-  status: 'paid' | 'pending' | 'overdue';
-  date: string;
-}
+import { useGetInvoicesQuery } from '@/services/api.service';
+import { format } from 'date-fns';
+import { auth } from '@/lib/firebase';
 
 export const InvoicesPage = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
-
-  const invoices: Invoice[] = [
-    {
-      id: '1',
-      number: 'INV-001',
-      customer: 'Acme Corp',
-      amount: 1500.0,
-      status: 'paid',
-      date: '2024-01-15',
-    },
-    {
-      id: '2',
-      number: 'INV-002',
-      customer: 'Tech Solutions',
-      amount: 2300.0,
-      status: 'pending',
-      date: '2024-01-20',
-    },
-    {
-      id: '3',
-      number: 'INV-003',
-      customer: 'Global Industries',
-      amount: 3200.0,
-      status: 'overdue',
-      date: '2024-01-25',
-    },
-    {
-      id: '4',
-      number: 'INV-004',
-      customer: 'Innovate LLC',
-      amount: 4500.0,
-      status: 'paid',
-      date: '2024-02-01',
-    },
-    {
-      id: '5',
-      number: 'INV-005',
-      customer: 'Future Tech',
-      amount: 2750.0,
-      status: 'pending',
-      date: '2024-02-10',
-    },
-    // Add more mock data as needed
-  ];
-
-  const filteredInvoices = invoices.filter((invoice) => {
-    const matchesSearch =
-      invoice.customer.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      invoice.number.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesStatus = statusFilter === 'all' || invoice.status === statusFilter;
-    return matchesSearch && matchesStatus;
-  });
-
+  const [isAuthReady, setIsAuthReady] = useState(false);
   const navigate = useNavigate();
 
+  // Wait for Firebase auth
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged((user) => {
+      if (user) {
+        setIsAuthReady(true);
+      }
+    });
+    return () => unsubscribe();
+  }, []);
+
+  // Fetch invoices
+  const { data, isLoading, error } = useGetInvoicesQuery(
+    {
+      search: searchQuery,
+      status: statusFilter === 'all' ? undefined : statusFilter,
+      page: 1,
+      limit: 100,
+    },
+    {
+      skip: !isAuthReady,
+    }
+  );
+
+  const invoices = data?.data || [];
+
+  const getStatusBadge = (status: string) => {
+    const badges = {
+      draft: 'bg-gray-100 text-gray-700 border-gray-200',
+      sent: 'bg-blue-50 text-blue-700 border-blue-200',
+      viewed: 'bg-purple-50 text-purple-700 border-purple-200',
+      paid: 'bg-green-50 text-green-700 border-green-200',
+      partial: 'bg-yellow-50 text-yellow-700 border-yellow-200',
+      overdue: 'bg-red-50 text-red-700 border-red-200',
+      cancelled: 'bg-gray-100 text-gray-500 border-gray-300',
+    };
+
+    return badges[status as keyof typeof badges] || badges.draft;
+  };
+
   return (
-    <div className="min-h-screen">
-      <div className="max-w-[1300px] mx-auto px-8 py-12">
-        {/* Header */}
-        <div className="flex justify-between items-center mb-8">
-          <div>
-            <h1 className="text-[26px] font-bold text-gray-900 tracking-tight">Invoices</h1>
-            <p className="text-[14px] text-gray-500 mt-1.5">Manage your billing and payment history</p>
-          </div>
-          <Button
-            className="bg-gradient-to-r from-[#635bff] to-[#5045e5] hover:from-[#5045e5] hover:to-[#3d38d1] text-white rounded-lg h-10 px-5 text-[13px] font-semibold shadow-lg shadow-[#635bff]/20 hover:shadow-xl transition-all"
-            onClick={() => navigate('/invoices/new')}
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Create Invoice
-          </Button>
-        </div>
-
-        {/* Card Container */}
-        <div className="bg-white/80 backdrop-blur-sm border border-gray-200/60 rounded-xl shadow-sm overflow-hidden">
-          {/* Filters */}
-          <div className="px-6 py-4 border-b border-gray-200/60 bg-gray-50/30">
-            <div className="flex items-center gap-4">
-              <div className="relative flex-1 max-w-xs">
-                <Search className="absolute left-2.5 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                <Input
-                  placeholder="Search invoices..."
-                  className="h-10 w-full pl-9 text-[13px] bg-white border border-gray-300 rounded-lg
-                    focus-visible:ring-2 focus-visible:ring-[#635bff]/20 focus-visible:border-[#635bff]
-                    placeholder:text-gray-400 transition-all"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
+    <div className="min-h-screen bg-gray-50">
+      <div className="border-b border-gray-200">
+        <div className="max-w-[1400px] mx-auto px-6 sm:px-8 lg:px-12">
+          {/* Header */}
+          <div className="py-8">
+            <div className="flex items-center justify-between">
+              <div className="flex-1">
+                <h1 className="text-2xl font-semibold text-gray-900">Invoices</h1>
+                {data && (
+                  <p className="text-sm text-gray-500 mt-1">
+                    {data.pagination.total} {data.pagination.total === 1 ? 'invoice' : 'invoices'}
+                  </p>
+                )}
               </div>
-
-              <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value)}>
-                <SelectTrigger
-                  className="h-10 w-[160px] text-[13px] border border-gray-300 rounded-lg
-                  focus:ring-2 focus:ring-[#635bff]/20 focus:border-[#635bff]
-                  bg-white font-medium transition-all"
-                >
-                  <SelectValue placeholder="All Status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all" className="text-[13px]">
-                    All Status
-                  </SelectItem>
-                  <SelectItem value="paid" className="text-[13px]">
-                    Paid
-                  </SelectItem>
-                  <SelectItem value="pending" className="text-[13px]">
-                    Pending
-                  </SelectItem>
-                  <SelectItem value="overdue" className="text-[13px]">
-                    Overdue
-                  </SelectItem>
-                </SelectContent>
-              </Select>
+              <Button
+                onClick={() => navigate('/invoices/new')}
+                className="bg-[#635bff] hover:bg-[#0a2540] text-white text-sm font-medium px-4 h-9 rounded-md transition-colors"
+              >
+                <Plus className="w-4 h-4 mr-1.5" />
+                New
+              </Button>
             </div>
           </div>
 
-          {/* Table */}
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-gray-200">
-                  <th className="px-5 py-3 text-left text-[13px] font-medium text-gray-500">Invoice Number</th>
-                  <th className="px-5 py-3 text-left text-[13px] font-medium text-gray-500">Customer</th>
-                  <th className="px-5 py-3 text-left text-[13px] font-medium text-gray-500">Amount</th>
-                  <th className="px-5 py-3 text-left text-[13px] font-medium text-gray-500">Status</th>
-                  <th className="px-5 py-3 text-left text-[13px] font-medium text-gray-500">Date</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredInvoices.map((invoice) => (
-                  <tr key={invoice.id} className="border-b border-gray-100 hover:bg-gradient-to-r hover:from-gray-50 hover:to-transparent transition-all cursor-pointer group">
-                    <td className="px-6 py-4 text-[13px] font-semibold text-gray-900 group-hover:text-[#635bff]">{invoice.number}</td>
-                    <td className="px-6 py-4 text-[13px] text-gray-600">{invoice.customer}</td>
-                    <td className="px-6 py-4 text-[13px] font-semibold text-gray-900">${invoice.amount.toFixed(2)}</td>
-                    <td className="px-6 py-4">
-                      <span
-                        className={`
-                          inline-flex items-center px-3 py-1 text-[11px] font-semibold rounded-full
-                          ${
-                            invoice.status === 'paid'
-                              ? 'bg-gradient-to-r from-green-50 to-emerald-50 text-green-700 ring-1 ring-green-200/50'
-                              : invoice.status === 'pending'
-                              ? 'bg-gradient-to-r from-yellow-50 to-amber-50 text-yellow-700 ring-1 ring-yellow-200/50'
-                              : 'bg-gradient-to-r from-red-50 to-rose-50 text-red-700 ring-1 ring-red-200/50'
-                          }
-                        `}
-                      >
-                        {invoice.status.charAt(0).toUpperCase() + invoice.status.slice(1)}
-                      </span>
-                    </td>
-                    <td className="px-5 py-3 text-[13px] text-gray-600">
-                      {new Date(invoice.date).toLocaleDateString('en-US', {
-                        month: 'short',
-                        day: 'numeric',
-                        year: 'numeric',
-                      })}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          {/* Filters Bar */}
+          <div className="flex items-center gap-3 pb-4">
+            <div className="relative flex-1 max-w-xs">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <Input
+                placeholder="Search"
+                className="h-9 w-full pl-9 pr-3 text-sm bg-white border border-gray-300 rounded-md
+                  focus-visible:ring-1 focus-visible:ring-[#635bff] focus-visible:border-[#635bff]
+                  placeholder:text-gray-400"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="h-9 w-[140px] text-sm border-gray-300 rounded-md">
+                <SelectValue placeholder="All statuses" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All statuses</SelectItem>
+                <SelectItem value="draft">Draft</SelectItem>
+                <SelectItem value="sent">Sent</SelectItem>
+                <SelectItem value="paid">Paid</SelectItem>
+                <SelectItem value="overdue">Overdue</SelectItem>
+                <SelectItem value="cancelled">Cancelled</SelectItem>
+              </SelectContent>
+            </Select>
+            <Button
+              variant="outline"
+              className="h-9 px-3 text-sm font-medium border-gray-300 rounded-md hover:bg-gray-50"
+            >
+              <Filter className="w-4 h-4 mr-1.5" />
+              More filters
+            </Button>
           </div>
         </div>
+      </div>
+
+      {/* Content */}
+      <div className="max-w-[1400px] mx-auto px-6 sm:px-8 lg:px-12">
+        {/* Loading State */}
+        {(!isAuthReady || isLoading) && (
+          <div className="flex items-center justify-center py-24">
+            <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+          </div>
+        )}
+
+        {/* Error State */}
+        {error && (
+          <div className="py-24 text-center">
+            <p className="text-sm text-red-600">Failed to load invoices. Please try again.</p>
+          </div>
+        )}
+
+        {/* Empty State */}
+        {isAuthReady && !isLoading && !error && invoices.length === 0 && (
+          <div className="py-24 text-center">
+            <div className="mx-auto w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center mb-4">
+              <Plus className="w-6 h-6 text-gray-400" />
+            </div>
+            <h3 className="text-sm font-medium text-gray-900 mb-1">
+              {searchQuery ? 'No invoices found' : 'No invoices yet'}
+            </h3>
+            <p className="text-sm text-gray-500 mb-6">
+              {searchQuery
+                ? 'Try adjusting your search to find what you are looking for.'
+                : 'Get started by creating your first invoice.'}
+            </p>
+            {!searchQuery && (
+              <Button
+                onClick={() => navigate('/invoices/new')}
+                className="bg-[#635bff] hover:bg-[#0a2540] text-white text-sm font-medium px-4 h-9 rounded-md"
+              >
+                <Plus className="w-4 h-4 mr-1.5" />
+                New invoice
+              </Button>
+            )}
+          </div>
+        )}
+
+        {/* Table */}
+        {isAuthReady && !isLoading && !error && invoices.length > 0 && (
+          <div className="mt-6">
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-gray-200">
+                    <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Number
+                    </th>
+                    <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Customer
+                    </th>
+                    <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Status
+                    </th>
+                    <th className="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Amount
+                    </th>
+                    <th className="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Amount due
+                    </th>
+                    <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Due date
+                    </th>
+                    <th className="px-3 py-3"></th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200">
+                  {invoices.map((invoice: any) => (
+                    <tr
+                      key={invoice._id || invoice.id}
+                      className="hover:bg-gray-50 transition-colors cursor-pointer"
+                      onClick={() => navigate(`/invoices/${invoice._id || invoice.id}`)}
+                    >
+                      <td className="px-3 py-4">
+                        <div className="text-sm font-medium text-[#635bff] hover:text-[#0a2540]">
+                          {invoice.invoiceNumber}
+                        </div>
+                      </td>
+                      <td className="px-3 py-4">
+                        <div className="text-sm text-gray-900">
+                          {invoice.customerId?.name || invoice.customerId?.company || '—'}
+                        </div>
+                      </td>
+                      <td className="px-3 py-4">
+                        <span
+                          className={`inline-flex items-center px-2 py-1 text-xs font-medium rounded-md border ${getStatusBadge(
+                            invoice.status
+                          )}`}
+                        >
+                          {invoice.status.charAt(0).toUpperCase() + invoice.status.slice(1)}
+                        </span>
+                      </td>
+                      <td className="px-3 py-4 text-right">
+                        <div className="text-sm font-medium text-gray-900">
+                          ${invoice.total.toLocaleString('en-US', {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          })}
+                        </div>
+                      </td>
+                      <td className="px-3 py-4 text-right">
+                        <div className="text-sm font-medium text-gray-900">
+                          ${invoice.amountDue.toLocaleString('en-US', {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          })}
+                        </div>
+                      </td>
+                      <td className="px-3 py-4">
+                        <div className="text-sm text-gray-600">
+                          {invoice.dueDate ? format(new Date(invoice.dueDate), 'MMM d, yyyy') : '—'}
+                        </div>
+                      </td>
+                      <td className="px-3 py-4">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            // Add menu logic here
+                          }}
+                          className="text-gray-400 hover:text-gray-600 p-1 rounded hover:bg-gray-100"
+                        >
+                          <MoreVertical className="w-4 h-4" />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Results count */}
+            <div className="mt-6 pb-8 text-sm text-gray-500">
+              Showing {invoices.length} {invoices.length === 1 ? 'result' : 'results'}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Edit, Trash2, Plus, Mail, Phone, MapPin, DollarSign, FileText, TrendingUp, Building2, Loader2 } from 'lucide-react';
+import { ArrowLeft, Edit, Trash2, Plus, Mail, Phone, MapPin, Building2, Loader2 } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useGetCustomerQuery, useDeleteCustomerMutation } from '@/services/api.service';
 import { format } from 'date-fns';
@@ -45,7 +45,7 @@ export const CustomerDetailScreen = () => {
 
   if (!isAuthReady || isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
       </div>
     );
@@ -53,7 +53,7 @@ export const CustomerDetailScreen = () => {
 
   if (error || !customer) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <p className="text-red-600 mb-4">Failed to load customer details</p>
           <Button onClick={() => navigate('/customers')}>Back to Customers</Button>
@@ -77,162 +77,142 @@ export const CustomerDetailScreen = () => {
   };
 
   return (
-    <div className="min-h-screen">
-      <div className="max-w-[1200px] mx-auto px-8 py-12">
-        {/* Header */}
-        <div className="mb-8">
-          <button
-            onClick={() => navigate('/customers')}
-            className="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900 mb-4 group"
-          >
-            <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
-            Back to Customers
-          </button>
+    <div className="min-h-screen bg-gray-50">
+      <div className="border-b border-gray-200">
+        <div className="max-w-[1400px] mx-auto px-6 sm:px-8 lg:px-12">
+          {/* Header */}
+          <div className="py-8">
+            <button
+              onClick={() => navigate('/customers')}
+              className="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900 mb-6 group"
+            >
+              <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
+              Customers
+            </button>
 
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-[28px] font-bold text-gray-900 tracking-tight">{customer.name}</h1>
-              <p className="text-sm text-gray-500 mt-1">
-                Customer since {format(new Date(customer.createdAt), 'MMMM yyyy')}
-              </p>
-            </div>
+            <div className="flex items-start justify-between">
+              <div className="flex-1">
+                <h1 className="text-2xl font-semibold text-gray-900">{customer.name}</h1>
+                <p className="text-sm text-gray-500 mt-1">
+                  {customer.email}
+                </p>
+              </div>
 
-            <div className="flex items-center gap-3">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => navigate(`/customers/${id}/edit`)}
-                className="h-10 px-4 border-gray-300 rounded-lg"
-              >
-                <Edit className="w-4 h-4 mr-2" />
-                Edit
-              </Button>
-              <Button
-                size="sm"
-                onClick={() => navigate('/invoices/new')}
-                className="h-10 px-4 bg-gradient-to-r from-[#635bff] to-[#5045e5] hover:from-[#5045e5] hover:to-[#3d38d1] text-white rounded-lg font-semibold shadow-lg shadow-[#635bff]/20"
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                New Invoice
-              </Button>
+              <div className="flex items-center gap-3">
+                <Button
+                  variant="outline"
+                  onClick={() => navigate(`/customers/${id}/edit`)}
+                  className="h-9 px-4 text-sm font-medium border-gray-300 rounded-md hover:bg-gray-50"
+                >
+                  <Edit className="w-4 h-4 mr-1.5" />
+                  Edit
+                </Button>
+                <Button
+                  onClick={() => navigate('/invoices/new')}
+                  className="bg-[#635bff] hover:bg-[#0a2540] text-white text-sm font-medium px-4 h-9 rounded-md transition-colors"
+                >
+                  <Plus className="w-4 h-4 mr-1.5" />
+                  New invoice
+                </Button>
+              </div>
             </div>
           </div>
         </div>
+      </div>
 
+      {/* Content */}
+      <div className="max-w-[1400px] mx-auto px-6 sm:px-8 lg:px-12 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-6">
-            {/* Stats Cards */}
-            <div className="grid grid-cols-3 gap-4">
-              <div className="bg-white/80 backdrop-blur-sm border border-gray-200/60 rounded-xl p-5 shadow-sm">
-                <div className="flex items-center gap-3 mb-2">
-                  <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-green-50 to-emerald-50 flex items-center justify-center">
-                    <DollarSign className="w-5 h-5 text-green-600" />
-                  </div>
+            {/* Overview Section */}
+            <div>
+              <h2 className="text-sm font-medium text-gray-900 mb-4">Overview</h2>
+              <div className="grid grid-cols-3 gap-4">
+                <div className="bg-white border border-gray-200 rounded-lg p-5">
+                  <p className="text-sm text-gray-500">Total invoiced</p>
+                  <p className="text-2xl font-semibold text-gray-900 mt-1">
+                    ${(customer.totalInvoiced || 0).toLocaleString('en-US', {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    })}
+                  </p>
                 </div>
-                <p className="text-2xl font-bold text-gray-900">${(customer.totalInvoiced || 0).toLocaleString()}</p>
-                <p className="text-xs text-gray-500 mt-1">Total Invoiced</p>
-              </div>
 
-              <div className="bg-white/80 backdrop-blur-sm border border-gray-200/60 rounded-xl p-5 shadow-sm">
-                <div className="flex items-center gap-3 mb-2">
-                  <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-orange-50 to-amber-50 flex items-center justify-center">
-                    <TrendingUp className="w-5 h-5 text-orange-600" />
-                  </div>
+                <div className="bg-white border border-gray-200 rounded-lg p-5">
+                  <p className="text-sm text-gray-500">Total paid</p>
+                  <p className="text-2xl font-semibold text-gray-900 mt-1">
+                    ${(customer.totalPaid || 0).toLocaleString('en-US', {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    })}
+                  </p>
                 </div>
-                <p className="text-2xl font-bold text-gray-900">${(customer.totalPaid || 0).toLocaleString()}</p>
-                <p className="text-xs text-gray-500 mt-1">Total Paid</p>
-              </div>
 
-              <div className="bg-white/80 backdrop-blur-sm border border-gray-200/60 rounded-xl p-5 shadow-sm">
-                <div className="flex items-center gap-3 mb-2">
-                  <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-50 to-indigo-50 flex items-center justify-center">
-                    <FileText className="w-5 h-5 text-blue-600" />
-                  </div>
+                <div className="bg-white border border-gray-200 rounded-lg p-5">
+                  <p className="text-sm text-gray-500">Invoices</p>
+                  <p className="text-2xl font-semibold text-gray-900 mt-1">0</p>
                 </div>
-                <p className="text-2xl font-bold text-gray-900">0</p>
-                <p className="text-xs text-gray-500 mt-1">Invoices</p>
               </div>
             </div>
 
-            {/* Invoices Table */}
-            <div className="bg-white/80 backdrop-blur-sm border border-gray-200/60 rounded-xl shadow-sm overflow-hidden">
-              <div className="px-6 py-4 border-b border-gray-200/60">
-                <h3 className="text-lg font-semibold text-gray-900">Invoice History</h3>
-                <p className="text-sm text-gray-500 mt-1">All invoices for this customer</p>
-              </div>
-
-              <div className="px-6 py-12 text-center">
-                <FileText className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-                <p className="text-sm text-gray-500">No invoices yet</p>
-                <Button
-                  onClick={() => navigate('/invoices/new')}
-                  className="mt-4 h-10 px-4 bg-gradient-to-r from-[#635bff] to-[#5045e5] hover:from-[#5045e5] hover:to-[#3d38d1] text-white rounded-lg font-semibold"
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  Create First Invoice
-                </Button>
+            {/* Invoices Section */}
+            <div>
+              <h2 className="text-sm font-medium text-gray-900 mb-4">Invoices</h2>
+              <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+                <div className="px-6 py-12 text-center">
+                  <p className="text-sm text-gray-500 mb-4">No invoices yet</p>
+                  <Button
+                    onClick={() => navigate('/invoices/new')}
+                    className="bg-[#635bff] hover:bg-[#0a2540] text-white text-sm font-medium px-4 h-9 rounded-md"
+                  >
+                    <Plus className="w-4 h-4 mr-1.5" />
+                    Create invoice
+                  </Button>
+                </div>
               </div>
             </div>
           </div>
 
           {/* Sidebar */}
           <div className="space-y-6">
-            {/* Contact Information */}
-            <div className="bg-white/80 backdrop-blur-sm border border-gray-200/60 rounded-xl p-6 shadow-sm">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Contact Information</h3>
-              <div className="space-y-4">
+            {/* Details Section */}
+            <div>
+              <h2 className="text-sm font-medium text-gray-900 mb-4">Details</h2>
+              <div className="bg-white border border-gray-200 rounded-lg p-5 space-y-4">
                 {customer.company && (
-                  <div className="flex items-start gap-3">
-                    <Building2 className="w-5 h-5 text-gray-400 mt-0.5 flex-shrink-0" />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-0.5">Company</p>
-                      <p className="text-sm text-gray-900">{customer.company}</p>
-                    </div>
+                  <div>
+                    <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">Company</p>
+                    <p className="text-sm text-gray-900">{customer.company}</p>
                   </div>
                 )}
 
-                <div className="flex items-start gap-3">
-                  <Mail className="w-5 h-5 text-gray-400 mt-0.5 flex-shrink-0" />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-0.5">Email</p>
-                    <a href={`mailto:${customer.email}`} className="text-sm text-blue-600 hover:text-blue-700 break-all">
-                      {customer.email}
-                    </a>
-                  </div>
+                <div>
+                  <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">Email</p>
+                  <a href={`mailto:${customer.email}`} className="text-sm text-[#635bff] hover:text-[#0a2540]">
+                    {customer.email}
+                  </a>
                 </div>
 
                 {customer.phone && (
-                  <div className="flex items-start gap-3">
-                    <Phone className="w-5 h-5 text-gray-400 mt-0.5 flex-shrink-0" />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-0.5">Phone</p>
-                      <a href={`tel:${customer.phone}`} className="text-sm text-gray-900">
-                        {customer.phone}
-                      </a>
-                    </div>
+                  <div>
+                    <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">Phone</p>
+                    <a href={`tel:${customer.phone}`} className="text-sm text-gray-900">
+                      {customer.phone}
+                    </a>
                   </div>
                 )}
 
                 {customer.address?.street && (
-                  <div className="flex items-start gap-3">
-                    <MapPin className="w-5 h-5 text-gray-400 mt-0.5 flex-shrink-0" />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-0.5">Address</p>
-                      <p className="text-sm text-gray-900 whitespace-pre-line">{formatAddress()}</p>
-                    </div>
+                  <div>
+                    <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">Address</p>
+                    <p className="text-sm text-gray-900 whitespace-pre-line">{formatAddress()}</p>
                   </div>
                 )}
-              </div>
-            </div>
 
-            {/* Payment Details */}
-            <div className="bg-white/80 backdrop-blur-sm border border-gray-200/60 rounded-xl p-6 shadow-sm">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Additional Details</h3>
-              <div className="space-y-3">
                 {customer.preferredPaymentMethod && customer.preferredPaymentMethod !== 'none' && (
                   <div>
-                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Payment Method</p>
+                    <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">Payment Method</p>
                     <p className="text-sm text-gray-900">
                       {customer.preferredPaymentMethod
                         .replace(/_/g, ' ')
@@ -243,42 +223,49 @@ export const CustomerDetailScreen = () => {
 
                 {customer.taxId && (
                   <div>
-                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Tax ID</p>
+                    <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">Tax ID</p>
                     <p className="text-sm text-gray-900 font-mono">{customer.taxId}</p>
                   </div>
                 )}
 
                 {customer.walletAddress && (
                   <div>
-                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Payment Address</p>
+                    <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">Payment Address</p>
                     <p className="text-sm text-gray-900 font-mono break-all">{customer.walletAddress}</p>
                   </div>
                 )}
 
                 {customer.notes && (
                   <div>
-                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Notes</p>
+                    <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">Notes</p>
                     <p className="text-sm text-gray-900 whitespace-pre-line">{customer.notes}</p>
                   </div>
                 )}
+
+                <div>
+                  <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">Created</p>
+                  <p className="text-sm text-gray-900">
+                    {format(new Date(customer.createdAt), 'MMM d, yyyy')}
+                  </p>
+                </div>
               </div>
             </div>
 
-            {/* Quick Actions */}
-            <div className="bg-white/80 backdrop-blur-sm border border-gray-200/60 rounded-xl p-6 shadow-sm">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Actions</h3>
+            {/* Actions Section */}
+            <div>
+              <h2 className="text-sm font-medium text-gray-900 mb-4">Actions</h2>
               <div className="space-y-2">
                 <Button
                   variant="outline"
-                  className="w-full h-10 justify-start border-gray-300 rounded-lg"
+                  className="w-full h-9 justify-start text-sm font-medium border-gray-300 rounded-md hover:bg-gray-50"
                   onClick={() => navigate(`/customers/${id}/edit`)}
                 >
                   <Edit className="w-4 h-4 mr-2" />
-                  Edit Customer
+                  Edit customer
                 </Button>
                 <Button
                   variant="outline"
-                  className="w-full h-10 justify-start border-red-200 text-red-600 hover:bg-red-50 rounded-lg"
+                  className="w-full h-9 justify-start text-sm font-medium border-red-200 text-red-600 hover:bg-red-50 rounded-md"
                   onClick={handleDelete}
                   disabled={isDeleting}
                 >
@@ -290,7 +277,7 @@ export const CustomerDetailScreen = () => {
                   ) : (
                     <>
                       <Trash2 className="w-4 h-4 mr-2" />
-                      Delete Customer
+                      Delete customer
                     </>
                   )}
                 </Button>

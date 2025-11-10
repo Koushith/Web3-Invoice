@@ -191,6 +191,29 @@ export const apiService = createApi({
       invalidatesTags: (_result, _error, id) => [{ type: 'Invoice', id }],
     }),
 
+    markInvoiceAsPaid: builder.mutation<Invoice, {
+      id: string;
+      data: {
+        amountPaid?: number;
+        paymentMethod?: string;
+        transactionReference?: string;
+        paymentDate?: string;
+        notes?: string;
+      }
+    }>({
+      query: ({ id, data }) => ({
+        url: `/invoices/${id}/mark-paid`,
+        method: 'POST',
+        body: data,
+      }),
+      transformResponse: (response: ApiResponse<Invoice>) => response.data!,
+      invalidatesTags: (_result, _error, { id }) => [
+        { type: 'Invoice', id },
+        { type: 'Invoice', id: 'LIST' },
+        'Dashboard',
+      ],
+    }),
+
     // ==================== Customer Endpoints ====================
 
     getCustomers: builder.query<PaginatedResponse<Customer>, QueryParams>({
@@ -431,6 +454,7 @@ export const {
   useUpdateInvoiceMutation,
   useDeleteInvoiceMutation,
   useSendInvoiceMutation,
+  useMarkInvoiceAsPaidMutation,
 
   // Customers
   useGetCustomersQuery,

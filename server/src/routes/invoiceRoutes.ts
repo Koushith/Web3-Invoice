@@ -6,6 +6,7 @@ import {
   updateInvoice,
   deleteInvoice,
   updateInvoiceStatus,
+  markInvoiceAsPaid,
 } from '../controllers/invoiceController';
 import { authenticate } from '../middleware';
 
@@ -20,5 +21,6 @@ router.post('/', createInvoice);
 router.put('/:id', updateInvoice);
 router.delete('/:id', deleteInvoice);
 router.patch('/:id/status', updateInvoiceStatus);
+router.post('/:id/mark-paid', markInvoiceAsPaid); // Manual payment marking
 
 export default router;
