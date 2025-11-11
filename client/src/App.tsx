@@ -44,11 +44,6 @@ const router = createBrowserRouter([
         errorElement: <ErrorScreen />,
       },
       {
-        path: '/invoices/new',
-        element: <NewInvoice />,
-        errorElement: <ErrorScreen />,
-      },
-      {
         path: '/invoices/:id',
         element: <InvoiceDetailScreen />,
         errorElement: <ErrorScreen />,
@@ -135,6 +130,16 @@ const router = createBrowserRouter([
   {
     path: '/forgot-password',
     element: <ForgotPasswordScreen />,
+    errorElement: <ErrorScreen />,
+  },
+  // Invoice creation - fullscreen without sidebar
+  {
+    path: '/invoices/new',
+    element: (
+      <ProtectedRoute>
+        <NewInvoice />
+      </ProtectedRoute>
+    ),
     errorElement: <ErrorScreen />,
   },
 ]);

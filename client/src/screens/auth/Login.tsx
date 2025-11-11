@@ -189,70 +189,73 @@ export const LoginScreen = () => {
   };
 
   return (
-    <div className="min-h-screen flex">
+    <div className="min-h-screen flex bg-gray-50">
       {/* Left Side - Branding */}
-      <div className="hidden lg:flex lg:w-1/2 bg-[#0A2540] p-12 flex-col justify-between relative overflow-hidden">
+      <div className="hidden lg:flex lg:w-[45%] bg-[#635BFF] p-12 flex-col justify-between relative overflow-hidden">
         {/* Decorative elements */}
-        <div className="absolute top-20 right-20 w-72 h-72 bg-[#635BFF]/10 rounded-full blur-3xl"></div>
-        <div className="absolute bottom-20 left-20 w-96 h-96 bg-[#00D924]/5 rounded-full blur-3xl"></div>
+        <div className="absolute -top-24 -right-24 w-96 h-96 bg-white/5 rounded-full"></div>
+        <div className="absolute -bottom-32 -left-32 w-[600px] h-[600px] bg-white/5 rounded-full"></div>
 
         <div className="relative z-10">
-          <Link to="/" className="inline-flex items-center gap-3 text-white hover:opacity-80 transition-opacity">
+          <Link to="/" className="inline-flex items-center gap-3">
             <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center">
-              <span className="text-[#0A2540] text-xl font-bold">D</span>
+              <span className="text-[#635BFF] text-xl font-bold">D</span>
             </div>
-            <span className="text-2xl font-semibold">DefInvoice</span>
+            <span className="text-xl font-semibold text-white">DefInvoice</span>
           </Link>
         </div>
 
-        <div className="relative z-10">
-          <h1 className="text-5xl font-bold text-white mb-6 leading-tight">
-            Modern invoicing,<br />simplified.
-          </h1>
-          <p className="text-white/70 text-lg mb-12 max-w-md leading-relaxed">
-            Create, send, and track invoices in minutes. Get paid faster with flexible payment options.
-          </p>
+        <div className="relative z-10 space-y-8">
+          <div>
+            <h1 className="text-4xl font-bold text-white mb-4 leading-tight">
+              Get paid faster with<br />beautiful invoices
+            </h1>
+            <p className="text-lg text-white/80 leading-relaxed max-w-md">
+              Professional invoicing made simple. Create, send, and track in minutes.
+            </p>
+          </div>
 
-          <div className="space-y-6">
-            <div className="flex items-start gap-4">
-              <div className="w-12 h-12 rounded-xl bg-[#635BFF] flex items-center justify-center flex-shrink-0">
-                <Zap className="w-6 h-6 text-white" />
+          <div className="grid gap-6 max-w-md">
+            <div className="flex gap-4">
+              <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center flex-shrink-0 mt-1">
+                <Zap className="w-5 h-5 text-white" />
               </div>
               <div>
-                <h3 className="text-white font-semibold mb-1 text-base">Lightning Fast</h3>
-                <p className="text-white/60 text-sm leading-relaxed">Create invoices in seconds, not hours</p>
+                <h3 className="text-white font-medium mb-1">Create invoices in seconds</h3>
+                <p className="text-sm text-white/70">Beautiful templates that make you look professional</p>
               </div>
             </div>
 
-            <div className="flex items-start gap-4">
-              <div className="w-12 h-12 rounded-xl bg-[#00D924] flex items-center justify-center flex-shrink-0">
-                <Shield className="w-6 h-6 text-white" />
+            <div className="flex gap-4">
+              <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center flex-shrink-0 mt-1">
+                <Shield className="w-5 h-5 text-white" />
               </div>
               <div>
-                <h3 className="text-white font-semibold mb-1 text-base">Secure & Transparent</h3>
-                <p className="text-white/60 text-sm leading-relaxed">Bank-grade security for your data</p>
+                <h3 className="text-white font-medium mb-1">Secure and compliant</h3>
+                <p className="text-sm text-white/70">Bank-level security with passkey authentication</p>
               </div>
             </div>
 
-            <div className="flex items-start gap-4">
-              <div className="w-12 h-12 rounded-xl bg-[#FFC043] flex items-center justify-center flex-shrink-0">
-                <Sparkles className="w-6 h-6 text-white" />
+            <div className="flex gap-4">
+              <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center flex-shrink-0 mt-1">
+                <Sparkles className="w-5 h-5 text-white" />
               </div>
               <div>
-                <h3 className="text-white font-semibold mb-1 text-base">Smart Automation</h3>
-                <p className="text-white/60 text-sm leading-relaxed">Automated reminders and tracking</p>
+                <h3 className="text-white font-medium mb-1">Smart reminders</h3>
+                <p className="text-sm text-white/70">Never chase payments manually again</p>
               </div>
             </div>
           </div>
         </div>
 
-        <div className="relative z-10 text-white/50 text-sm">
-          © 2024 DefInvoice. All rights reserved.
+        <div className="relative z-10 flex items-center justify-between text-white/60 text-sm">
+          <span>© 2024 DefInvoice</span>
+          <span>Trusted by 10,000+ businesses</span>
         </div>
       </div>
 
       {/* Right Side - Login Form */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-8 bg-white">
+      <div className="w-full lg:w-[55%] flex items-center justify-center p-8 bg-white">
         <div className="w-full max-w-md">
           {/* Mobile Logo */}
           <div className="lg:hidden mb-8">
