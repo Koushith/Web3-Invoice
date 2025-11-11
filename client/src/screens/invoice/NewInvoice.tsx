@@ -12,6 +12,9 @@ import {
   ModernTemplate,
   MinimalTemplate,
   ArtisticTemplate,
+  GradientTemplate,
+  GlassTemplate,
+  ElegantTemplate,
 } from '@/components/invoice/InvoiceTemplates';
 import { useGetCustomersQuery, useCreateInvoiceMutation, useGetOrganizationQuery } from '@/services/api.service';
 import { toast } from 'sonner';
@@ -21,7 +24,7 @@ import { toPng } from 'html-to-image';
 import { jsPDF } from 'jspdf';
 import { Currency } from '@/types/models';
 
-export type InvoiceStyle = 'standard' | 'modern' | 'minimal' | 'artistic';
+export type InvoiceStyle = 'standard' | 'modern' | 'minimal' | 'artistic' | 'gradient' | 'glass' | 'elegant';
 
 export interface InvoiceStyleProps {
   logo: string | null;
@@ -708,6 +711,9 @@ export const NewInvoice = () => {
                           <SelectItem value="modern">Modern</SelectItem>
                           <SelectItem value="minimal">Minimal</SelectItem>
                           <SelectItem value="artistic">Artistic</SelectItem>
+                          <SelectItem value="gradient">Professional</SelectItem>
+                          <SelectItem value="glass">Executive</SelectItem>
+                          <SelectItem value="elegant">Classic</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -778,6 +784,15 @@ export const NewInvoice = () => {
                     )}
                     {invoiceStyle === 'artistic' && (
                       <ArtisticTemplate logo={logo} invoiceData={invoiceData} paymentDetails={paymentDetails} />
+                    )}
+                    {invoiceStyle === 'gradient' && (
+                      <GradientTemplate logo={logo} invoiceData={invoiceData} paymentDetails={paymentDetails} />
+                    )}
+                    {invoiceStyle === 'glass' && (
+                      <GlassTemplate logo={logo} invoiceData={invoiceData} paymentDetails={paymentDetails} />
+                    )}
+                    {invoiceStyle === 'elegant' && (
+                      <ElegantTemplate logo={logo} invoiceData={invoiceData} paymentDetails={paymentDetails} />
                     )}
                   </div>
                 </div>

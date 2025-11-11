@@ -794,3 +794,448 @@ export function ArtisticTemplate({ logo, invoiceData, paymentDetails }: Template
     </div>
   );
 }
+
+// Professional Template - Clean enterprise design
+export function GradientTemplate({ logo, invoiceData, paymentDetails }: TemplateProps) {
+  const subtotal = invoiceData.items.reduce((sum, item) => sum + item.quantity * item.price, 0);
+  const total = subtotal;
+
+  return (
+    <div className="bg-white p-[25mm] min-h-[297mm]">
+      {/* Header */}
+      <div className="flex justify-between items-start pb-8 mb-8 border-b-2 border-gray-300">
+        <div className="space-y-4">
+          {logo && (
+            <div className="w-40 h-20">
+              <img src={logo} alt="Company Logo" className="w-full h-full object-contain" />
+            </div>
+          )}
+          <div>
+            <h1 className="text-4xl font-bold text-gray-900">INVOICE</h1>
+            <p className="text-gray-600 mt-1">#{invoiceData.invoiceNumber}</p>
+          </div>
+        </div>
+        <div className="text-right space-y-2 bg-gray-50 p-5 border border-gray-200">
+          <div>
+            <p className="text-xs text-gray-500 uppercase font-semibold">Date</p>
+            <p className="text-gray-900 font-semibold">
+              {invoiceData.date ? new Date(invoiceData.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'N/A'}
+            </p>
+          </div>
+          {invoiceData.dueDate && (
+            <div className="pt-2 border-t border-gray-200">
+              <p className="text-xs text-gray-500 uppercase font-semibold">Due Date</p>
+              <p className="text-gray-900 font-semibold">
+                {new Date(invoiceData.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+              </p>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Addresses */}
+      <div className="grid grid-cols-2 gap-8 mb-10">
+        <div>
+          <p className="text-xs text-gray-500 uppercase font-semibold mb-3">From</p>
+          <p className="text-gray-900 font-bold text-lg">{invoiceData.fromCompany}</p>
+          <p className="text-gray-600 text-sm mt-2 whitespace-pre-line leading-relaxed">{invoiceData.fromAddress}</p>
+        </div>
+        <div>
+          <p className="text-xs text-gray-500 uppercase font-semibold mb-3">Bill To</p>
+          <p className="text-gray-900 font-bold text-lg">{invoiceData.toCompany}</p>
+          <p className="text-gray-600 text-sm mt-2 whitespace-pre-line leading-relaxed">{invoiceData.toAddress}</p>
+        </div>
+      </div>
+
+      {/* Items Table */}
+      <div className="mb-8">
+        <table className="w-full border-collapse">
+          <thead>
+            <tr className="bg-gray-900">
+              <th className="py-3 px-4 text-left text-xs font-semibold text-white uppercase">Description</th>
+              <th className="py-3 px-4 text-center text-xs font-semibold text-white uppercase">Qty</th>
+              <th className="py-3 px-4 text-right text-xs font-semibold text-white uppercase">Unit Price</th>
+              <th className="py-3 px-4 text-right text-xs font-semibold text-white uppercase">Amount</th>
+            </tr>
+          </thead>
+          <tbody>
+            {invoiceData.items.map((item, index) => (
+              <tr key={index} className={`border-b border-gray-200 ${index % 2 === 0 ? 'bg-gray-50' : 'bg-white'}`}>
+                <td className="py-3 px-4 text-gray-900">{item.description}</td>
+                <td className="py-3 px-4 text-center text-gray-700">{item.quantity}</td>
+                <td className="py-3 px-4 text-right text-gray-700">${item.price.toFixed(2)}</td>
+                <td className="py-3 px-4 text-right text-gray-900 font-semibold">${(item.quantity * item.price).toFixed(2)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Total */}
+      <div className="flex justify-end mb-10">
+        <div className="w-80">
+          <div className="flex justify-between py-2 border-b border-gray-200">
+            <span className="text-gray-600">Subtotal</span>
+            <span className="text-gray-900 font-semibold">${subtotal.toFixed(2)}</span>
+          </div>
+          <div className="flex justify-between py-3 bg-gray-900 px-4 mt-2">
+            <span className="text-white font-bold">Total Due</span>
+            <span className="text-white font-bold text-xl">${total.toFixed(2)}</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Footer */}
+      {(paymentDetails.method || invoiceData.notes) && (
+        <div className="grid grid-cols-2 gap-8 pt-8 border-t border-gray-200">
+          {paymentDetails.method && (
+            <div>
+              <h3 className="text-gray-900 font-bold mb-3 text-sm uppercase">Payment Information</h3>
+              {paymentDetails.method === 'bank' && paymentDetails.bankDetails && (
+                <div className="space-y-1 text-sm">
+                  {paymentDetails.bankDetails.bankName && <p><span className="text-gray-500">Bank:</span> <span className="text-gray-900 ml-2">{paymentDetails.bankDetails.bankName}</span></p>}
+                  {paymentDetails.bankDetails.accountName && <p><span className="text-gray-500">Account Name:</span> <span className="text-gray-900 ml-2">{paymentDetails.bankDetails.accountName}</span></p>}
+                  {paymentDetails.bankDetails.accountNumber && <p><span className="text-gray-500">Account Number:</span> <span className="text-gray-900 font-mono ml-2">{paymentDetails.bankDetails.accountNumber}</span></p>}
+                  {paymentDetails.bankDetails.swiftCode && <p><span className="text-gray-500">SWIFT:</span> <span className="text-gray-900 font-mono ml-2">{paymentDetails.bankDetails.swiftCode}</span></p>}
+                </div>
+              )}
+              {paymentDetails.method === 'crypto' && paymentDetails.cryptoDetails?.walletAddress && (
+                <div className="mt-3 p-3 bg-gray-50 border border-gray-200">
+                  <div className="flex justify-center mb-2">
+                    <QRCode value={paymentDetails.cryptoDetails.walletAddress} size={100} />
+                  </div>
+                  <p className="text-gray-600 text-xs text-center break-all font-mono">{paymentDetails.cryptoDetails.walletAddress}</p>
+                </div>
+              )}
+            </div>
+          )}
+          {invoiceData.notes && (
+            <div>
+              <h3 className="text-gray-900 font-bold mb-3 text-sm uppercase">Notes</h3>
+              <p className="text-gray-600 text-sm leading-relaxed">{invoiceData.notes}</p>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Executive Template - Corporate blue theme
+export function GlassTemplate({ logo, invoiceData, paymentDetails }: TemplateProps) {
+  const subtotal = invoiceData.items.reduce((sum, item) => sum + item.quantity * item.price, 0);
+  const total = subtotal;
+
+  return (
+    <div className="bg-white p-[25mm] min-h-[297mm]">
+      {/* Header with Blue Bar */}
+      <div className="mb-8">
+        <div className="bg-blue-600 h-3 w-full mb-6"></div>
+        <div className="flex justify-between items-start">
+          <div className="space-y-4">
+            {logo && (
+              <div className="w-40 h-20 border-2 border-gray-200 p-2">
+                <img src={logo} alt="Company Logo" className="w-full h-full object-contain" />
+              </div>
+            )}
+            <div>
+              <h1 className="text-5xl font-bold text-gray-900">INVOICE</h1>
+              <p className="text-blue-600 font-semibold text-lg mt-1">#{invoiceData.invoiceNumber}</p>
+            </div>
+          </div>
+          <div className="text-right">
+            <div className="mb-4">
+              <p className="text-xs text-gray-500 uppercase font-semibold mb-1">Invoice Date</p>
+              <p className="text-gray-900 font-semibold">
+                {invoiceData.date ? new Date(invoiceData.date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : 'N/A'}
+              </p>
+            </div>
+            {invoiceData.dueDate && (
+              <div>
+                <p className="text-xs text-gray-500 uppercase font-semibold mb-1">Payment Due</p>
+                <p className="text-gray-900 font-semibold">
+                  {new Date(invoiceData.dueDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Addresses */}
+      <div className="grid grid-cols-2 gap-12 mb-10 pb-8 border-b border-gray-200">
+        <div>
+          <p className="text-xs text-blue-600 uppercase font-bold mb-3 tracking-wide">Billed From</p>
+          <p className="text-gray-900 font-bold text-base mb-1">{invoiceData.fromCompany}</p>
+          <p className="text-gray-600 text-sm whitespace-pre-line leading-relaxed">{invoiceData.fromAddress}</p>
+        </div>
+        <div>
+          <p className="text-xs text-blue-600 uppercase font-bold mb-3 tracking-wide">Billed To</p>
+          <p className="text-gray-900 font-bold text-base mb-1">{invoiceData.toCompany}</p>
+          <p className="text-gray-600 text-sm whitespace-pre-line leading-relaxed">{invoiceData.toAddress}</p>
+        </div>
+      </div>
+
+      {/* Items Table */}
+      <div className="mb-8">
+        <table className="w-full">
+          <thead>
+            <tr className="border-b-2 border-blue-600">
+              <th className="py-3 px-0 text-left text-xs font-bold text-gray-700 uppercase tracking-wide">Item Description</th>
+              <th className="py-3 px-4 text-center text-xs font-bold text-gray-700 uppercase tracking-wide">Quantity</th>
+              <th className="py-3 px-4 text-right text-xs font-bold text-gray-700 uppercase tracking-wide">Rate</th>
+              <th className="py-3 px-4 text-right text-xs font-bold text-gray-700 uppercase tracking-wide">Amount</th>
+            </tr>
+          </thead>
+          <tbody>
+            {invoiceData.items.map((item, index) => (
+              <tr key={index} className="border-b border-gray-200">
+                <td className="py-4 px-0 text-gray-900 font-medium">{item.description}</td>
+                <td className="py-4 px-4 text-center text-gray-700">{item.quantity}</td>
+                <td className="py-4 px-4 text-right text-gray-700">${item.price.toFixed(2)}</td>
+                <td className="py-4 px-4 text-right text-gray-900 font-semibold">${(item.quantity * item.price).toFixed(2)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Total */}
+      <div className="flex justify-end mb-12">
+        <div className="w-96">
+          <div className="flex justify-between py-3 border-b border-gray-300">
+            <span className="text-gray-600 font-semibold">Subtotal</span>
+            <span className="text-gray-900 font-semibold">${subtotal.toFixed(2)}</span>
+          </div>
+          <div className="flex justify-between py-4 bg-blue-600 px-6 mt-3">
+            <span className="text-white font-bold text-lg">Amount Due (USD)</span>
+            <span className="text-white font-bold text-2xl">${total.toFixed(2)}</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Footer */}
+      {(paymentDetails.method || invoiceData.notes) && (
+        <div className="grid grid-cols-2 gap-10 pt-8 border-t border-gray-200">
+          {paymentDetails.method && (
+            <div>
+              <h3 className="text-gray-900 font-bold mb-4 text-sm uppercase tracking-wide">Payment Instructions</h3>
+              {paymentDetails.method === 'bank' && paymentDetails.bankDetails && (
+                <div className="space-y-2 text-sm">
+                  {paymentDetails.bankDetails.bankName && (
+                    <div className="flex">
+                      <span className="text-gray-500 w-32">Bank Name:</span>
+                      <span className="text-gray-900 font-medium">{paymentDetails.bankDetails.bankName}</span>
+                    </div>
+                  )}
+                  {paymentDetails.bankDetails.accountName && (
+                    <div className="flex">
+                      <span className="text-gray-500 w-32">Account Name:</span>
+                      <span className="text-gray-900 font-medium">{paymentDetails.bankDetails.accountName}</span>
+                    </div>
+                  )}
+                  {paymentDetails.bankDetails.accountNumber && (
+                    <div className="flex">
+                      <span className="text-gray-500 w-32">Account No:</span>
+                      <span className="text-gray-900 font-mono font-medium">{paymentDetails.bankDetails.accountNumber}</span>
+                    </div>
+                  )}
+                  {paymentDetails.bankDetails.swiftCode && (
+                    <div className="flex">
+                      <span className="text-gray-500 w-32">SWIFT Code:</span>
+                      <span className="text-gray-900 font-mono font-medium">{paymentDetails.bankDetails.swiftCode}</span>
+                    </div>
+                  )}
+                </div>
+              )}
+              {paymentDetails.method === 'crypto' && paymentDetails.cryptoDetails?.walletAddress && (
+                <div className="mt-3 p-4 bg-gray-50 border border-gray-200">
+                  <div className="flex justify-center mb-2">
+                    <QRCode value={paymentDetails.cryptoDetails.walletAddress} size={100} />
+                  </div>
+                  <p className="text-gray-600 text-xs text-center break-all font-mono mt-2">{paymentDetails.cryptoDetails.walletAddress}</p>
+                </div>
+              )}
+            </div>
+          )}
+          {invoiceData.notes && (
+            <div>
+              <h3 className="text-gray-900 font-bold mb-4 text-sm uppercase tracking-wide">Terms & Notes</h3>
+              <p className="text-gray-600 text-sm leading-relaxed">{invoiceData.notes}</p>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Footer Bar */}
+      <div className="mt-16 pt-6 border-t border-gray-200">
+        <p className="text-center text-xs text-gray-500">Thank you for your business</p>
+      </div>
+    </div>
+  );
+}
+
+// Classic Template - Traditional business format
+export function ElegantTemplate({ logo, invoiceData, paymentDetails }: TemplateProps) {
+  const subtotal = invoiceData.items.reduce((sum, item) => sum + item.quantity * item.price, 0);
+  const total = subtotal;
+
+  return (
+    <div className="bg-white p-[25mm] min-h-[297mm]">
+      {/* Letterhead Header */}
+      <div className="mb-10">
+        <div className="flex justify-between items-start pb-6 mb-6 border-b-4 border-double border-gray-400">
+          <div className="space-y-3">
+            {logo && (
+              <div className="w-40 h-20 mb-4">
+                <img src={logo} alt="Company Logo" className="w-full h-full object-contain" />
+              </div>
+            )}
+            <div>
+              <h1 className="text-5xl font-bold text-gray-900 tracking-wide">INVOICE</h1>
+            </div>
+          </div>
+          <div className="text-right space-y-1">
+            <div className="bg-gray-100 px-4 py-2 border-l-4 border-gray-700">
+              <p className="text-gray-900 font-bold">#{invoiceData.invoiceNumber}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Dates */}
+      <div className="grid grid-cols-2 gap-4 mb-10">
+        <div className="flex gap-3">
+          <span className="text-gray-600 font-semibold min-w-[100px]">Date:</span>
+          <span className="text-gray-900">
+            {invoiceData.date ? new Date(invoiceData.date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : 'N/A'}
+          </span>
+        </div>
+        {invoiceData.dueDate && (
+          <div className="flex gap-3">
+            <span className="text-gray-600 font-semibold min-w-[100px]">Due Date:</span>
+            <span className="text-gray-900">
+              {new Date(invoiceData.dueDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+            </span>
+          </div>
+        )}
+      </div>
+
+      {/* Addresses */}
+      <div className="grid grid-cols-2 gap-12 mb-12">
+        <div>
+          <p className="text-gray-600 font-semibold uppercase text-xs mb-3 tracking-wide">From</p>
+          <div className="border-l-2 border-gray-300 pl-4">
+            <p className="text-gray-900 font-bold text-base">{invoiceData.fromCompany}</p>
+            <p className="text-gray-600 text-sm mt-1 whitespace-pre-line leading-relaxed">{invoiceData.fromAddress}</p>
+          </div>
+        </div>
+        <div>
+          <p className="text-gray-600 font-semibold uppercase text-xs mb-3 tracking-wide">Bill To</p>
+          <div className="border-l-2 border-gray-300 pl-4">
+            <p className="text-gray-900 font-bold text-base">{invoiceData.toCompany}</p>
+            <p className="text-gray-600 text-sm mt-1 whitespace-pre-line leading-relaxed">{invoiceData.toAddress}</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Items Table */}
+      <div className="mb-10">
+        <table className="w-full border-collapse border-2 border-gray-300">
+          <thead>
+            <tr className="bg-gray-800">
+              <th className="py-3 px-4 text-left text-xs font-semibold text-white uppercase border-r border-gray-600">Description</th>
+              <th className="py-3 px-4 text-center text-xs font-semibold text-white uppercase border-r border-gray-600 w-24">Qty</th>
+              <th className="py-3 px-4 text-right text-xs font-semibold text-white uppercase border-r border-gray-600 w-32">Unit Price</th>
+              <th className="py-3 px-4 text-right text-xs font-semibold text-white uppercase w-32">Amount</th>
+            </tr>
+          </thead>
+          <tbody>
+            {invoiceData.items.map((item, index) => (
+              <tr key={index} className={`border-b border-gray-300 ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}`}>
+                <td className="py-3 px-4 text-gray-900 border-r border-gray-300">{item.description}</td>
+                <td className="py-3 px-4 text-center text-gray-700 border-r border-gray-300">{item.quantity}</td>
+                <td className="py-3 px-4 text-right text-gray-700 border-r border-gray-300">${item.price.toFixed(2)}</td>
+                <td className="py-3 px-4 text-right text-gray-900 font-semibold">${(item.quantity * item.price).toFixed(2)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Total */}
+      <div className="flex justify-end mb-12">
+        <div className="w-80 border-2 border-gray-300">
+          <div className="flex justify-between py-2 px-4 bg-gray-50 border-b border-gray-300">
+            <span className="text-gray-700 font-semibold">Subtotal:</span>
+            <span className="text-gray-900 font-semibold">${subtotal.toFixed(2)}</span>
+          </div>
+          <div className="flex justify-between py-3 px-4 bg-gray-800">
+            <span className="text-white font-bold text-lg">Total Due:</span>
+            <span className="text-white font-bold text-xl">${total.toFixed(2)}</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Footer */}
+      {(paymentDetails.method || invoiceData.notes) && (
+        <div className="border-t-2 border-gray-300 pt-8 mt-8">
+          <div className="grid grid-cols-2 gap-10">
+            {paymentDetails.method && (
+              <div>
+                <h3 className="text-gray-900 font-bold mb-4 text-sm uppercase">Remittance Information</h3>
+                {paymentDetails.method === 'bank' && paymentDetails.bankDetails && (
+                  <div className="space-y-2 text-sm bg-gray-50 p-4 border-l-4 border-gray-700">
+                    {paymentDetails.bankDetails.bankName && (
+                      <div className="flex gap-2">
+                        <span className="text-gray-600 font-semibold min-w-[120px]">Bank Name:</span>
+                        <span className="text-gray-900">{paymentDetails.bankDetails.bankName}</span>
+                      </div>
+                    )}
+                    {paymentDetails.bankDetails.accountName && (
+                      <div className="flex gap-2">
+                        <span className="text-gray-600 font-semibold min-w-[120px]">Account Name:</span>
+                        <span className="text-gray-900">{paymentDetails.bankDetails.accountName}</span>
+                      </div>
+                    )}
+                    {paymentDetails.bankDetails.accountNumber && (
+                      <div className="flex gap-2">
+                        <span className="text-gray-600 font-semibold min-w-[120px]">Account Number:</span>
+                        <span className="text-gray-900 font-mono">{paymentDetails.bankDetails.accountNumber}</span>
+                      </div>
+                    )}
+                    {paymentDetails.bankDetails.swiftCode && (
+                      <div className="flex gap-2">
+                        <span className="text-gray-600 font-semibold min-w-[120px]">SWIFT/BIC:</span>
+                        <span className="text-gray-900 font-mono">{paymentDetails.bankDetails.swiftCode}</span>
+                      </div>
+                    )}
+                  </div>
+                )}
+                {paymentDetails.method === 'crypto' && paymentDetails.cryptoDetails?.walletAddress && (
+                  <div className="p-4 bg-gray-50 border-l-4 border-gray-700">
+                    <div className="flex justify-center mb-2">
+                      <QRCode value={paymentDetails.cryptoDetails.walletAddress} size={100} />
+                    </div>
+                    <p className="text-gray-600 text-xs text-center break-all font-mono mt-2">{paymentDetails.cryptoDetails.walletAddress}</p>
+                  </div>
+                )}
+              </div>
+            )}
+            {invoiceData.notes && (
+              <div>
+                <h3 className="text-gray-900 font-bold mb-4 text-sm uppercase">Payment Terms & Notes</h3>
+                <p className="text-gray-700 text-sm leading-relaxed bg-gray-50 p-4 border-l-4 border-gray-700">{invoiceData.notes}</p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Footer */}
+      <div className="mt-16 pt-4 border-t border-gray-300">
+        <p className="text-center text-xs text-gray-500">Payment is due within the specified terms. Late payments may incur additional fees.</p>
+      </div>
+    </div>
+  );
+}
