@@ -1,6 +1,7 @@
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
+import { PasskeyManagement } from '@/components/passkey/PasskeyManagement';
 
 export const SecurityScreen = () => {
   const navigate = useNavigate();
@@ -25,6 +26,20 @@ export const SecurityScreen = () => {
           <div className="flex items-center gap-1.5 mt-1">
             <span className="text-sm text-gray-600">Authentication and account security</span>
           </div>
+        </div>
+
+        {/* Passkeys Section */}
+        <div className="mb-8 pb-8 border-b border-gray-200">
+          <div className="mb-4">
+            <h2 className="text-base font-semibold text-gray-900">Passkeys</h2>
+          </div>
+          <p className="text-sm text-gray-600 mb-2">
+            Sign in securely with your biometrics, device PIN or hardware security key.
+          </p>
+          <p className="text-sm text-gray-600 mb-6">
+            Passkeys are easy to set up and can also be used for two-step authentication.
+          </p>
+          <PasskeyManagement />
         </div>
 
         {/* Google Account Section */}

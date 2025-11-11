@@ -253,7 +253,7 @@ export interface InvoiceItem {
 export interface CreateInvoiceDTO {
   customerId: string;
   issueDate: Date | string;
-  dueDate: Date | string;
+  dueDate?: Date | string;
   items: Omit<InvoiceItem, 'id' | 'amount'>[];
   taxRate: number;
   discount?: number;
@@ -322,6 +322,7 @@ export interface QueryParams {
   sort?: string;
   order?: 'asc' | 'desc';
   search?: string;
+  status?: string;
   filters?: Record<string, any>;
 }
 

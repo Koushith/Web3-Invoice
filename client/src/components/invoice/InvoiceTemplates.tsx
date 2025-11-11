@@ -1,4 +1,4 @@
-import { QRCode } from 'react-qr-code';
+import QRCode from 'react-qr-code';
 
 interface InvoiceItem {
   description: string;
@@ -10,7 +10,7 @@ interface InvoiceData {
   invoiceNumber: string;
   date: string;
   dueDate: string;
-  memo: string;
+  memo?: string;
   fromCompany: string;
   fromAddress: string;
   toCompany: string;

@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus, Search, MoreVertical, Mail, Shield, UserX, Crown, ArrowLeft } from 'lucide-react';
+import { Plus, MoreVertical, Mail, Shield, ArrowLeft } from 'lucide-react';
 
 interface TeamMember {
   id: string;
@@ -19,7 +19,7 @@ interface TeamMember {
 
 export const TeamScreen = () => {
   const navigate = useNavigate();
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery] = useState('');
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [activeTab, setActiveTab] = useState('team');
 
@@ -72,47 +72,8 @@ export const TeamScreen = () => {
       member.email.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const getRoleColor = (role: string) => {
-    switch (role) {
-      case 'owner':
-        return 'bg-purple-50 text-purple-700 ring-1 ring-purple-200/50';
-      case 'admin':
-        return 'bg-blue-50 text-blue-700 ring-1 ring-blue-200/50';
-      case 'accountant':
-        return 'bg-green-50 text-green-700 ring-1 ring-green-200/50';
-      case 'viewer':
-        return 'bg-gray-50 text-gray-700 ring-1 ring-gray-200/50';
-      default:
-        return 'bg-gray-50 text-gray-700 ring-1 ring-gray-200/50';
-    }
-  };
-
-  const getRoleIcon = (role: string) => {
-    switch (role) {
-      case 'owner':
-        return <Crown className="w-3.5 h-3.5" />;
-      case 'admin':
-        return <Shield className="w-3.5 h-3.5" />;
-      default:
-        return null;
-    }
-  };
-
   const getRoleLabel = (role: string) => {
     return role.charAt(0).toUpperCase() + role.slice(1);
-  };
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'active':
-        return 'bg-green-100 text-green-800';
-      case 'pending':
-        return 'bg-yellow-100 text-yellow-800';
-      case 'inactive':
-        return 'bg-gray-100 text-gray-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
-    }
   };
 
   return (
@@ -230,11 +191,7 @@ export const TeamScreen = () => {
               </button>
             </div>
             <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-8 px-3 border-gray-300 rounded-md text-xs font-medium"
-              >
+              <Button variant="outline" size="sm" className="h-8 px-3 border-gray-300 rounded-md text-xs font-medium">
                 Export
               </Button>
               <Button
@@ -271,12 +228,8 @@ export const TeamScreen = () => {
                         <span className="text-[13px] font-medium text-gray-900">{member.name}</span>
                         {member.role === 'owner' && (
                           <>
-                            <span className="px-1.5 py-0.5 text-[11px] bg-gray-100 text-gray-600 rounded">
-                              You
-                            </span>
-                            <span className="px-1.5 py-0.5 text-[11px] bg-gray-100 text-gray-600 rounded">
-                              Owner
-                            </span>
+                            <span className="px-1.5 py-0.5 text-[11px] bg-gray-100 text-gray-600 rounded">You</span>
+                            <span className="px-1.5 py-0.5 text-[11px] bg-gray-100 text-gray-600 rounded">Owner</span>
                           </>
                         )}
                       </div>
@@ -289,11 +242,7 @@ export const TeamScreen = () => {
                   <td className="px-4 py-4 text-[13px] text-gray-600">-</td>
                   <td className="px-4 py-4 text-[13px] text-gray-600">{member.lastActive}</td>
                   <td className="px-4 py-4 text-right">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-7 w-7 p-0 hover:bg-gray-100 rounded"
-                    >
+                    <Button variant="ghost" size="sm" className="h-7 w-7 p-0 hover:bg-gray-100 rounded">
                       <MoreVertical className="w-4 h-4 text-gray-500" />
                     </Button>
                   </td>
@@ -302,9 +251,7 @@ export const TeamScreen = () => {
             </tbody>
           </table>
 
-          <div className="py-3 text-[11px] text-gray-500 border-t border-gray-200">
-            Viewing 1 of 1 results
-          </div>
+          <div className="py-3 text-[11px] text-gray-500 border-t border-gray-200">Viewing 1 of 1 results</div>
         </div>
 
         {/* Invite Modal */}

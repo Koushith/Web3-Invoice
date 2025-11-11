@@ -1,5 +1,5 @@
 import { Button } from '@/components/ui/button';
-import { LayoutDashboard, FileText, Users, Settings, LogOut, Key, Webhook, DollarSign, BarChart3 } from 'lucide-react';
+import { LayoutDashboard, FileText, Users, Settings, LogOut, Key, Webhook, DollarSign } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import { useState } from 'react';
@@ -27,7 +27,7 @@ function Logo() {
 }
 
 export function AppShell() {
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isMobileMenuOpen] = useState(false);
 
   return (
     <div className="min-h-screen bg-[#FEFFFE]">

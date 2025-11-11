@@ -1,9 +1,6 @@
-import React from 'react';
 import {
   AreaChart,
   Area,
-  BarChart,
-  Bar,
   XAxis,
   YAxis,
   ResponsiveContainer,

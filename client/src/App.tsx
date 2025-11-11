@@ -15,8 +15,9 @@ import { SettingsScreen } from './screens/settings/Settings';
 import { ApiKeysScreen } from './screens/api-keys/ApiKeys';
 import { WebhooksScreen } from './screens/webhooks/Webhooks';
 import { ProfileScreen } from './screens/profile/Profile';
-import { PasskeysScreen } from './screens/passkeys/Passkeys';
 import { SecurityScreen } from './screens/security/Security';
+import { BillingScreen } from './screens/billing/Billing';
+import { BusinessScreen } from './screens/business/Business';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
 import { Toaster } from 'sonner';
 import { CustomersScreen } from './screens/customer/Customer';
@@ -99,13 +100,18 @@ const router = createBrowserRouter([
         errorElement: <ErrorScreen />,
       },
       {
-        path: '/passkeys',
-        element: <PasskeysScreen />,
+        path: '/security',
+        element: <SecurityScreen />,
         errorElement: <ErrorScreen />,
       },
       {
-        path: '/security',
-        element: <SecurityScreen />,
+        path: '/billing',
+        element: <BillingScreen />,
+        errorElement: <ErrorScreen />,
+      },
+      {
+        path: '/business',
+        element: <BusinessScreen />,
         errorElement: <ErrorScreen />,
       },
       {

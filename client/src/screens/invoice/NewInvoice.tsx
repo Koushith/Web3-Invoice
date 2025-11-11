@@ -14,6 +14,7 @@ import { auth } from '@/lib/firebase';
 import { useReactToPrint } from 'react-to-print';
 import { toPng } from 'html-to-image';
 import { jsPDF } from 'jspdf';
+import { Currency } from '@/types/models';
 
 export type InvoiceStyle = 'standard' | 'modern' | 'minimal' | 'artistic';
 
@@ -133,7 +134,7 @@ export const NewInvoice = () => {
         fromAddress: organization.address
           ? [
               organization.address.street,
-              [organization.address.city, organization.address.state, organization.address.zipCode]
+              [organization.address.city, organization.address.state, organization.address.postalCode]
                 .filter(Boolean)
                 .join(', '),
               organization.address.country,
@@ -159,7 +160,7 @@ export const NewInvoice = () => {
         fromAddress: organization.address
           ? [
               organization.address.street,
-              [organization.address.city, organization.address.state, organization.address.zipCode]
+              [organization.address.city, organization.address.state, organization.address.postalCode]
                 .filter(Boolean)
                 .join(', '),
               organization.address.country,
@@ -187,7 +188,7 @@ export const NewInvoice = () => {
           ...prev,
           toCompany: customer.company || customer.name,
           toAddress: customer.address?.street
-            ? `${customer.address.street}\n${customer.address.city}, ${customer.address.state} ${customer.address.zipCode}\n${customer.address.country}`
+            ? `${customer.address.street}\n${customer.address.city}, ${customer.address.state} ${customer.address.postalCode}\n${customer.address.country}`
             : '',
         }));
       }
@@ -213,7 +214,7 @@ export const NewInvoice = () => {
   };
 
   const handlePrint = useReactToPrint({
-    content: () => printRef.current,
+    contentRef: printRef,
     pageStyle: `
       @page {
         size: A4;
@@ -302,17 +303,15 @@ export const NewInvoice = () => {
         customerId: selectedCustomerId,
         issueDate: invoiceData.date,
         dueDate: invoiceData.dueDate || undefined,
-        currency: 'USD',
-        lineItems: validItems.map(item => ({
+        currency: Currency.USD,
+        items: validItems.map(item => ({
           description: item.description.trim(),
           quantity: item.quantity,
           unitPrice: item.price,
-          amount: item.quantity * item.price,
         })),
+        taxRate: 0,
         notes: invoiceData.notes || undefined,
         terms: invoiceData.terms || undefined,
-        allowedPaymentMethods: paymentDetails.method === 'bank' ? ['bank_transfer'] :
-                               paymentDetails.method === 'crypto' ? ['crypto'] : ['other'],
       };
 
       await createInvoice(invoicePayload).unwrap();
@@ -876,7 +875,7 @@ export const NewInvoice = () => {
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={handlePrint}
+                    onClick={() => handlePrint()}
                     className="h-8 px-3 text-xs border-gray-300 rounded-md"
                   >
                     <Printer className="h-3 w-3 mr-1.5" />

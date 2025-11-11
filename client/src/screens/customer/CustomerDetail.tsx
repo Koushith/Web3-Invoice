@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Edit, Trash2, Plus, Mail, Phone, MapPin, Building2, Loader2 } from 'lucide-react';
+import { ArrowLeft, Edit, Trash2, Plus, Loader2 } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useGetCustomerQuery, useDeleteCustomerMutation } from '@/services/api.service';
 import { format } from 'date-fns';
@@ -67,7 +67,7 @@ export const CustomerDetailScreen = () => {
 
     const parts = [
       customer.address.street,
-      [customer.address.city, customer.address.state, customer.address.zipCode]
+      [customer.address.city, customer.address.state, customer.address.postalCode]
         .filter(Boolean)
         .join(', '),
       customer.address.country,
@@ -132,7 +132,7 @@ export const CustomerDetailScreen = () => {
                 <div className="bg-white border border-gray-200 rounded-lg p-5">
                   <p className="text-sm text-gray-500">Total invoiced</p>
                   <p className="text-2xl font-semibold text-gray-900 mt-1">
-                    ${(customer.totalInvoiced || 0).toLocaleString('en-US', {
+                    ${(customer.totalRevenue || 0).toLocaleString('en-US', {
                       minimumFractionDigits: 2,
                       maximumFractionDigits: 2,
                     })}
@@ -140,9 +140,9 @@ export const CustomerDetailScreen = () => {
                 </div>
 
                 <div className="bg-white border border-gray-200 rounded-lg p-5">
-                  <p className="text-sm text-gray-500">Total paid</p>
+                  <p className="text-sm text-gray-500">Outstanding balance</p>
                   <p className="text-2xl font-semibold text-gray-900 mt-1">
-                    ${(customer.totalPaid || 0).toLocaleString('en-US', {
+                    ${(customer.outstandingBalance || 0).toLocaleString('en-US', {
                       minimumFractionDigits: 2,
                       maximumFractionDigits: 2,
                     })}
@@ -210,16 +210,6 @@ export const CustomerDetailScreen = () => {
                   </div>
                 )}
 
-                {customer.preferredPaymentMethod && customer.preferredPaymentMethod !== 'none' && (
-                  <div>
-                    <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">Payment Method</p>
-                    <p className="text-sm text-gray-900">
-                      {customer.preferredPaymentMethod
-                        .replace(/_/g, ' ')
-                        .replace(/\b\w/g, (l: string) => l.toUpperCase())}
-                    </p>
-                  </div>
-                )}
 
                 {customer.taxId && (
                   <div>

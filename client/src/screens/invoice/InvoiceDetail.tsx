@@ -1,15 +1,6 @@
-import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Download, Printer, Send, MoreVertical, CheckCircle, Clock, XCircle, Edit, Trash2, Copy } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
-
-interface InvoiceItem {
-  id: string;
-  description: string;
-  quantity: number;
-  rate: number;
-  amount: number;
-}
 
 export const InvoiceDetailScreen = () => {
   const navigate = useNavigate();
