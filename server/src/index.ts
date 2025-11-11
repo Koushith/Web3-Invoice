@@ -10,6 +10,7 @@ import userRoutes from './routes/users.js';
 import passkeyRoutes from './routes/passkeys.js';
 import customerRoutes from './routes/customerRoutes.js';
 import invoiceRoutes from './routes/invoiceRoutes.js';
+import organizationRoutes from './routes/organizationRoutes.js';
 
 // Initialize express app
 const app = express();
@@ -43,6 +44,7 @@ app.use('/api/users', userRoutes);
 app.use('/api/passkeys', passkeyRoutes);
 app.use('/api/customers', customerRoutes);
 app.use('/api/invoices', invoiceRoutes);
+app.use('/api/organization', organizationRoutes);
 
 // 404 handler
 app.use((req: Request, res: Response) => {

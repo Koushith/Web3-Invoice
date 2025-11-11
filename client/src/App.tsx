@@ -2,7 +2,6 @@ import { useEffect } from 'react';
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import { AppShell } from '@/components/layout/AppShell';
 import { ErrorScreen, InvoicesPage, NewCustomerScreen, NewInvoice } from './screens';
-import { HomePage } from './screens';
 import { Auth } from './screens/auth/Auth';
 import { LoginScreen } from './screens/auth/Login';
 import { SignupScreen } from './screens/auth/Signup';
@@ -16,6 +15,8 @@ import { SettingsScreen } from './screens/settings/Settings';
 import { ApiKeysScreen } from './screens/api-keys/ApiKeys';
 import { WebhooksScreen } from './screens/webhooks/Webhooks';
 import { ProfileScreen } from './screens/profile/Profile';
+import { PasskeysScreen } from './screens/passkeys/Passkeys';
+import { SecurityScreen } from './screens/security/Security';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
 import { Toaster } from 'sonner';
 import { CustomersScreen } from './screens/customer/Customer';
@@ -34,7 +35,7 @@ const router = createBrowserRouter([
     children: [
       {
         path: '/',
-        element: <HomePage />,
+        element: <ReportsScreen />,
       },
       {
         path: '/invoices',
@@ -71,11 +72,7 @@ const router = createBrowserRouter([
         element: <PaymentsScreen />,
         errorElement: <ErrorScreen />,
       },
-      {
-        path: '/reports',
-        element: <ReportsScreen />,
-        errorElement: <ErrorScreen />,
-      },
+
       {
         path: '/team',
         element: <TeamScreen />,
@@ -99,6 +96,16 @@ const router = createBrowserRouter([
       {
         path: '/profile',
         element: <ProfileScreen />,
+        errorElement: <ErrorScreen />,
+      },
+      {
+        path: '/passkeys',
+        element: <PasskeysScreen />,
+        errorElement: <ErrorScreen />,
+      },
+      {
+        path: '/security',
+        element: <SecurityScreen />,
         errorElement: <ErrorScreen />,
       },
       {

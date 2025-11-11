@@ -1,320 +1,317 @@
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { User, Mail, MapPin, Camera, Briefcase, Calendar } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { ArrowLeft, Loader2 } from 'lucide-react';
+import { useGetUserProfileQuery, useUpdateUserProfileMutation } from '@/services/api.service';
+import { toast } from 'sonner';
 
 export const ProfileScreen = () => {
+  const [editingSection, setEditingSection] = useState<string | null>(null);
+  const navigate = useNavigate();
+  const { data: user, isLoading } = useGetUserProfileQuery();
+  const [updateProfile, { isLoading: isUpdating }] = useUpdateUserProfileMutation();
+
+  const [formData, setFormData] = useState({
+    firstName: '',
+    lastName: '',
+    phone: '',
+    language: 'en',
+  });
+
+  // Update formData when user data loads
+  useEffect(() => {
+    if (user) {
+      setFormData({
+        firstName: user.firstName || '',
+        lastName: user.lastName || '',
+        phone: user.phone || '',
+        language: user.language || 'en',
+      });
+    }
+  }, [user]);
+
+  const handleSave = async () => {
+    try {
+      await updateProfile(formData).unwrap();
+      toast.success('Profile updated successfully');
+      setEditingSection(null);
+    } catch (error: any) {
+      toast.error(error?.data?.message || 'Failed to update profile');
+    }
+  };
+
+  const handleLanguageSave = async () => {
+    try {
+      await updateProfile({ language: formData.language }).unwrap();
+      toast.success('Language updated successfully');
+    } catch (error: any) {
+      toast.error(error?.data?.message || 'Failed to update language');
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-[#FEFFFE] flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen">
-      <div className="max-w-[900px] mx-auto px-8 py-12">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-[28px] font-bold text-gray-900 tracking-tight">Profile</h1>
-          <p className="text-sm text-gray-500 mt-2">Manage your personal information and preferences</p>
+    <div className="min-h-screen bg-[#FEFFFE]">
+      <div className="max-w-6xl mx-auto px-8 py-8">
+        {/* Back button */}
+        <div className="mb-6">
+          <button
+            onClick={() => navigate('/settings')}
+            className="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900 transition-colors"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            <span>Settings</span>
+          </button>
         </div>
 
-        <div className="space-y-6">
-          {/* Profile Picture Card */}
-          <div className="bg-white/80 backdrop-blur-sm border border-gray-200/60 rounded-xl p-6 shadow-sm">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-50 to-indigo-50 flex items-center justify-center">
-                <User className="w-5 h-5 text-blue-600" />
-              </div>
-              <div>
-                <h2 className="text-lg font-semibold text-gray-900">Profile Picture</h2>
-                <p className="text-sm text-gray-500">Update your profile photo</p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-6">
-              <div className="relative group">
-                <div className="w-24 h-24 rounded-full bg-gradient-to-br from-[#635bff] to-[#5045e5] flex items-center justify-center text-white text-2xl font-bold">
-                  KT
-                </div>
-                <button className="absolute inset-0 rounded-full bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                  <Camera className="w-6 h-6 text-white" />
-                </button>
-              </div>
-              <div className="flex-1">
-                <div className="flex gap-3">
-                  <Button variant="outline" className="h-10 px-4 border-gray-300 rounded-lg">
-                    Change Photo
-                  </Button>
-                  <Button variant="outline" className="h-10 px-4 border-gray-300 rounded-lg text-red-600 hover:bg-red-50 border-red-200">
-                    Remove
-                  </Button>
-                </div>
-                <p className="text-xs text-gray-500 mt-2">JPG, PNG or GIF. Max size of 2MB.</p>
-              </div>
-            </div>
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="text-[28px] font-semibold text-gray-900">Personal details</h1>
+          <div className="flex items-center gap-1.5 mt-1">
+            <span className="text-sm text-gray-600">Global setting</span>
+            <span className="text-gray-400 text-xs">ⓘ</span>
           </div>
+        </div>
 
-          {/* Personal Information Card */}
-          <div className="bg-white/80 backdrop-blur-sm border border-gray-200/60 rounded-xl p-6 shadow-sm">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-emerald-50 to-green-50 flex items-center justify-center">
-                <Mail className="w-5 h-5 text-emerald-600" />
-              </div>
-              <div>
-                <h2 className="text-lg font-semibold text-gray-900">Personal Information</h2>
-                <p className="text-sm text-gray-500">Update your personal details</p>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-5">
-              <div>
-                <Label htmlFor="first-name" className="text-sm font-semibold text-gray-700 mb-2 block">
-                  First Name
-                </Label>
-                <Input
-                  id="first-name"
-                  defaultValue="Koushith"
-                  className="h-11 border-gray-300 rounded-lg"
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="last-name" className="text-sm font-semibold text-gray-700 mb-2 block">
-                  Last Name
-                </Label>
-                <Input
-                  id="last-name"
-                  defaultValue="Amin"
-                  className="h-11 border-gray-300 rounded-lg"
-                />
-              </div>
-
-              <div className="col-span-2">
-                <Label htmlFor="email" className="text-sm font-semibold text-gray-700 mb-2 block">
-                  Email Address
-                </Label>
-                <Input
-                  id="email"
-                  type="email"
-                  defaultValue="koushith@definvoice.com"
-                  className="h-11 border-gray-300 rounded-lg"
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="phone" className="text-sm font-semibold text-gray-700 mb-2 block">
-                  Phone Number
-                </Label>
-                <Input
-                  id="phone"
-                  type="tel"
-                  placeholder="+1 (555) 000-0000"
-                  className="h-11 border-gray-300 rounded-lg"
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="language" className="text-sm font-semibold text-gray-700 mb-2 block">
-                  Language
-                </Label>
-                <Select defaultValue="en">
-                  <SelectTrigger className="h-11 border-gray-300 rounded-lg">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="en">English</SelectItem>
-                    <SelectItem value="es">Español</SelectItem>
-                    <SelectItem value="fr">Français</SelectItem>
-                    <SelectItem value="de">Deutsch</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          </div>
-
-          {/* Professional Information Card */}
-          <div className="bg-white/80 backdrop-blur-sm border border-gray-200/60 rounded-xl p-6 shadow-sm">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-50 to-violet-50 flex items-center justify-center">
-                <Briefcase className="w-5 h-5 text-purple-600" />
-              </div>
-              <div>
-                <h2 className="text-lg font-semibold text-gray-900">Professional Information</h2>
-                <p className="text-sm text-gray-500">Work-related details</p>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-5">
-              <div>
-                <Label htmlFor="job-title" className="text-sm font-semibold text-gray-700 mb-2 block">
-                  Job Title
-                </Label>
-                <Input
-                  id="job-title"
-                  placeholder="e.g., Product Manager"
-                  className="h-11 border-gray-300 rounded-lg"
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="department" className="text-sm font-semibold text-gray-700 mb-2 block">
-                  Department
-                </Label>
-                <Select>
-                  <SelectTrigger className="h-11 border-gray-300 rounded-lg">
-                    <SelectValue placeholder="Select department" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="sales">Sales</SelectItem>
-                    <SelectItem value="marketing">Marketing</SelectItem>
-                    <SelectItem value="engineering">Engineering</SelectItem>
-                    <SelectItem value="finance">Finance</SelectItem>
-                    <SelectItem value="operations">Operations</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="col-span-2">
-                <Label htmlFor="bio" className="text-sm font-semibold text-gray-700 mb-2 block">
-                  Bio
-                </Label>
-                <Textarea
-                  id="bio"
-                  placeholder="Tell us about yourself..."
-                  className="min-h-[100px] border-gray-300 rounded-lg resize-none"
-                />
-                <p className="text-xs text-gray-500 mt-1.5">Brief description for your profile. Max 200 characters.</p>
-              </div>
-            </div>
-          </div>
-
-          {/* Location Card */}
-          <div className="bg-white/80 backdrop-blur-sm border border-gray-200/60 rounded-xl p-6 shadow-sm">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-orange-50 to-amber-50 flex items-center justify-center">
-                <MapPin className="w-5 h-5 text-orange-600" />
-              </div>
-              <div>
-                <h2 className="text-lg font-semibold text-gray-900">Location</h2>
-                <p className="text-sm text-gray-500">Where you're based</p>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-5">
-              <div>
-                <Label htmlFor="city" className="text-sm font-semibold text-gray-700 mb-2 block">
-                  City
-                </Label>
-                <Input
-                  id="city"
-                  placeholder="San Francisco"
-                  className="h-11 border-gray-300 rounded-lg"
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="country" className="text-sm font-semibold text-gray-700 mb-2 block">
-                  Country
-                </Label>
-                <Select>
-                  <SelectTrigger className="h-11 border-gray-300 rounded-lg">
-                    <SelectValue placeholder="Select country" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="us">United States</SelectItem>
-                    <SelectItem value="uk">United Kingdom</SelectItem>
-                    <SelectItem value="ca">Canada</SelectItem>
-                    <SelectItem value="au">Australia</SelectItem>
-                    <SelectItem value="in">India</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div>
-                <Label htmlFor="timezone" className="text-sm font-semibold text-gray-700 mb-2 block">
-                  Timezone
-                </Label>
-                <Select defaultValue="pst">
-                  <SelectTrigger className="h-11 border-gray-300 rounded-lg">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="pst">Pacific Time (GMT-8:00)</SelectItem>
-                    <SelectItem value="est">Eastern Time (GMT-5:00)</SelectItem>
-                    <SelectItem value="utc">UTC (GMT+0:00)</SelectItem>
-                    <SelectItem value="ist">India Time (GMT+5:30)</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div>
-                <Label htmlFor="date-format" className="text-sm font-semibold text-gray-700 mb-2 block">
-                  Date Format
-                </Label>
-                <Select defaultValue="mm-dd-yyyy">
-                  <SelectTrigger className="h-11 border-gray-300 rounded-lg">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="mm-dd-yyyy">MM/DD/YYYY</SelectItem>
-                    <SelectItem value="dd-mm-yyyy">DD/MM/YYYY</SelectItem>
-                    <SelectItem value="yyyy-mm-dd">YYYY-MM-DD</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          </div>
-
-          {/* Account Information Card */}
-          <div className="bg-white/80 backdrop-blur-sm border border-gray-200/60 rounded-xl p-6 shadow-sm">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-pink-50 to-rose-50 flex items-center justify-center">
-                <Calendar className="w-5 h-5 text-pink-600" />
-              </div>
-              <div>
-                <h2 className="text-lg font-semibold text-gray-900">Account Information</h2>
-                <p className="text-sm text-gray-500">Account details and metadata</p>
-              </div>
-            </div>
-
-            <div className="space-y-4">
-              <div className="flex items-center justify-between py-3 border-b border-gray-100">
-                <div>
-                  <p className="text-sm font-medium text-gray-900">User ID</p>
-                  <p className="text-xs text-gray-500 mt-0.5">Your unique identifier</p>
-                </div>
-                <code className="text-sm font-mono bg-gray-50 px-3 py-1.5 rounded-md border border-gray-200">
-                  usr_2aK9j4nX7qB
-                </code>
-              </div>
-
-              <div className="flex items-center justify-between py-3 border-b border-gray-100">
-                <div>
-                  <p className="text-sm font-medium text-gray-900">Member Since</p>
-                  <p className="text-xs text-gray-500 mt-0.5">Account creation date</p>
-                </div>
-                <span className="text-sm text-gray-600">January 10, 2024</span>
-              </div>
-
-              <div className="flex items-center justify-between py-3">
-                <div>
-                  <p className="text-sm font-medium text-gray-900">Account Type</p>
-                  <p className="text-xs text-gray-500 mt-0.5">Current subscription plan</p>
-                </div>
-                <span className="inline-flex items-center px-3 py-1 text-xs font-semibold rounded-full bg-gradient-to-r from-purple-50 to-indigo-50 text-purple-700 ring-1 ring-purple-200/50">
-                  Pro Plan
-                </span>
-              </div>
-            </div>
-          </div>
-
-          {/* Action Buttons */}
-          <div className="flex items-center justify-end pt-4 border-t border-gray-200">
-            <div className="flex gap-3">
-              <Button variant="outline" className="h-11 px-6 border-gray-300 rounded-lg">
-                Cancel
+        {/* User Section */}
+        <div className="mb-8">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-base font-semibold text-gray-900">User</h2>
+            {editingSection !== 'user' ? (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 px-2 text-sm text-gray-700 hover:bg-gray-100"
+                onClick={() => {
+                  setEditingSection('user');
+                  setFormData({
+                    firstName: user?.firstName || '',
+                    lastName: user?.lastName || '',
+                    phone: user?.phone || '',
+                    language: user?.language || 'en',
+                  });
+                }}
+              >
+                ✎ Edit
               </Button>
-              <Button className="h-11 px-8 bg-gradient-to-r from-[#635bff] to-[#5045e5] hover:from-[#5045e5] hover:to-[#3d38d1] text-white rounded-lg font-semibold shadow-lg shadow-[#635bff]/20">
-                Save Changes
-              </Button>
+            ) : (
+              <div className="flex gap-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 px-3 text-sm"
+                  onClick={() => setEditingSection(null)}
+                  disabled={isUpdating}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  size="sm"
+                  className="h-7 px-3 text-sm"
+                  onClick={handleSave}
+                  disabled={isUpdating}
+                >
+                  {isUpdating ? <Loader2 className="w-3 h-3 animate-spin" /> : 'Save'}
+                </Button>
+              </div>
+            )}
+          </div>
+
+          {editingSection === 'user' ? (
+            <div className="space-y-4 bg-white p-4 rounded-md border border-gray-200">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-medium text-gray-700 block mb-1.5">First name</label>
+                  <Input
+                    value={formData.firstName}
+                    onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+                    className="h-8 text-sm"
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-700 block mb-1.5">Last name</label>
+                  <Input
+                    value={formData.lastName}
+                    onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+                    className="h-8 text-sm"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-700 block mb-1.5">Phone</label>
+                <Input
+                  value={formData.phone}
+                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                  className="h-8 text-sm"
+                />
+              </div>
             </div>
+          ) : (
+            <div className="space-y-5">
+              {/* Email */}
+              <div className="flex items-start">
+                <div className="w-40 flex-shrink-0">
+                  <span className="text-sm font-medium text-gray-700">Email</span>
+                </div>
+                <div className="flex-1">
+                  <span className="text-sm text-gray-900">{user?.email || '—'}</span>
+                </div>
+              </div>
+
+              {/* Name */}
+              <div className="flex items-start">
+                <div className="w-40 flex-shrink-0">
+                  <span className="text-sm font-medium text-gray-700">Name</span>
+                </div>
+                <div className="flex-1">
+                  <span className="text-sm text-gray-900">
+                    {user?.firstName && user?.lastName
+                      ? `${user.firstName} ${user.lastName}`
+                      : user?.displayName || '—'}
+                  </span>
+                </div>
+              </div>
+
+              {/* Password */}
+              <div className="flex items-start">
+                <div className="w-40 flex-shrink-0">
+                  <span className="text-sm font-medium text-gray-700">Password</span>
+                </div>
+                <div className="flex-1">
+                  <span className="text-sm text-gray-900">••••••••••</span>
+                </div>
+              </div>
+
+              {/* Contact phone */}
+              <div className="flex items-start">
+                <div className="w-40 flex-shrink-0">
+                  <div className="flex items-center gap-1">
+                    <span className="text-sm font-medium text-gray-700">Contact phone</span>
+                    <span className="text-gray-400 text-xs">ⓘ</span>
+                  </div>
+                </div>
+                <div className="flex-1">
+                  {user?.phone ? (
+                    <span className="text-sm text-gray-900">{user.phone}</span>
+                  ) : (
+                    <button className="text-sm text-gray-600 hover:text-gray-900">
+                      Add contact phone number
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Language Section */}
+        <div className="mb-8 pb-8 border-b border-gray-200">
+          <div className="mb-4">
+            <h2 className="text-base font-semibold text-gray-900">Language</h2>
+          </div>
+          <p className="text-sm text-gray-600 mb-4">
+            Please select a preferred language for your Dashboard, including date, time and number formatting.
+          </p>
+          <div className="flex items-center gap-3">
+            <select
+              className="h-8 px-3 text-sm border border-gray-300 rounded-md bg-white"
+              value={formData.language}
+              onChange={(e) => setFormData({ ...formData, language: e.target.value })}
+            >
+              <option value="auto">Auto-detect</option>
+              <option value="en">English</option>
+              <option value="es">Español</option>
+              <option value="fr">Français</option>
+              <option value="de">Deutsch</option>
+            </select>
+            <Button
+              size="sm"
+              className="h-8 px-3 text-sm bg-primary hover:bg-primary/90 text-white rounded-md"
+              onClick={handleLanguageSave}
+              disabled={isUpdating}
+            >
+              {isUpdating ? <Loader2 className="w-3 h-3 animate-spin" /> : 'Save'}
+            </Button>
+          </div>
+          <p className="text-sm text-gray-600 mt-3">
+            Your detected language is{' '}
+            {formData.language === 'en'
+              ? 'English'
+              : formData.language === 'es'
+              ? 'Spanish'
+              : formData.language === 'fr'
+              ? 'French'
+              : formData.language === 'de'
+              ? 'German'
+              : 'English'}
+            .
+          </p>
+        </div>
+
+        {/* Login sessions Section */}
+        <div className="mb-8">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-base font-semibold text-gray-900">Login sessions</h2>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-7 px-3 text-sm border-gray-300 rounded-md"
+            >
+              Sign out all other sessions
+            </Button>
+          </div>
+          <p className="text-sm text-gray-600 mb-5">Places where you're logged into Stripe.</p>
+
+          {/* Sessions Table */}
+          <div className="bg-white rounded-md border border-gray-200">
+            <table className="w-full">
+              <thead className="border-b border-gray-200">
+                <tr>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Location</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Device</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">IP Address</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Time</th>
+                  <th className="px-4 py-3"></th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                <tr className="hover:bg-gray-50">
+                  <td className="px-4 py-3 text-sm text-gray-900">India (KA)</td>
+                  <td className="px-4 py-3 text-sm text-gray-600">Chrome - Apple Macintosh - Mac OS</td>
+                  <td className="px-4 py-3 text-sm text-gray-600">117.205.233.185</td>
+                  <td className="px-4 py-3 text-sm text-gray-600">4 minutes ago</td>
+                  <td className="px-4 py-3 text-right">
+                    <span className="text-xs text-gray-500">Current session</span>
+                  </td>
+                </tr>
+                <tr className="hover:bg-gray-50">
+                  <td className="px-4 py-3 text-sm text-gray-900">India (KA)</td>
+                  <td className="px-4 py-3 text-sm text-gray-600">Chrome - Apple Macintosh - Mac OS</td>
+                  <td className="px-4 py-3 text-sm text-gray-600">49.37.178.24</td>
+                  <td className="px-4 py-3 text-sm text-gray-600">last month</td>
+                  <td className="px-4 py-3 text-right">
+                    <span className="text-xs text-gray-500">Expired</span>
+                  </td>
+                </tr>
+                <tr className="hover:bg-gray-50">
+                  <td className="px-4 py-3 text-sm text-gray-900">India (KA)</td>
+                  <td className="px-4 py-3 text-sm text-gray-600">Chrome - Apple Macintosh - Mac OS</td>
+                  <td className="px-4 py-3 text-sm text-gray-600">117.205.233.35</td>
+                  <td className="px-4 py-3 text-sm text-gray-600">2 months ago</td>
+                  <td className="px-4 py-3 text-right">
+                    <span className="text-xs text-gray-500">Expired</span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
           </div>
         </div>
       </div>

@@ -88,6 +88,18 @@ export interface User extends BaseEntity {
   metadata?: Record<string, any>;
   preferences?: UserPreferences;
   lastLoginAt?: Date | string;
+  // Profile fields
+  firstName?: string;
+  lastName?: string;
+  phone?: string;
+  language?: string;
+  jobTitle?: string;
+  department?: string;
+  bio?: string;
+  city?: string;
+  country?: string;
+  timezone?: string;
+  dateFormat?: string;
 }
 
 export interface UserPreferences {

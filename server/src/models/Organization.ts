@@ -12,7 +12,7 @@ export interface IOrganization extends Document {
   currency: string;
   invoicePrefix: string;
   invoiceNumberSequence: number;
-  ownerId: mongoose.Types.ObjectId;
+  ownerId: string; // Firebase UID
   settings: {
     defaultTaxRate?: number;
     defaultPaymentTerms?: number; // days
@@ -78,9 +78,9 @@ const OrganizationSchema: Schema = new Schema(
       default: 1,
     },
     ownerId: {
-      type: Schema.Types.ObjectId,
-      ref: 'User',
+      type: String, // Firebase UID
       required: true,
+      index: true,
     },
     settings: {
       defaultTaxRate: {

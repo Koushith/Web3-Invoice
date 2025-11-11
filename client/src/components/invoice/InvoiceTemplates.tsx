@@ -55,7 +55,7 @@ export function StandardTemplate({ logo, invoiceData, paymentDetails }: Template
           )}
           <div>
             <h1 className="text-3xl font-semibold text-gray-900">INVOICE</h1>
-            <p className="text-sm text-muted-foreground mt-1">#{invoiceData.invoiceNumber || '000000'}</p>
+            <p className="text-sm text-muted-foreground mt-1">#{invoiceData.invoiceNumber}</p>
           </div>
         </div>
 
@@ -92,9 +92,9 @@ export function StandardTemplate({ logo, invoiceData, paymentDetails }: Template
         <div className="space-y-3">
           <p className="text-sm font-medium text-muted-foreground">From</p>
           <div className="space-y-1">
-            <p className="font-semibold text-gray-900">{invoiceData.fromCompany || 'Your Company Name'}</p>
+            <p className="font-semibold text-gray-900">{invoiceData.fromCompany}</p>
             <p className="text-sm text-gray-600 whitespace-pre-line">
-              {invoiceData.fromAddress || 'Your Address'}
+              {invoiceData.fromAddress}
             </p>
           </div>
         </div>
@@ -102,9 +102,9 @@ export function StandardTemplate({ logo, invoiceData, paymentDetails }: Template
         <div className="space-y-3">
           <p className="text-sm font-medium text-muted-foreground">Bill To</p>
           <div className="space-y-1">
-            <p className="font-semibold text-gray-900">{invoiceData.toCompany || 'Client Company Name'}</p>
+            <p className="font-semibold text-gray-900">{invoiceData.toCompany}</p>
             <p className="text-sm text-gray-600 whitespace-pre-line">
-              {invoiceData.toAddress || 'Client Address'}
+              {invoiceData.toAddress}
             </p>
           </div>
         </div>
@@ -124,7 +124,7 @@ export function StandardTemplate({ logo, invoiceData, paymentDetails }: Template
           <tbody className="divide-y divide-border/50">
             {invoiceData.items.map((item, index) => (
               <tr key={index}>
-                <td className="py-4 text-sm">{item.description || 'Item description'}</td>
+                <td className="py-4 text-sm">{item.description}</td>
                 <td className="py-4 text-sm text-right">{item.quantity}</td>
                 <td className="py-4 text-sm text-right">${item.price.toFixed(2)}</td>
                 <td className="py-4 text-sm text-right">${(item.quantity * item.price).toFixed(2)}</td>
@@ -169,35 +169,45 @@ export function StandardTemplate({ logo, invoiceData, paymentDetails }: Template
             )}
           </div>
         )}
-        {paymentDetails.method === 'crypto' && paymentDetails.cryptoDetails && (
+        {paymentDetails.method === 'crypto' && paymentDetails.cryptoDetails && paymentDetails.cryptoDetails.walletAddress && (
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-1">
-                <p className="text-sm text-muted-foreground">Currency</p>
-                <p className="font-medium">{paymentDetails.cryptoDetails.currency}</p>
-              </div>
+              {paymentDetails.cryptoDetails.currency && (
+                <div className="space-y-1">
+                  <p className="text-sm text-muted-foreground">Currency</p>
+                  <p className="font-medium">{paymentDetails.cryptoDetails.currency}</p>
+                </div>
+              )}
               {paymentDetails.cryptoDetails.network && (
                 <div className="space-y-1">
-                  <p className="text-sm text-muted-foreground">Network</p>
+                  <p className="text-sm text-muted-foreground">Chain</p>
                   <p className="font-medium">{paymentDetails.cryptoDetails.network}</p>
                 </div>
               )}
             </div>
-            <div className="space-y-2">
-              <p className="text-sm text-muted-foreground">Payment Address</p>
-              <p className="font-medium font-mono text-sm break-all">
-                {paymentDetails.cryptoDetails.walletAddress}
-              </p>
-              {paymentDetails.cryptoDetails.walletAddress && (
-                <div className="mt-2 bg-white p-2 inline-block rounded-lg">
-                  <QRCode
-                    value={paymentDetails.cryptoDetails.walletAddress}
-                    size={120}
-                    level="M"
-                    className="h-32 w-32"
-                  />
-                </div>
-              )}
+            <div className="flex gap-6 items-start">
+              <div className="flex-1 space-y-2">
+                <p className="text-sm text-muted-foreground">Payment Address</p>
+                <p className="font-medium font-mono text-sm break-all">
+                  {paymentDetails.cryptoDetails.walletAddress}
+                </p>
+              </div>
+              <div className="bg-white p-3 rounded-lg border-2 border-gray-200 relative">
+                <QRCode
+                  value={paymentDetails.cryptoDetails.walletAddress}
+                  size={120}
+                  level="H"
+                  className="w-full h-full"
+                  style={{ height: "auto", maxWidth: "100%", width: "120px" }}
+                />
+                {logo && (
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="bg-white p-1 rounded">
+                      <img src={logo} alt="Logo" className="w-8 h-8 object-contain" />
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         )}
@@ -239,7 +249,7 @@ export function ModernTemplate({ logo, invoiceData, paymentDetails }: TemplatePr
             )}
             <div>
               <h1 className="text-4xl font-bold">INVOICE</h1>
-              <p className="text-lg opacity-90 mt-2">#{invoiceData.invoiceNumber || '000000'}</p>
+              <p className="text-lg opacity-90 mt-2">#{invoiceData.invoiceNumber}</p>
             </div>
           </div>
 
@@ -279,9 +289,9 @@ export function ModernTemplate({ logo, invoiceData, paymentDetails }: TemplatePr
             <p className="text-xs font-bold text-gray-600 uppercase tracking-wider">From</p>
           </div>
           <div className="space-y-1">
-            <p className="font-bold text-gray-900 text-lg">{invoiceData.fromCompany || 'Your Company Name'}</p>
+            <p className="font-bold text-gray-900 text-lg">{invoiceData.fromCompany}</p>
             <p className="text-sm text-gray-600 whitespace-pre-line">
-              {invoiceData.fromAddress || 'Your Address'}
+              {invoiceData.fromAddress}
             </p>
           </div>
         </div>
@@ -291,9 +301,9 @@ export function ModernTemplate({ logo, invoiceData, paymentDetails }: TemplatePr
             <p className="text-xs font-bold text-[#635bff] uppercase tracking-wider">Bill To</p>
           </div>
           <div className="space-y-1">
-            <p className="font-bold text-gray-900 text-lg">{invoiceData.toCompany || 'Client Company Name'}</p>
+            <p className="font-bold text-gray-900 text-lg">{invoiceData.toCompany}</p>
             <p className="text-sm text-gray-600 whitespace-pre-line">
-              {invoiceData.toAddress || 'Client Address'}
+              {invoiceData.toAddress}
             </p>
           </div>
         </div>
@@ -313,7 +323,7 @@ export function ModernTemplate({ logo, invoiceData, paymentDetails }: TemplatePr
           <tbody>
             {invoiceData.items.map((item, index) => (
               <tr key={index} className="border-b border-gray-100">
-                <td className="py-4 px-4 text-sm font-medium">{item.description || 'Item description'}</td>
+                <td className="py-4 px-4 text-sm font-medium">{item.description}</td>
                 <td className="py-4 px-4 text-sm text-right">{item.quantity}</td>
                 <td className="py-4 px-4 text-sm text-right">${item.price.toFixed(2)}</td>
                 <td className="py-4 px-4 text-sm text-right font-semibold">${(item.quantity * item.price).toFixed(2)}</td>
@@ -334,22 +344,28 @@ export function ModernTemplate({ logo, invoiceData, paymentDetails }: TemplatePr
       </div>
 
       {/* Payment Details */}
-      {paymentDetails.method === 'bank' && paymentDetails.bankDetails && (
-        <div className="space-y-4 pt-6 border-t-2 border-gray-200">
-          <p className="text-sm font-bold text-gray-700 uppercase tracking-wider">Payment Details</p>
+      <div className="space-y-4 pt-6 border-t-2 border-gray-200">
+        <p className="text-sm font-bold text-gray-700 uppercase tracking-wider">Payment Details</p>
+        {paymentDetails.method === 'bank' && paymentDetails.bankDetails && (
           <div className="grid grid-cols-2 gap-4 bg-gray-50 rounded-xl p-6">
-            <div className="space-y-1">
-              <p className="text-xs text-gray-500 font-semibold uppercase">Bank Name</p>
-              <p className="font-bold text-gray-900">{paymentDetails.bankDetails.bankName}</p>
-            </div>
-            <div className="space-y-1">
-              <p className="text-xs text-gray-500 font-semibold uppercase">Account Name</p>
-              <p className="font-bold text-gray-900">{paymentDetails.bankDetails.accountName}</p>
-            </div>
-            <div className="space-y-1">
-              <p className="text-xs text-gray-500 font-semibold uppercase">Account Number</p>
-              <p className="font-bold text-gray-900">{paymentDetails.bankDetails.accountNumber}</p>
-            </div>
+            {paymentDetails.bankDetails.bankName && (
+              <div className="space-y-1">
+                <p className="text-xs text-gray-500 font-semibold uppercase">Bank Name</p>
+                <p className="font-bold text-gray-900">{paymentDetails.bankDetails.bankName}</p>
+              </div>
+            )}
+            {paymentDetails.bankDetails.accountName && (
+              <div className="space-y-1">
+                <p className="text-xs text-gray-500 font-semibold uppercase">Account Name</p>
+                <p className="font-bold text-gray-900">{paymentDetails.bankDetails.accountName}</p>
+              </div>
+            )}
+            {paymentDetails.bankDetails.accountNumber && (
+              <div className="space-y-1">
+                <p className="text-xs text-gray-500 font-semibold uppercase">Account Number</p>
+                <p className="font-bold text-gray-900">{paymentDetails.bankDetails.accountNumber}</p>
+              </div>
+            )}
             {paymentDetails.bankDetails.swiftCode && (
               <div className="space-y-1">
                 <p className="text-xs text-gray-500 font-semibold uppercase">SWIFT/BIC</p>
@@ -357,6 +373,68 @@ export function ModernTemplate({ logo, invoiceData, paymentDetails }: TemplatePr
               </div>
             )}
           </div>
+        )}
+        {paymentDetails.method === 'crypto' && paymentDetails.cryptoDetails && paymentDetails.cryptoDetails.walletAddress && (
+          <div className="bg-gray-50 rounded-xl p-6">
+            <div className="flex gap-6 items-start">
+              <div className="flex-1 space-y-4">
+                {paymentDetails.cryptoDetails.currency && (
+                  <div className="space-y-1">
+                    <p className="text-xs text-gray-500 font-semibold uppercase">Currency</p>
+                    <p className="font-bold text-gray-900">{paymentDetails.cryptoDetails.currency}</p>
+                  </div>
+                )}
+                {paymentDetails.cryptoDetails.network && (
+                  <div className="space-y-1">
+                    <p className="text-xs text-gray-500 font-semibold uppercase">Chain</p>
+                    <p className="font-bold text-gray-900">{paymentDetails.cryptoDetails.network}</p>
+                  </div>
+                )}
+                <div className="space-y-1">
+                  <p className="text-xs text-gray-500 font-semibold uppercase">Address</p>
+                  <p className="font-bold text-gray-900 font-mono text-xs break-all">{paymentDetails.cryptoDetails.walletAddress}</p>
+                </div>
+              </div>
+              <div className="bg-white p-3 rounded-lg border-2 border-gray-200 relative flex-shrink-0">
+                <QRCode
+                  value={paymentDetails.cryptoDetails.walletAddress}
+                  size={120}
+                  level="H"
+                  style={{ height: "auto", maxWidth: "100%", width: "120px" }}
+                />
+                {logo && (
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="bg-white p-1 rounded">
+                      <img src={logo} alt="Logo" className="w-8 h-8 object-contain" />
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+        {paymentDetails.method === 'other' && paymentDetails.otherDetails && (
+          <div className="bg-gray-50 rounded-xl p-6">
+            <p className="text-sm whitespace-pre-line text-gray-700">{paymentDetails.otherDetails}</p>
+          </div>
+        )}
+      </div>
+
+      {/* Notes */}
+      {(invoiceData.notes || invoiceData.terms) && (
+        <div className="grid grid-cols-2 gap-12 pt-6 border-t border-gray-200">
+          {invoiceData.notes && (
+            <div className="space-y-2">
+              <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">Notes</p>
+              <p className="text-sm text-gray-600 whitespace-pre-line">{invoiceData.notes}</p>
+            </div>
+          )}
+          {invoiceData.terms && (
+            <div className="space-y-2">
+              <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">Terms</p>
+              <p className="text-sm text-gray-600 whitespace-pre-line">{invoiceData.terms}</p>
+            </div>
+          )}
         </div>
       )}
     </div>
@@ -378,7 +456,7 @@ export function MinimalTemplate({ logo, invoiceData, paymentDetails }: TemplateP
         </div>
 
         <div className="text-right">
-          <p className="text-3xl font-light text-gray-900">#{invoiceData.invoiceNumber || '000000'}</p>
+          <p className="text-3xl font-light text-gray-900">#{invoiceData.invoiceNumber}</p>
           <div className="mt-4 space-y-1 text-sm">
             <p className="text-gray-600">{invoiceData.date ? new Date(invoiceData.date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : 'Date'}</p>
             {invoiceData.dueDate && (
@@ -392,17 +470,17 @@ export function MinimalTemplate({ logo, invoiceData, paymentDetails }: TemplateP
       <div className="grid grid-cols-2 gap-16">
         <div className="space-y-2">
           <p className="text-xs font-semibold text-gray-500 uppercase tracking-widest mb-3">From</p>
-          <p className="font-semibold text-gray-900">{invoiceData.fromCompany || 'Your Company'}</p>
+          <p className="font-semibold text-gray-900">{invoiceData.fromCompany}</p>
           <p className="text-sm text-gray-600 whitespace-pre-line leading-relaxed">
-            {invoiceData.fromAddress || 'Your Address'}
+            {invoiceData.fromAddress}
           </p>
         </div>
 
         <div className="space-y-2">
           <p className="text-xs font-semibold text-gray-500 uppercase tracking-widest mb-3">To</p>
-          <p className="font-semibold text-gray-900">{invoiceData.toCompany || 'Client Company'}</p>
+          <p className="font-semibold text-gray-900">{invoiceData.toCompany}</p>
           <p className="text-sm text-gray-600 whitespace-pre-line leading-relaxed">
-            {invoiceData.toAddress || 'Client Address'}
+            {invoiceData.toAddress}
           </p>
         </div>
       </div>
@@ -412,7 +490,7 @@ export function MinimalTemplate({ logo, invoiceData, paymentDetails }: TemplateP
         {invoiceData.items.map((item, index) => (
           <div key={index} className="flex justify-between items-center py-3 border-b border-gray-200">
             <div className="flex-1">
-              <p className="font-medium text-gray-900">{item.description || 'Item'}</p>
+              <p className="font-medium text-gray-900">{item.description}</p>
               <p className="text-sm text-gray-500 mt-1">{item.quantity} × ${item.price.toFixed(2)}</p>
             </div>
             <p className="font-semibold text-gray-900 text-lg">${(item.quantity * item.price).toFixed(2)}</p>
@@ -446,6 +524,73 @@ export function MinimalTemplate({ logo, invoiceData, paymentDetails }: TemplateP
           </div>
         </div>
       )}
+
+      {paymentDetails.method === 'crypto' && paymentDetails.cryptoDetails && paymentDetails.cryptoDetails.walletAddress && (
+        <div className="space-y-3 pt-8 border-t border-gray-200">
+          <p className="text-xs font-semibold text-gray-500 uppercase tracking-widest">Payment Information</p>
+          <div className="flex gap-6 items-start">
+            <div className="flex-1 space-y-3">
+              {paymentDetails.cryptoDetails.currency && (
+                <div>
+                  <p className="text-xs text-gray-500 mb-1">Currency</p>
+                  <p className="font-medium">{paymentDetails.cryptoDetails.currency}</p>
+                </div>
+              )}
+              {paymentDetails.cryptoDetails.network && (
+                <div>
+                  <p className="text-xs text-gray-500 mb-1">Chain</p>
+                  <p className="font-medium">{paymentDetails.cryptoDetails.network}</p>
+                </div>
+              )}
+              <div>
+                <p className="text-xs text-gray-500 mb-1">Address</p>
+                <p className="font-mono text-sm break-all">{paymentDetails.cryptoDetails.walletAddress}</p>
+              </div>
+            </div>
+            <div className="bg-white p-2 border border-gray-900 relative">
+              <QRCode
+                value={paymentDetails.cryptoDetails.walletAddress}
+                size={100}
+                level="H"
+                className="w-full h-full"
+                style={{ height: "auto", maxWidth: "100%", width: "100px" }}
+              />
+              {logo && (
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="bg-white p-1">
+                    <img src={logo} alt="Logo" className="w-6 h-6 object-contain" />
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {paymentDetails.method === 'other' && paymentDetails.otherDetails && (
+        <div className="space-y-3 pt-8 border-t border-gray-200">
+          <p className="text-xs font-semibold text-gray-500 uppercase tracking-widest">Payment Information</p>
+          <p className="text-sm whitespace-pre-line">{paymentDetails.otherDetails}</p>
+        </div>
+      )}
+
+      {/* Notes and Terms */}
+      {(invoiceData.notes || invoiceData.terms) && (
+        <div className="space-y-6 pt-8 border-t border-gray-200">
+          {invoiceData.notes && (
+            <div>
+              <p className="text-xs font-semibold text-gray-500 uppercase tracking-widest mb-2">Notes</p>
+              <p className="text-sm text-gray-600 whitespace-pre-line">{invoiceData.notes}</p>
+            </div>
+          )}
+          {invoiceData.terms && (
+            <div>
+              <p className="text-xs font-semibold text-gray-500 uppercase tracking-widest mb-2">Terms & Conditions</p>
+              <p className="text-sm text-gray-600 whitespace-pre-line">{invoiceData.terms}</p>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
@@ -458,14 +603,14 @@ export function ArtisticTemplate({ logo, invoiceData, paymentDetails }: Template
         <div className="space-y-4">
           <p className="text-xs uppercase tracking-widest text-gray-500">From:</p>
           <div className="text-sm leading-relaxed">
-            <p className="font-semibold">{invoiceData.fromCompany || 'Kailash S R'}</p>
-            <p className="text-gray-600 whitespace-pre-line">{invoiceData.fromAddress || 'Your Creative Studio,\nBangalore, India'}</p>
+            <p className="font-semibold">{invoiceData.fromCompany}</p>
+            <p className="text-gray-600 whitespace-pre-line">{invoiceData.fromAddress}</p>
           </div>
         </div>
 
         <div className="text-right">
           <h1 className="text-2xl font-light tracking-wide">Invoice</h1>
-          <p className="text-lg mt-1">#{invoiceData.invoiceNumber || '074'}</p>
+          <p className="text-lg mt-1">#{invoiceData.invoiceNumber}</p>
         </div>
       </div>
 
@@ -473,7 +618,7 @@ export function ArtisticTemplate({ logo, invoiceData, paymentDetails }: Template
       <div className="grid grid-cols-2 gap-12">
         <div className="space-y-3">
           <p className="text-xs uppercase tracking-widest text-gray-500">Billed to:</p>
-          <p className="text-sm font-semibold">{invoiceData.toCompany || 'Client Studio'}</p>
+          <p className="text-sm font-semibold">{invoiceData.toCompany}</p>
         </div>
 
         <div className="space-y-2 text-sm">
@@ -506,7 +651,7 @@ export function ArtisticTemplate({ logo, invoiceData, paymentDetails }: Template
         </div>
         {invoiceData.items.map((item, index) => (
           <div key={index} className="flex justify-between text-sm">
-            <span>{item.description || 'Service'}</span>
+            <span>{item.description}</span>
             <span className="font-medium">{item.quantity * item.price}</span>
           </div>
         ))}
@@ -544,20 +689,25 @@ export function ArtisticTemplate({ logo, invoiceData, paymentDetails }: Template
         </svg>
       </div>
 
-      {/* Bank Details */}
+      {/* Payment Details */}
       {paymentDetails.method === 'bank' && paymentDetails.bankDetails && (
         <div className="space-y-4 pt-6 relative z-10">
-          <p className="text-sm font-semibold border-b border-gray-300 pb-2">Bank Details</p>
+          <p className="text-sm font-semibold border-b border-gray-300 pb-2">Payment Details</p>
           <div className="text-sm space-y-1.5 leading-relaxed">
             <div className="flex">
               <span className="text-gray-600 w-32">Name</span>
               <span className="text-gray-600">:</span>
-              <span className="ml-2 font-medium">{paymentDetails.bankDetails.accountName || 'Kailash SR'}</span>
+              <span className="ml-2 font-medium">{paymentDetails.bankDetails.accountName}</span>
+            </div>
+            <div className="flex">
+              <span className="text-gray-600 w-32">Bank</span>
+              <span className="text-gray-600">:</span>
+              <span className="ml-2 font-medium">{paymentDetails.bankDetails.bankName}</span>
             </div>
             <div className="flex">
               <span className="text-gray-600 w-32">Account Number</span>
               <span className="text-gray-600">:</span>
-              <span className="ml-2 font-medium font-mono">{paymentDetails.bankDetails.accountNumber || '00000012345789'}</span>
+              <span className="ml-2 font-medium font-mono">{paymentDetails.bankDetails.accountNumber}</span>
             </div>
             {paymentDetails.bankDetails.swiftCode && (
               <div className="flex">
@@ -566,18 +716,79 @@ export function ArtisticTemplate({ logo, invoiceData, paymentDetails }: Template
                 <span className="ml-2 font-medium font-mono">{paymentDetails.bankDetails.swiftCode}</span>
               </div>
             )}
-            <div className="flex">
-              <span className="text-gray-600 w-32">IFSC</span>
-              <span className="text-gray-600">:</span>
-              <span className="ml-2 font-medium font-mono">{paymentDetails.bankDetails.bankName || 'HDFC0001468'}</span>
+          </div>
+        </div>
+      )}
+
+      {paymentDetails.method === 'crypto' && paymentDetails.cryptoDetails && paymentDetails.cryptoDetails.walletAddress && (
+        <div className="space-y-4 pt-6 relative z-10">
+          <p className="text-sm font-semibold border-b border-gray-300 pb-2">Payment Details</p>
+          <div className="flex gap-6 items-start">
+            <div className="flex-1 text-sm space-y-2">
+              {paymentDetails.cryptoDetails.currency && (
+                <div className="flex">
+                  <span className="text-gray-600 w-32">Currency</span>
+                  <span className="text-gray-600">:</span>
+                  <span className="ml-2 font-medium">{paymentDetails.cryptoDetails.currency}</span>
+                </div>
+              )}
+              {paymentDetails.cryptoDetails.network && (
+                <div className="flex">
+                  <span className="text-gray-600 w-32">Chain</span>
+                  <span className="text-gray-600">:</span>
+                  <span className="ml-2 font-medium">{paymentDetails.cryptoDetails.network}</span>
+                </div>
+              )}
+              <div>
+                <div className="flex mb-1">
+                  <span className="text-gray-600 w-32">Address</span>
+                  <span className="text-gray-600">:</span>
+                </div>
+                <p className="font-mono text-xs break-all ml-2">{paymentDetails.cryptoDetails.walletAddress}</p>
+              </div>
+            </div>
+            <div className="bg-white p-2 border border-gray-300 relative shrink-0">
+              <QRCode
+                value={paymentDetails.cryptoDetails.walletAddress}
+                size={100}
+                level="H"
+                className="w-full h-full"
+                style={{ height: "auto", maxWidth: "100%", width: "100px" }}
+              />
+              {logo && (
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="bg-white p-1">
+                    <img src={logo} alt="Logo" className="w-6 h-6 object-contain" />
+                  </div>
+                </div>
+              )}
             </div>
           </div>
+        </div>
+      )}
 
-          <p className="text-xs text-gray-600 leading-relaxed pt-4">
-            You can pay using wire transfer or PayPal. Whatever is convenient for you. Thanks for working with me! Lots more to come in the near future.
-          </p>
+      {paymentDetails.method === 'other' && paymentDetails.otherDetails && (
+        <div className="space-y-4 pt-6 relative z-10">
+          <p className="text-sm font-semibold border-b border-gray-300 pb-2">Payment Details</p>
+          <p className="text-sm whitespace-pre-line leading-relaxed">{paymentDetails.otherDetails}</p>
+        </div>
+      )}
 
-          <p className="text-xs italic text-gray-500 pt-2">-Kailash</p>
+      {/* Notes and Terms */}
+      {(invoiceData.notes || invoiceData.terms) && (
+        <div className="space-y-6 pt-6 relative z-10">
+          {invoiceData.notes && (
+            <div>
+              <p className="text-sm font-semibold border-b border-gray-300 pb-2">Notes</p>
+              <p className="text-sm text-gray-600 whitespace-pre-line leading-relaxed pt-3">{invoiceData.notes}</p>
+            </div>
+          )}
+          {invoiceData.terms && (
+            <div>
+              <p className="text-sm font-semibold border-b border-gray-300 pb-2">Terms & Conditions</p>
+              <p className="text-sm text-gray-600 whitespace-pre-line leading-relaxed pt-3">{invoiceData.terms}</p>
+            </div>
+          )}
         </div>
       )}
     </div>

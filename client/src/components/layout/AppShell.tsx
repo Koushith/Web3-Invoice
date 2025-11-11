@@ -1,17 +1,5 @@
 import { Button } from '@/components/ui/button';
-import {
-  LayoutDashboard,
-  FileText,
-  Users,
-  Settings,
-  LogOut,
-  Key,
-  Webhook,
-  UserCircle,
-  Users2,
-  DollarSign,
-  BarChart3,
-} from 'lucide-react';
+import { LayoutDashboard, FileText, Users, Settings, LogOut, Key, Webhook, DollarSign, BarChart3 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import { useState } from 'react';
@@ -42,10 +30,10 @@ export function AppShell() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   return (
-    <div className="min-h-screen bg-[#F6F9FC]">
+    <div className="min-h-screen bg-[#FEFFFE]">
       <div className="flex">
         <AppSidebar isMobileMenuOpen={isMobileMenuOpen} />
-        <main className="md:ml-[280px] flex-1 min-h-screen">
+        <main className="md:ml-[280px] flex-1 min-h-screen bg-[#FEFFFE]">
           <div className="p-8 max-w-[1500px] mx-auto">
             <Outlet />
           </div>
@@ -87,8 +75,6 @@ function AppSidebar({ isMobileMenuOpen }: { isMobileMenuOpen: boolean }) {
           <NavItem icon={<FileText size={20} />} label="Invoices" to="/invoices" />
           <NavItem icon={<Users size={20} />} label="Customers" to="/customers" />
           <NavItem icon={<DollarSign size={20} />} label="Payments" to="/payments" />
-          <NavItem icon={<BarChart3 size={20} />} label="Reports" to="/reports" />
-          <NavItem icon={<Users2 size={20} />} label="Team" to="/team" />
           <NavItem icon={<Settings size={20} />} label="Settings" to="/settings" />
 
           <div className="mt-8 mb-3 px-3">
@@ -96,11 +82,6 @@ function AppSidebar({ isMobileMenuOpen }: { isMobileMenuOpen: boolean }) {
           </div>
           <NavItem icon={<Key size={20} />} label="API Keys" to="/api-keys" />
           <NavItem icon={<Webhook size={20} />} label="Webhooks" to="/webhooks" />
-
-          <div className="mt-8 mb-3 px-3">
-            <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Account</div>
-          </div>
-          <NavItem icon={<UserCircle size={20} />} label="Profile" to="/profile" />
         </div>
 
         {/* User Profile Section with Dropdown */}

@@ -21,6 +21,7 @@ import type {
   ApiKey,
   TeamMember,
   Passkey,
+  Organization,
 } from '@/types/models';
 
 // ==================== Base Query Configuration ====================
@@ -87,7 +88,7 @@ const baseQueryWithReauth: BaseQueryFn<
 export const apiService = createApi({
   reducerPath: 'api',
   baseQuery: baseQueryWithReauth,
-  tagTypes: ['User', 'Invoice', 'Customer', 'Payment', 'Webhook', 'ApiKey', 'Team', 'Dashboard', 'Passkey'],
+  tagTypes: ['User', 'Invoice', 'Customer', 'Payment', 'Webhook', 'ApiKey', 'Team', 'Dashboard', 'Passkey', 'Organization'],
   endpoints: (builder) => ({
     // ==================== Auth Endpoints ====================
 
@@ -122,6 +123,24 @@ export const apiService = createApi({
         url: '/auth/me',
         method: 'DELETE',
       }),
+    }),
+
+    // ==================== User Profile Endpoints ====================
+
+    getUserProfile: builder.query<User, void>({
+      query: () => '/users/profile/me',
+      transformResponse: (response: ApiResponse<User>) => response.data!,
+      providesTags: ['User'],
+    }),
+
+    updateUserProfile: builder.mutation<User, Partial<User>>({
+      query: (data) => ({
+        url: '/users/profile/me',
+        method: 'PUT',
+        body: data,
+      }),
+      transformResponse: (response: ApiResponse<User>) => response.data!,
+      invalidatesTags: ['User'],
     }),
 
     // ==================== Invoice Endpoints ====================
@@ -435,6 +454,24 @@ export const apiService = createApi({
       }),
       invalidatesTags: ['Passkey'],
     }),
+
+    // ==================== Organization Endpoints ====================
+
+    getOrganization: builder.query<Organization, void>({
+      query: () => '/organization',
+      transformResponse: (response: ApiResponse<Organization>) => response.data!,
+      providesTags: ['Organization'],
+    }),
+
+    updateOrganization: builder.mutation<Organization, Partial<Organization>>({
+      query: (data) => ({
+        url: '/organization',
+        method: 'PUT',
+        body: data,
+      }),
+      transformResponse: (response: ApiResponse<Organization>) => response.data!,
+      invalidatesTags: ['Organization'],
+    }),
   }),
 });
 
@@ -446,6 +483,10 @@ export const {
   useUpdateProfileMutation,
   useSyncUserMutation,
   useDeleteAccountMutation,
+
+  // User Profile
+  useGetUserProfileQuery,
+  useUpdateUserProfileMutation,
 
   // Invoices
   useGetInvoicesQuery,
@@ -492,6 +533,10 @@ export const {
   // Passkeys
   useGetPasskeysQuery,
   useDeletePasskeyMutation,
+
+  // Organization
+  useGetOrganizationQuery,
+  useUpdateOrganizationMutation,
 } = apiService;
 
 // ==================== Export Utilities ====================

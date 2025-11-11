@@ -158,7 +158,7 @@
 
 @media print {
   @page {
-    size: A4;
+    size: A4 portrait;
     margin: 0;
   }
 
@@ -166,15 +166,44 @@
     margin: 0;
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
+    color-adjust: exact;
   }
 
   .print\:hidden {
     display: none !important;
   }
+
+  .invoice-preview {
+    width: 210mm !important;
+    min-height: 297mm !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    box-shadow: none !important;
+    page-break-after: always;
+    transform: none !important;
+  }
+
+  /* Hide everything except the invoice preview */
+  body > *:not(.invoice-preview) {
+    display: none !important;
+  }
+
+  /* Ensure the invoice preview is visible */
+  .invoice-preview, .invoice-preview * {
+    visibility: visible !important;
+  }
+
+  /* Prevent page breaks inside important elements */
+  .invoice-preview table,
+  .invoice-preview tr,
+  .invoice-preview td,
+  .invoice-preview th {
+    page-break-inside: avoid;
+  }
 }
 
 /* Hide browser's default header/footer when printing */
 @page {
-  size: A4;
+  size: A4 portrait;
   margin: 0;
 }

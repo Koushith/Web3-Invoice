@@ -3,21 +3,25 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Card } from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator';
-import { ImagePlus, Trash2, Plus, Download, Printer, Eye, ArrowLeft, FileText, Building2, DollarSign, CreditCard, MessageSquare, Type, Loader2 } from 'lucide-react';
+import { Trash2, Plus, ArrowLeft, Loader2, Printer, Download, ImagePlus } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { QRCode } from 'react-qr-code';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useNavigate } from 'react-router-dom';
+import { StandardTemplate, ModernTemplate, MinimalTemplate, ArtisticTemplate } from '@/components/invoice/InvoiceTemplates';
+import { useGetCustomersQuery, useCreateInvoiceMutation, useGetOrganizationQuery } from '@/services/api.service';
+import { toast } from 'sonner';
+import { auth } from '@/lib/firebase';
 import { useReactToPrint } from 'react-to-print';
 import { toPng } from 'html-to-image';
 import { jsPDF } from 'jspdf';
-import { useNavigate } from 'react-router-dom';
-import { StandardTemplate, ModernTemplate, MinimalTemplate, ArtisticTemplate } from '@/components/invoice/InvoiceTemplates';
-import { useGetCustomersQuery, useCreateInvoiceMutation } from '@/services/api.service';
-import { toast } from 'sonner';
-import { auth } from '@/lib/firebase';
+
+export type InvoiceStyle = 'standard' | 'modern' | 'minimal' | 'artistic';
+
+export interface InvoiceStyleProps {
+  logo: string | null;
+  invoiceData: InvoiceData;
+  paymentDetails: PaymentDetails;
+}
 
 interface InvoiceItem {
   description: string;
@@ -61,21 +65,13 @@ interface PaymentDetails {
   otherDetails?: string;
 }
 
-export type InvoiceStyle = 'standard' | 'modern' | 'minimal' | 'artistic';
-
-export interface InvoiceStyleProps {
-  logo: string | null;
-  invoiceData: InvoiceData;
-  paymentDetails: PaymentDetails;
-}
-
 export const NewInvoice = () => {
   const navigate = useNavigate();
   const [isAuthReady, setIsAuthReady] = useState(false);
   const [selectedCustomerId, setSelectedCustomerId] = useState<string>('');
   const [logo, setLogo] = useState<string | null>(null);
-  const [invoiceFont, setInvoiceFont] = useState<string>('default');
   const [invoiceStyle, setInvoiceStyle] = useState<InvoiceStyle>('standard');
+  const [showFromSection, setShowFromSection] = useState(false);
   const [invoiceData, setInvoiceData] = useState({
     invoiceNumber: '',
     date: new Date().toISOString().split('T')[0],
@@ -96,6 +92,12 @@ export const NewInvoice = () => {
       bankName: '',
       swiftCode: '',
     },
+    cryptoDetails: {
+      currency: '',
+      network: '',
+      walletAddress: '',
+    },
+    otherDetails: '',
   });
 
   const printRef = useRef<HTMLDivElement>(null);
@@ -117,6 +119,62 @@ export const NewInvoice = () => {
   );
   const customers = customersData?.data || [];
 
+  // Fetch organization data
+  const { data: organization } = useGetOrganizationQuery(undefined, {
+    skip: !isAuthReady,
+  });
+
+  // Pre-populate from fields with organization data
+  useEffect(() => {
+    if (organization) {
+      setInvoiceData((prev) => ({
+        ...prev,
+        fromCompany: organization.name || '',
+        fromAddress: organization.address
+          ? [
+              organization.address.street,
+              [organization.address.city, organization.address.state, organization.address.zipCode]
+                .filter(Boolean)
+                .join(', '),
+              organization.address.country,
+            ]
+              .filter(Boolean)
+              .join('\n')
+          : '',
+      }));
+
+      // Set organization logo as default
+      if (organization.logo && !logo) {
+        setLogo(organization.logo);
+      }
+    }
+  }, [organization]);
+
+  // Function to restore organization details
+  const restoreOrganizationDetails = () => {
+    if (organization) {
+      setInvoiceData((prev) => ({
+        ...prev,
+        fromCompany: organization.name || '',
+        fromAddress: organization.address
+          ? [
+              organization.address.street,
+              [organization.address.city, organization.address.state, organization.address.zipCode]
+                .filter(Boolean)
+                .join(', '),
+              organization.address.country,
+            ]
+              .filter(Boolean)
+              .join('\n')
+          : '',
+      }));
+      if (organization.logo) {
+        setLogo(organization.logo);
+      }
+      toast.success('Organization details restored');
+    }
+  };
+
   // Create invoice mutation
   const [createInvoice, { isLoading: isCreating }] = useCreateInvoiceMutation();
 
@@ -136,13 +194,21 @@ export const NewInvoice = () => {
     }
   }, [selectedCustomerId, customers]);
 
-  const getFontFamily = () => {
-    switch (invoiceFont) {
-      case 'apercu':
-        return "'Apercu Mono Pro', monospace";
-      case 'default':
-      default:
-        return 'inherit';
+  const addItem = () => {
+    setInvoiceData({
+      ...invoiceData,
+      items: [...invoiceData.items, { description: '', quantity: 1, price: 0 }],
+    });
+  };
+
+  const handleLogoUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setLogo(reader.result as string);
+      };
+      reader.readAsDataURL(file);
     }
   };
 
@@ -165,73 +231,69 @@ export const NewInvoice = () => {
         }
       }
     `,
-    onBeforeGetContent: () => {
-      return Promise.resolve();
-    },
-    onPrintError: (error) => {
-      console.error('Print failed:', error);
-    },
   });
 
   const handleDownload = async () => {
     if (!printRef.current) return;
 
     try {
-      // Convert the preview div to a PNG image
       const imgData = await toPng(printRef.current, {
         quality: 1.0,
         pixelRatio: 2,
       });
 
-      // Create PDF with A4 dimensions
       const pdf = new jsPDF({
         orientation: 'portrait',
         unit: 'mm',
         format: 'a4',
       });
 
-      // Calculate dimensions to fit A4
-      const imgWidth = 210; // A4 width in mm
+      const imgWidth = 210;
       const imgHeight = (printRef.current.offsetHeight * imgWidth) / printRef.current.offsetWidth;
 
-      // Add the image to the PDF
       pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
-
-      // Download the PDF
       pdf.save(`invoice-${invoiceData.invoiceNumber || 'draft'}.pdf`);
     } catch (error) {
       console.error('Error generating PDF:', error);
-      // Fallback to print dialog if PDF generation fails
-      handlePrint();
+      toast.error('Failed to generate PDF');
     }
-  };
-
-  const handleLogoUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setLogo(reader.result as string);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  const addItem = () => {
-    setInvoiceData({
-      ...invoiceData,
-      items: [...invoiceData.items, { description: '', quantity: 1, price: 0 }],
-    });
   };
 
   const handleCreateInvoice = async () => {
+    // Validation
     if (!selectedCustomerId) {
       toast.error('Please select a customer');
       return;
     }
 
-    if (invoiceData.items.length === 0) {
+    if (!invoiceData.invoiceNumber?.trim()) {
+      toast.error('Please enter an invoice number');
+      return;
+    }
+
+    if (!invoiceData.date) {
+      toast.error('Please select an invoice date');
+      return;
+    }
+
+    // Filter out completely empty items (rows that were never filled)
+    const validItems = invoiceData.items.filter(item => item.description?.trim());
+
+    if (validItems.length === 0) {
       toast.error('Please add at least one line item');
+      return;
+    }
+
+    // Validate the items that have descriptions
+    const invalidQuantity = validItems.filter(item => item.quantity <= 0);
+    if (invalidQuantity.length > 0) {
+      toast.error('Item quantities must be greater than 0');
+      return;
+    }
+
+    const invalidPrice = validItems.filter(item => item.price < 0);
+    if (invalidPrice.length > 0) {
+      toast.error('Item prices cannot be negative');
       return;
     }
 
@@ -241,8 +303,8 @@ export const NewInvoice = () => {
         issueDate: invoiceData.date,
         dueDate: invoiceData.dueDate || undefined,
         currency: 'USD',
-        lineItems: invoiceData.items.map(item => ({
-          description: item.description,
+        lineItems: validItems.map(item => ({
+          description: item.description.trim(),
           quantity: item.quantity,
           unitPrice: item.price,
           amount: item.quantity * item.price,
@@ -262,663 +324,600 @@ export const NewInvoice = () => {
     }
   };
 
-  return (
-    <div className="min-h-screen">
-      <div className="max-w-[1400px] mx-auto px-8 py-12">
-        {/* Header */}
-        <div className="mb-8">
-          <button
-            onClick={() => navigate('/invoices')}
-            className="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900 mb-4 group"
-          >
-            <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
-            Back to Invoices
-          </button>
-          <h1 className="text-[28px] font-bold text-gray-900 tracking-tight">Create New Invoice</h1>
-          <p className="text-sm text-gray-500 mt-2">Fill in the details to generate a professional invoice</p>
-        </div>
+  const subtotal = invoiceData.items.reduce((sum, item) => sum + item.quantity * item.price, 0);
 
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <div className="border-b border-gray-200">
+        <div className="max-w-[1400px] mx-auto px-6 sm:px-8 lg:px-12">
+          <div className="py-8">
+            <button
+              onClick={() => navigate('/invoices')}
+              className="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900 mb-6 group"
+            >
+              <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
+              Invoices
+            </button>
+
+            <div className="flex items-start justify-between">
+              <div className="flex-1">
+                <h1 className="text-2xl font-semibold text-gray-900">Create invoice</h1>
+                <p className="text-sm text-gray-500 mt-1">
+                  Create a new invoice for your customer
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="max-w-[1400px] mx-auto px-6 sm:px-8 lg:px-12 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Left Side - Form */}
-          <div className="space-y-6">
-            {/* Logo Upload Card */}
-            <div className="bg-white/80 backdrop-blur-sm border border-gray-200/60 rounded-xl p-6 shadow-sm">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-50 to-indigo-50 flex items-center justify-center">
-                  <ImagePlus className="w-5 h-5 text-blue-600" />
-                </div>
-                <div>
-                  <h2 className="text-lg font-semibold text-gray-900">Company Logo</h2>
-                  <p className="text-sm text-gray-500">Add your brand identity</p>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-4">
-                <input accept="image/*" className="hidden" id="logo-upload" type="file" onChange={handleLogoUpload} />
+          <div className="bg-white border border-gray-200 rounded-lg p-6 space-y-6 h-fit">
+            {/* Logo Upload */}
+            <div>
+              <Label className="text-sm font-medium text-gray-900 mb-2 block">Logo (optional)</Label>
+              <div className="flex items-center gap-3">
+                <input
+                  accept="image/*"
+                  className="hidden"
+                  id="logo-upload"
+                  type="file"
+                  onChange={handleLogoUpload}
+                />
                 <Label
                   htmlFor="logo-upload"
-                  className="flex items-center gap-2 cursor-pointer border border-gray-300 rounded-lg px-4 py-2 hover:bg-gray-50 transition-colors"
+                  className="cursor-pointer border border-gray-300 rounded-md px-3 py-1.5 text-sm hover:bg-gray-50 transition-colors flex items-center gap-2"
                 >
                   <ImagePlus className="h-4 w-4" />
-                  {logo ? 'Change Logo' : 'Add Logo'}
+                  {logo ? 'Change' : 'Upload'}
                 </Label>
                 {logo && (
-                  <Button variant="outline" size="sm" onClick={() => setLogo(null)} className="text-red-600 hover:bg-red-50 border-red-200">
-                    <Trash2 className="h-4 w-4 mr-2" />
-                    Remove
-                  </Button>
+                  <>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setLogo(null)}
+                      className="h-8 px-2 text-red-600 hover:text-red-700 hover:bg-red-50"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                    <img src={logo} alt="Logo" className="h-10 object-contain" />
+                  </>
                 )}
               </div>
-              {logo && (
-                <div className="mt-4 p-4 border border-gray-200 rounded-lg bg-gray-50">
-                  <img src={logo} alt="Company Logo" className="max-h-20 object-contain" />
+            </div>
+
+            {/* Customer Section */}
+            <div>
+              <Label htmlFor="customer" className="text-sm font-medium text-gray-900 mb-2 block">
+                Customer
+              </Label>
+              <Select value={selectedCustomerId} onValueChange={setSelectedCustomerId}>
+                <SelectTrigger className="h-9 border-gray-300 rounded-md">
+                  <SelectValue placeholder="Find or add a customer..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {customers.map((customer: any) => (
+                    <SelectItem key={customer._id || customer.id} value={customer._id || customer.id}>
+                      {customer.company || customer.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* From Details (Collapsible) */}
+            <div className="border border-gray-200 rounded-lg">
+              <button
+                type="button"
+                onClick={() => setShowFromSection(!showFromSection)}
+                className="w-full px-4 py-3 flex items-center justify-between text-left hover:bg-gray-50 transition-colors rounded-t-lg"
+              >
+                <div>
+                  <p className="text-sm font-medium text-gray-900">From (Your Business)</p>
+                  <p className="text-xs text-gray-500 mt-0.5">
+                    {showFromSection ? 'Click to hide' : 'Auto-filled from organization • Click to edit'}
+                  </p>
+                </div>
+                <div className="text-gray-400">
+                  {showFromSection ? '−' : '+'}
+                </div>
+              </button>
+
+              {showFromSection && (
+                <div className="px-4 pb-4 space-y-4 border-t border-gray-200">
+                  <div className="flex justify-end pt-3">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={restoreOrganizationDetails}
+                      className="h-7 px-3 text-xs"
+                    >
+                      Use Organization Details
+                    </Button>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="fromCompany" className="text-sm font-medium text-gray-900 mb-2 block">
+                      Company name
+                    </Label>
+                    <Input
+                      id="fromCompany"
+                      value={invoiceData.fromCompany}
+                      onChange={(e) => setInvoiceData({ ...invoiceData, fromCompany: e.target.value })}
+                      className="h-9 border-gray-300 rounded-md"
+                      placeholder="Your company name"
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="fromAddress" className="text-sm font-medium text-gray-900 mb-2 block">
+                      Address
+                    </Label>
+                    <Textarea
+                      id="fromAddress"
+                      value={invoiceData.fromAddress}
+                      onChange={(e) => setInvoiceData({ ...invoiceData, fromAddress: e.target.value })}
+                      className="border-gray-300 rounded-md resize-none"
+                      rows={3}
+                      placeholder="Street address&#10;City, State ZIP&#10;Country"
+                    />
+                  </div>
                 </div>
               )}
             </div>
 
-            {/* Invoice Details Card */}
-            <div className="bg-white/80 backdrop-blur-sm border border-gray-200/60 rounded-xl p-6 shadow-sm">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-emerald-50 to-green-50 flex items-center justify-center">
-                  <FileText className="w-5 h-5 text-emerald-600" />
-                </div>
-                <div>
-                  <h2 className="text-lg font-semibold text-gray-900">Invoice Details</h2>
-                  <p className="text-sm text-gray-500">Basic invoice information</p>
-                </div>
-              </div>
+            {/* Invoice Details */}
+            <div>
+              <Label htmlFor="invoiceNumber" className="text-sm font-medium text-gray-900 mb-2 block">
+                Invoice number *
+              </Label>
+              <Input
+                id="invoiceNumber"
+                placeholder="INV-001"
+                value={invoiceData.invoiceNumber}
+                onChange={(e) => setInvoiceData({ ...invoiceData, invoiceNumber: e.target.value })}
+                className="h-9 border-gray-300 rounded-md"
+              />
+            </div>
 
-              <div className="grid grid-cols-2 gap-5">
-                <div>
-                  <Label htmlFor="invoice-number" className="text-sm font-semibold text-gray-700 mb-2 block">Invoice Number</Label>
-                  <Input
-                    id="invoice-number"
-                    value={invoiceData.invoiceNumber}
-                    onChange={(e) => setInvoiceData({ ...invoiceData, invoiceNumber: e.target.value })}
-                    className="h-11 border-gray-300 rounded-lg"
-                    placeholder="INV-0001"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="date" className="text-sm font-semibold text-gray-700 mb-2 block">Date</Label>
-                  <Input
-                    id="date"
-                    type="date"
-                    value={invoiceData.date}
-                    onChange={(e) => setInvoiceData({ ...invoiceData, date: e.target.value })}
-                    className="h-11 border-gray-300 rounded-lg"
-                  />
-                </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="date" className="text-sm font-medium text-gray-900 mb-2 block">
+                  Invoice date
+                </Label>
+                <Input
+                  id="date"
+                  type="date"
+                  value={invoiceData.date}
+                  onChange={(e) => setInvoiceData({ ...invoiceData, date: e.target.value })}
+                  className="h-9 border-gray-300 rounded-md"
+                />
+              </div>
+              <div>
+                <Label htmlFor="dueDate" className="text-sm font-medium text-gray-900 mb-2 block">
+                  Due date
+                </Label>
+                <Input
+                  id="dueDate"
+                  type="date"
+                  value={invoiceData.dueDate}
+                  onChange={(e) => setInvoiceData({ ...invoiceData, dueDate: e.target.value })}
+                  className="h-9 border-gray-300 rounded-md"
+                />
               </div>
             </div>
 
-            {/* Company Details Card */}
-            <div className="bg-white/80 backdrop-blur-sm border border-gray-200/60 rounded-xl p-6 shadow-sm">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-50 to-violet-50 flex items-center justify-center">
-                  <Building2 className="w-5 h-5 text-purple-600" />
-                </div>
-                <div>
-                  <h2 className="text-lg font-semibold text-gray-900">Company Details</h2>
-                  <p className="text-sm text-gray-500">From and Bill To information</p>
-                </div>
-              </div>
-
-              <div className="space-y-6">
-                {/* Customer Selector */}
-                <div>
-                  <Label htmlFor="customer" className="text-sm font-semibold text-gray-700 mb-2 block">
-                    Select Customer *
-                  </Label>
-                  <Select value={selectedCustomerId} onValueChange={setSelectedCustomerId}>
-                    <SelectTrigger className="h-11 border-gray-300 rounded-lg">
-                      <SelectValue placeholder="Choose a customer" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {customers.map((customer: any) => (
-                        <SelectItem key={customer._id || customer.id} value={customer._id || customer.id}>
-                          {customer.company || customer.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <Separator />
-
-                {/* From Section */}
-                <div>
-                  <h3 className="text-sm font-semibold text-gray-700 mb-3">From (Your Company)</h3>
-                  <div className="space-y-3">
-                    <Input
-                      id="from-company"
-                      value={invoiceData.fromCompany}
-                      onChange={(e) => setInvoiceData({ ...invoiceData, fromCompany: e.target.value })}
-                      placeholder="Your Company Name"
-                      className="h-11 border-gray-300 rounded-lg"
-                    />
-                    <Textarea
-                      id="from-address"
-                      value={invoiceData.fromAddress}
-                      onChange={(e) => setInvoiceData({ ...invoiceData, fromAddress: e.target.value })}
-                      placeholder="Your Company Address"
-                      className="min-h-[80px] border-gray-300 rounded-lg resize-none"
-                    />
-                  </div>
-                </div>
-
-                <Separator />
-
-                {/* To Section */}
-                <div>
-                  <h3 className="text-sm font-semibold text-gray-700 mb-3">Bill To (Client)</h3>
-                  <div className="space-y-3">
-                    <Input
-                      id="to-company"
-                      value={invoiceData.toCompany}
-                      onChange={(e) => setInvoiceData({ ...invoiceData, toCompany: e.target.value })}
-                      placeholder="Client Company Name"
-                      className="h-11 border-gray-300 rounded-lg"
-                    />
-                    <Textarea
-                      id="to-address"
-                      value={invoiceData.toAddress}
-                      onChange={(e) => setInvoiceData({ ...invoiceData, toAddress: e.target.value })}
-                      placeholder="Client Address"
-                      className="min-h-[80px] border-gray-300 rounded-lg resize-none"
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Line Items Card */}
-            <div className="bg-white/80 backdrop-blur-sm border border-gray-200/60 rounded-xl p-6 shadow-sm">
-              <div className="flex items-center justify-between mb-6">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-orange-50 to-amber-50 flex items-center justify-center">
-                    <DollarSign className="w-5 h-5 text-orange-600" />
-                  </div>
-                  <div>
-                    <h2 className="text-lg font-semibold text-gray-900">Line Items</h2>
-                    <p className="text-sm text-gray-500">Add products or services</p>
-                  </div>
-                </div>
+            {/* Items Section */}
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <Label className="text-sm font-medium text-gray-900">Items</Label>
                 <Button
                   variant="outline"
+                  size="sm"
                   onClick={addItem}
-                  className="h-9 px-4 border-gray-300 rounded-lg"
+                  className="h-7 px-2 text-xs border-gray-300 rounded-md"
                 >
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add Item
+                  <Plus className="h-3 w-3 mr-1" />
+                  Add item
                 </Button>
               </div>
 
-              <div className="space-y-3">
-                {invoiceData.items.map((item, index) => (
-                  <div key={index} className="grid grid-cols-12 gap-3 items-center p-4 border border-gray-200 rounded-lg hover:border-gray-300 transition-colors">
-                    <div className="col-span-5">
-                      <Input
-                        placeholder="Item description"
-                        value={item.description}
-                        onChange={(e) => {
-                          const newItems = [...invoiceData.items];
-                          newItems[index].description = e.target.value;
-                          setInvoiceData({ ...invoiceData, items: newItems });
-                        }}
-                        className="h-10 border-gray-300 rounded-lg"
-                      />
-                    </div>
-                    <div className="col-span-2">
-                      <Input
-                        type="number"
-                        placeholder="Qty"
-                        value={item.quantity}
-                        onChange={(e) => {
-                          const newItems = [...invoiceData.items];
-                          newItems[index].quantity = Number(e.target.value);
-                          setInvoiceData({ ...invoiceData, items: newItems });
-                        }}
-                        className="h-10 border-gray-300 rounded-lg"
-                      />
-                    </div>
-                    <div className="col-span-2">
-                      <Input
-                        type="number"
-                        placeholder="Price"
-                        value={item.price}
-                        onChange={(e) => {
-                          const newItems = [...invoiceData.items];
-                          newItems[index].price = Number(e.target.value);
-                          setInvoiceData({ ...invoiceData, items: newItems });
-                        }}
-                        className="h-10 border-gray-300 rounded-lg"
-                      />
-                    </div>
-                    <div className="col-span-2 text-right">
-                      <span className="text-sm font-semibold text-gray-900">
-                        ${(item.quantity * item.price).toFixed(2)}
-                      </span>
-                    </div>
-                    <div className="col-span-1">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                          const newItems = invoiceData.items.filter((_, i) => i !== index);
-                          setInvoiceData({ ...invoiceData, items: newItems });
-                        }}
-                        className="h-10 w-10 p-0 border-red-200 text-red-600 hover:bg-red-50"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-                ))}
-              </div>
+              <div className="space-y-2">
+                {invoiceData.items.map((item, index) => {
+                  const hasEmptyDescription = !item.description?.trim();
+                  const hasInvalidQuantity = item.quantity <= 0;
+                  const hasInvalidPrice = item.price < 0;
 
-              {/* Total */}
-              <div className="mt-6 pt-6 border-t border-gray-200 flex justify-end">
-                <div className="w-64 space-y-2">
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-gray-600">Subtotal</span>
-                    <span className="font-semibold text-gray-900">
-                      ${invoiceData.items.reduce((sum, item) => sum + item.quantity * item.price, 0).toFixed(2)}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between text-base font-bold pt-2 border-t border-gray-200">
-                    <span className="text-gray-900">Total</span>
-                    <span className="text-gray-900">
-                      ${invoiceData.items.reduce((sum, item) => sum + item.quantity * item.price, 0).toFixed(2)}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Payment Details Card */}
-            <div className="bg-white/80 backdrop-blur-sm border border-gray-200/60 rounded-xl p-6 shadow-sm">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-pink-50 to-rose-50 flex items-center justify-center">
-                  <CreditCard className="w-5 h-5 text-pink-600" />
-                </div>
-                <div>
-                  <h2 className="text-lg font-semibold text-gray-900">Payment Details</h2>
-                  <p className="text-sm text-gray-500">How customer should pay</p>
-                </div>
-              </div>
-
-              <div className="space-y-5">
-                <div>
-                  <Label className="text-sm font-semibold text-gray-700 mb-3 block">Payment Method</Label>
-                  <RadioGroup
-                    defaultValue={paymentDetails.method}
-                    onValueChange={(value: PaymentMethod) => setPaymentDetails({ method: value })}
-                    className="flex flex-col space-y-2"
-                  >
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="bank" id="bank" />
-                      <Label htmlFor="bank" className="cursor-pointer">Bank Transfer</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="crypto" id="crypto" />
-                      <Label htmlFor="crypto" className="cursor-pointer">Digital Currency</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="other" id="other" />
-                      <Label htmlFor="other" className="cursor-pointer">Other</Label>
-                    </div>
-                  </RadioGroup>
-                </div>
-
-                {paymentDetails.method === 'bank' && (
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label className="text-sm font-semibold text-gray-700 mb-2 block">Account Name</Label>
-                      <Input
-                        value={paymentDetails.bankDetails?.accountName}
-                        onChange={(e) =>
-                          setPaymentDetails({
-                            ...paymentDetails,
-                            bankDetails: {
-                              ...paymentDetails.bankDetails,
-                              accountName: e.target.value,
-                            },
-                          })
-                        }
-                        placeholder="Enter account name"
-                        className="h-11 border-gray-300 rounded-lg"
-                      />
-                    </div>
-                    <div>
-                      <Label className="text-sm font-semibold text-gray-700 mb-2 block">Account Number</Label>
-                      <Input
-                        value={paymentDetails.bankDetails?.accountNumber}
-                        onChange={(e) =>
-                          setPaymentDetails({
-                            ...paymentDetails,
-                            bankDetails: {
-                              ...paymentDetails.bankDetails,
-                              accountNumber: e.target.value,
-                            },
-                          })
-                        }
-                        placeholder="Enter account number"
-                        className="h-11 border-gray-300 rounded-lg"
-                      />
-                    </div>
-                    <div>
-                      <Label className="text-sm font-semibold text-gray-700 mb-2 block">Bank Name</Label>
-                      <Input
-                        value={paymentDetails.bankDetails?.bankName}
-                        onChange={(e) =>
-                          setPaymentDetails({
-                            ...paymentDetails,
-                            bankDetails: {
-                              ...paymentDetails.bankDetails,
-                              bankName: e.target.value,
-                            },
-                          })
-                        }
-                        placeholder="Enter bank name"
-                        className="h-11 border-gray-300 rounded-lg"
-                      />
-                    </div>
-                    <div>
-                      <Label className="text-sm font-semibold text-gray-700 mb-2 block">SWIFT/BIC (Optional)</Label>
-                      <Input
-                        value={paymentDetails.bankDetails?.swiftCode}
-                        onChange={(e) =>
-                          setPaymentDetails({
-                            ...paymentDetails,
-                            bankDetails: {
-                              ...paymentDetails.bankDetails,
-                              swiftCode: e.target.value,
-                            },
-                          })
-                        }
-                        placeholder="Enter SWIFT/BIC code"
-                        className="h-11 border-gray-300 rounded-lg"
-                      />
-                    </div>
-                  </div>
-                )}
-
-                {paymentDetails.method === 'crypto' && (
-                  <div className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <Label className="text-sm font-semibold text-gray-700 mb-2 block">Currency</Label>
-                        <Select
-                          value={paymentDetails.cryptoDetails?.currency}
-                          onValueChange={(value) =>
-                            setPaymentDetails({
-                              ...paymentDetails,
-                              cryptoDetails: {
-                                ...paymentDetails.cryptoDetails,
-                                currency: value,
-                              },
-                            })
-                          }
-                        >
-                          <SelectTrigger className="h-11 border-gray-300 rounded-lg">
-                            <SelectValue placeholder="Select currency" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="BTC">Bitcoin (BTC)</SelectItem>
-                            <SelectItem value="ETH">Ethereum (ETH)</SelectItem>
-                            <SelectItem value="USDT">Tether (USDT)</SelectItem>
-                            <SelectItem value="USDC">USD Coin (USDC)</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div>
-                        <Label className="text-sm font-semibold text-gray-700 mb-2 block">Network (Optional)</Label>
+                  return (
+                    <div key={index} className="grid grid-cols-12 gap-2 items-center">
+                      <div className="col-span-6">
                         <Input
-                          value={paymentDetails.cryptoDetails?.network}
-                          onChange={(e) =>
-                            setPaymentDetails({
-                              ...paymentDetails,
-                              cryptoDetails: {
-                                ...paymentDetails.cryptoDetails,
-                                network: e.target.value,
-                              },
-                            })
-                          }
-                          placeholder="e.g., ERC20, TRC20"
-                          className="h-11 border-gray-300 rounded-lg"
+                          placeholder="Description *"
+                          value={item.description}
+                          onChange={(e) => {
+                            const newItems = [...invoiceData.items];
+                            newItems[index].description = e.target.value;
+                            setInvoiceData({ ...invoiceData, items: newItems });
+                          }}
+                          className={cn(
+                            "h-9 rounded-md text-sm",
+                            hasEmptyDescription && item.description !== ''
+                              ? "border-red-300 focus:border-red-500 focus:ring-red-500"
+                              : "border-gray-300"
+                          )}
                         />
                       </div>
+                      <div className="col-span-2">
+                        <Input
+                          type="number"
+                          placeholder="Qty"
+                          min="1"
+                          value={item.quantity}
+                          onChange={(e) => {
+                            const newItems = [...invoiceData.items];
+                            newItems[index].quantity = Number(e.target.value);
+                            setInvoiceData({ ...invoiceData, items: newItems });
+                          }}
+                          className={cn(
+                            "h-9 rounded-md text-sm",
+                            hasInvalidQuantity
+                              ? "border-red-300 focus:border-red-500 focus:ring-red-500"
+                              : "border-gray-300"
+                          )}
+                        />
+                      </div>
+                      <div className="col-span-2">
+                        <Input
+                          type="number"
+                          placeholder="Price"
+                          value={item.price}
+                          onChange={(e) => {
+                            const newItems = [...invoiceData.items];
+                            newItems[index].price = Number(e.target.value);
+                            setInvoiceData({ ...invoiceData, items: newItems });
+                          }}
+                          className={cn(
+                            "h-9 rounded-md text-sm",
+                            hasInvalidPrice
+                              ? "border-red-300 focus:border-red-500 focus:ring-red-500"
+                              : "border-gray-300"
+                          )}
+                        />
+                      </div>
+                      <div className="col-span-1 text-right">
+                        <span className="text-sm text-gray-900">
+                          ${(item.quantity * item.price).toFixed(2)}
+                        </span>
+                      </div>
+                      <div className="col-span-1 flex justify-end">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            const newItems = invoiceData.items.filter((_, i) => i !== index);
+                            setInvoiceData({ ...invoiceData, items: newItems });
+                          }}
+                          className="h-7 w-7 p-0 text-gray-400 hover:text-red-600"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </div>
-                    <div>
-                      <Label className="text-sm font-semibold text-gray-700 mb-2 block">Payment Address</Label>
-                      <Input
-                        value={paymentDetails.cryptoDetails?.walletAddress}
-                        onChange={(e) =>
-                          setPaymentDetails({
-                            ...paymentDetails,
-                            cryptoDetails: {
-                              ...paymentDetails.cryptoDetails,
-                              walletAddress: e.target.value,
-                            },
-                          })
-                        }
-                        placeholder="Enter payment address"
-                        className="h-11 border-gray-300 rounded-lg font-mono text-sm"
-                      />
-                    </div>
-                  </div>
-                )}
-
-                {paymentDetails.method === 'other' && (
-                  <div>
-                    <Label className="text-sm font-semibold text-gray-700 mb-2 block">Payment Instructions</Label>
-                    <Textarea
-                      value={paymentDetails.otherDetails}
-                      onChange={(e) =>
-                        setPaymentDetails({
-                          ...paymentDetails,
-                          otherDetails: e.target.value,
-                        })
-                      }
-                      placeholder="Enter payment instructions..."
-                      rows={4}
-                      className="border-gray-300 rounded-lg resize-none"
-                    />
-                  </div>
-                )}
+                  );
+                })}
               </div>
+
+              {invoiceData.items.length === 0 && (
+                <div className="text-center py-8 border border-dashed border-gray-300 rounded-md">
+                  <p className="text-sm text-gray-500">No items added yet</p>
+                </div>
+              )}
+
+              {/* Total */}
+              {invoiceData.items.length > 0 && (
+                <div className="mt-4 pt-4 border-t border-gray-200 flex justify-end">
+                  <div className="w-48 space-y-2">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-gray-600">Subtotal</span>
+                      <span className="font-medium text-gray-900">
+                        ${subtotal.toFixed(2)}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between text-base font-semibold pt-2 border-t border-gray-200">
+                      <span className="text-gray-900">Total</span>
+                      <span className="text-gray-900">
+                        ${subtotal.toFixed(2)}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
 
-            {/* Notes & Terms Card */}
-            <div className="bg-white/80 backdrop-blur-sm border border-gray-200/60 rounded-xl p-6 shadow-sm">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-indigo-50 to-blue-50 flex items-center justify-center">
-                  <MessageSquare className="w-5 h-5 text-indigo-600" />
-                </div>
-                <div>
-                  <h2 className="text-lg font-semibold text-gray-900">Notes & Terms</h2>
-                  <p className="text-sm text-gray-500">Additional information</p>
-                </div>
+            {/* Payment Method */}
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="payment-method" className="text-sm font-medium text-gray-900 mb-2 block">
+                  Payment method
+                </Label>
+                <Select
+                  value={paymentDetails.method}
+                  onValueChange={(value: PaymentMethod) => setPaymentDetails({ ...paymentDetails, method: value })}
+                >
+                  <SelectTrigger className="h-9 border-gray-300 rounded-md">
+                    <SelectValue placeholder="Select payment method" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="bank">Bank transfer</SelectItem>
+                    <SelectItem value="crypto">Cryptocurrency</SelectItem>
+                    <SelectItem value="other">Other</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
 
-              <div className="space-y-5">
-                <div>
-                  <Label htmlFor="notes" className="text-sm font-semibold text-gray-700 mb-2 block">Notes</Label>
-                  <Textarea
-                    id="notes"
-                    value={invoiceData.notes}
-                    onChange={(e) => setInvoiceData({ ...invoiceData, notes: e.target.value })}
-                    placeholder="Add any additional notes..."
-                    className="min-h-[100px] border-gray-300 rounded-lg resize-none"
+              {/* Bank Details */}
+              {paymentDetails.method === 'bank' && (
+                <div className="space-y-3 pt-2">
+                  <Input
+                    placeholder="Bank name"
+                    value={paymentDetails.bankDetails?.bankName}
+                    onChange={(e) => setPaymentDetails({
+                      ...paymentDetails,
+                      bankDetails: { ...paymentDetails.bankDetails, bankName: e.target.value }
+                    })}
+                    className="h-9 border-gray-300 rounded-md text-sm"
+                  />
+                  <Input
+                    placeholder="Account name"
+                    value={paymentDetails.bankDetails?.accountName}
+                    onChange={(e) => setPaymentDetails({
+                      ...paymentDetails,
+                      bankDetails: { ...paymentDetails.bankDetails, accountName: e.target.value }
+                    })}
+                    className="h-9 border-gray-300 rounded-md text-sm"
+                  />
+                  <Input
+                    placeholder="Account number"
+                    value={paymentDetails.bankDetails?.accountNumber}
+                    onChange={(e) => setPaymentDetails({
+                      ...paymentDetails,
+                      bankDetails: { ...paymentDetails.bankDetails, accountNumber: e.target.value }
+                    })}
+                    className="h-9 border-gray-300 rounded-md text-sm"
+                  />
+                  <Input
+                    placeholder="SWIFT/BIC (optional)"
+                    value={paymentDetails.bankDetails?.swiftCode}
+                    onChange={(e) => setPaymentDetails({
+                      ...paymentDetails,
+                      bankDetails: { ...paymentDetails.bankDetails, swiftCode: e.target.value }
+                    })}
+                    className="h-9 border-gray-300 rounded-md text-sm"
                   />
                 </div>
-                <div>
-                  <Label htmlFor="terms" className="text-sm font-semibold text-gray-700 mb-2 block">Terms & Conditions</Label>
-                  <Textarea
-                    id="terms"
-                    value={invoiceData.terms}
-                    onChange={(e) => setInvoiceData({ ...invoiceData, terms: e.target.value })}
-                    placeholder="Add terms and conditions..."
-                    className="min-h-[100px] border-gray-300 rounded-lg resize-none"
+              )}
+
+              {/* Crypto Details */}
+              {paymentDetails.method === 'crypto' && (
+                <div className="space-y-3 pt-2">
+                  <Select
+                    value={paymentDetails.cryptoDetails?.currency}
+                    onValueChange={(value) => setPaymentDetails({
+                      ...paymentDetails,
+                      cryptoDetails: { ...paymentDetails.cryptoDetails, currency: value }
+                    })}
+                  >
+                    <SelectTrigger className="h-9 border-gray-300 rounded-md">
+                      <SelectValue placeholder="Select currency" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="BTC">Bitcoin (BTC)</SelectItem>
+                      <SelectItem value="ETH">Ethereum (ETH)</SelectItem>
+                      <SelectItem value="USDT">Tether (USDT)</SelectItem>
+                      <SelectItem value="USDC">USD Coin (USDC)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Select
+                    value={paymentDetails.cryptoDetails?.network}
+                    onValueChange={(value) => setPaymentDetails({
+                      ...paymentDetails,
+                      cryptoDetails: { ...paymentDetails.cryptoDetails, network: value }
+                    })}
+                  >
+                    <SelectTrigger className="h-9 border-gray-300 rounded-md">
+                      <SelectValue placeholder="Select chain" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Ethereum">Ethereum</SelectItem>
+                      <SelectItem value="Polygon">Polygon</SelectItem>
+                      <SelectItem value="BSC">Binance Smart Chain</SelectItem>
+                      <SelectItem value="Arbitrum">Arbitrum</SelectItem>
+                      <SelectItem value="Optimism">Optimism</SelectItem>
+                      <SelectItem value="Base">Base</SelectItem>
+                      <SelectItem value="Solana">Solana</SelectItem>
+                      <SelectItem value="Bitcoin">Bitcoin</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Input
+                    placeholder="Wallet address"
+                    value={paymentDetails.cryptoDetails?.walletAddress}
+                    onChange={(e) => setPaymentDetails({
+                      ...paymentDetails,
+                      cryptoDetails: { ...paymentDetails.cryptoDetails, walletAddress: e.target.value }
+                    })}
+                    className="h-9 border-gray-300 rounded-md text-sm font-mono"
                   />
                 </div>
-              </div>
+              )}
+
+              {/* Other Payment Details */}
+              {paymentDetails.method === 'other' && (
+                <div className="pt-2">
+                  <Textarea
+                    placeholder="Enter payment instructions..."
+                    value={paymentDetails.otherDetails}
+                    onChange={(e) => setPaymentDetails({
+                      ...paymentDetails,
+                      otherDetails: e.target.value
+                    })}
+                    className="min-h-[80px] border-gray-300 rounded-md resize-none text-sm"
+                  />
+                </div>
+              )}
+            </div>
+
+            {/* Notes */}
+            <div>
+              <Label htmlFor="notes" className="text-sm font-medium text-gray-900 mb-2 block">
+                Memo (optional)
+              </Label>
+              <Textarea
+                id="notes"
+                value={invoiceData.notes}
+                onChange={(e) => setInvoiceData({ ...invoiceData, notes: e.target.value })}
+                placeholder="Add a note to the invoice..."
+                className="min-h-[80px] border-gray-300 rounded-md resize-none text-sm"
+              />
             </div>
 
             {/* Action Buttons */}
-            <div className="flex items-center justify-between pt-4">
+            <div className="flex items-center justify-end gap-3 pt-4 border-t border-gray-200">
               <Button
                 variant="outline"
                 onClick={() => navigate('/invoices')}
                 disabled={isCreating}
-                className="h-11 px-6 border-gray-300 hover:bg-gray-50 rounded-lg"
+                className="h-9 px-4 text-sm border-gray-300 rounded-md hover:bg-gray-50"
               >
                 Cancel
               </Button>
-              <div className="flex gap-3">
-                <Button
-                  variant="outline"
-                  disabled={isCreating}
-                  className="h-11 px-6 border-gray-300 hover:bg-gray-50 rounded-lg"
-                >
-                  Save Draft
-                </Button>
-                <Button
-                  onClick={handleCreateInvoice}
-                  disabled={isCreating}
-                  className="h-11 px-8 bg-gradient-to-r from-[#635bff] to-[#5045e5] hover:from-[#5045e5] hover:to-[#3d38d1] text-white rounded-lg font-semibold shadow-lg shadow-[#635bff]/20"
-                >
-                  {isCreating ? (
-                    <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      Creating...
-                    </>
-                  ) : (
-                    'Create Invoice'
-                  )}
-                </Button>
-              </div>
+              <Button
+                onClick={handleCreateInvoice}
+                disabled={isCreating}
+                className="bg-[#635bff] hover:bg-[#0a2540] text-white text-sm font-medium px-4 h-9 rounded-md transition-colors"
+              >
+                {isCreating ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Creating...
+                  </>
+                ) : (
+                  'Create invoice'
+                )}
+              </Button>
             </div>
           </div>
 
           {/* Right Side - Preview */}
           <div className="space-y-6">
-            {/* Preview Actions */}
-            <div className="bg-white/80 backdrop-blur-sm border border-gray-200/60 rounded-xl p-5 shadow-sm">
+            {/* Template Selector */}
+            <div className="bg-white border border-gray-200 rounded-lg p-6">
+              <h3 className="text-sm font-medium text-gray-900 mb-4">Template</h3>
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  onClick={() => setInvoiceStyle('standard')}
+                  className={cn(
+                    'p-3 rounded-md border-2 transition-all text-left',
+                    invoiceStyle === 'standard'
+                      ? 'border-[#635bff] bg-[#635bff]/5'
+                      : 'border-gray-200 hover:border-gray-300'
+                  )}
+                >
+                  <div className="font-medium text-sm text-gray-900">Standard</div>
+                  <div className="text-xs text-gray-500 mt-0.5">Classic</div>
+                </button>
+                <button
+                  onClick={() => setInvoiceStyle('modern')}
+                  className={cn(
+                    'p-3 rounded-md border-2 transition-all text-left',
+                    invoiceStyle === 'modern'
+                      ? 'border-[#635bff] bg-[#635bff]/5'
+                      : 'border-gray-200 hover:border-gray-300'
+                  )}
+                >
+                  <div className="font-medium text-sm text-gray-900">Modern</div>
+                  <div className="text-xs text-gray-500 mt-0.5">Bold</div>
+                </button>
+                <button
+                  onClick={() => setInvoiceStyle('minimal')}
+                  className={cn(
+                    'p-3 rounded-md border-2 transition-all text-left',
+                    invoiceStyle === 'minimal'
+                      ? 'border-[#635bff] bg-[#635bff]/5'
+                      : 'border-gray-200 hover:border-gray-300'
+                  )}
+                >
+                  <div className="font-medium text-sm text-gray-900">Minimal</div>
+                  <div className="text-xs text-gray-500 mt-0.5">Clean</div>
+                </button>
+                <button
+                  onClick={() => setInvoiceStyle('artistic')}
+                  className={cn(
+                    'p-3 rounded-md border-2 transition-all text-left',
+                    invoiceStyle === 'artistic'
+                      ? 'border-[#635bff] bg-[#635bff]/5'
+                      : 'border-gray-200 hover:border-gray-300'
+                  )}
+                >
+                  <div className="font-medium text-sm text-gray-900">Artistic</div>
+                  <div className="text-xs text-gray-500 mt-0.5">Creative</div>
+                </button>
+              </div>
+            </div>
+
+            {/* Preview */}
+            <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
               <div className="flex items-center justify-between mb-4">
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-900">Invoice Preview</h3>
-                  <p className="text-xs text-gray-500 mt-0.5">Live preview of your invoice</p>
-                </div>
+                <h3 className="text-sm font-medium text-gray-900">Preview</h3>
                 <div className="flex items-center gap-2">
                   <Button
                     variant="outline"
                     size="sm"
-                    className="h-9 px-3 border-gray-300 rounded-lg"
                     onClick={handlePrint}
+                    className="h-8 px-3 text-xs border-gray-300 rounded-md"
                   >
-                    <Printer className="h-4 w-4 mr-2" />
+                    <Printer className="h-3 w-3 mr-1.5" />
                     Print
                   </Button>
                   <Button
                     variant="outline"
                     size="sm"
-                    className="h-9 px-3 border-gray-300 rounded-lg"
                     onClick={handleDownload}
+                    className="h-8 px-3 text-xs border-gray-300 rounded-md"
                   >
-                    <Download className="h-4 w-4 mr-2" />
+                    <Download className="h-3 w-3 mr-1.5" />
                     PDF
                   </Button>
                 </div>
               </div>
-
-              {/* Template Selector */}
-              <div className="pt-4 border-t border-gray-200">
-                <Label className="text-sm font-semibold text-gray-700 mb-3 block">Template Style</Label>
-                <div className="grid grid-cols-2 gap-2">
-                  <button
-                    onClick={() => setInvoiceStyle('standard')}
-                    className={cn(
-                      'p-3 rounded-lg border-2 transition-all text-left',
-                      invoiceStyle === 'standard'
-                        ? 'border-[#635bff] bg-[#635bff]/5'
-                        : 'border-gray-200 hover:border-gray-300'
-                    )}
-                  >
-                    <div className="font-semibold text-sm text-gray-900">Standard</div>
-                    <div className="text-xs text-gray-500 mt-0.5">Classic & professional</div>
-                  </button>
-                  <button
-                    onClick={() => setInvoiceStyle('modern')}
-                    className={cn(
-                      'p-3 rounded-lg border-2 transition-all text-left',
-                      invoiceStyle === 'modern'
-                        ? 'border-[#635bff] bg-[#635bff]/5'
-                        : 'border-gray-200 hover:border-gray-300'
-                    )}
-                  >
-                    <div className="font-semibold text-sm text-gray-900">Modern</div>
-                    <div className="text-xs text-gray-500 mt-0.5">Bold & colorful</div>
-                  </button>
-                  <button
-                    onClick={() => setInvoiceStyle('minimal')}
-                    className={cn(
-                      'p-3 rounded-lg border-2 transition-all text-left',
-                      invoiceStyle === 'minimal'
-                        ? 'border-[#635bff] bg-[#635bff]/5'
-                        : 'border-gray-200 hover:border-gray-300'
-                    )}
-                  >
-                    <div className="font-semibold text-sm text-gray-900">Minimal</div>
-                    <div className="text-xs text-gray-500 mt-0.5">Clean & simple</div>
-                  </button>
-                  <button
-                    onClick={() => setInvoiceStyle('artistic')}
-                    className={cn(
-                      'p-3 rounded-lg border-2 transition-all text-left',
-                      invoiceStyle === 'artistic'
-                        ? 'border-[#635bff] bg-[#635bff]/5'
-                        : 'border-gray-200 hover:border-gray-300'
-                    )}
-                  >
-                    <div className="font-semibold text-sm text-gray-900">Artistic</div>
-                    <div className="text-xs text-gray-500 mt-0.5">Creative & unique</div>
-                  </button>
+              <div className="border border-gray-200 rounded-md overflow-auto bg-gray-100 p-4">
+                <div
+                  ref={printRef}
+                  className="bg-white invoice-preview mx-auto"
+                  style={{
+                    width: '210mm',
+                    minHeight: '297mm',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                    transform: 'scale(0.6)',
+                    transformOrigin: 'top center'
+                  }}
+                >
+                  {invoiceStyle === 'standard' && (
+                    <StandardTemplate logo={logo} invoiceData={invoiceData} paymentDetails={paymentDetails} />
+                  )}
+                  {invoiceStyle === 'modern' && (
+                    <ModernTemplate logo={logo} invoiceData={invoiceData} paymentDetails={paymentDetails} />
+                  )}
+                  {invoiceStyle === 'minimal' && (
+                    <MinimalTemplate logo={logo} invoiceData={invoiceData} paymentDetails={paymentDetails} />
+                  )}
+                  {invoiceStyle === 'artistic' && (
+                    <ArtisticTemplate logo={logo} invoiceData={invoiceData} paymentDetails={paymentDetails} />
+                  )}
                 </div>
-              </div>
-
-              {/* Font Selector */}
-              <div className="flex items-center gap-3 pt-4 border-t border-gray-200 mt-4">
-                <Type className="h-4 w-4 text-gray-500" />
-                <Label className="text-sm font-medium text-gray-700">Font</Label>
-                <Select value={invoiceFont} onValueChange={setInvoiceFont}>
-                  <SelectTrigger className="h-9 w-[180px] border-gray-300 rounded-lg">
-                    <SelectValue placeholder="Select font" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="default">System Default</SelectItem>
-                    <SelectItem value="apercu">Apercu Mono Pro</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            {/* Preview Content */}
-            <div className="bg-white border border-gray-200/60 rounded-xl shadow-sm overflow-hidden print:shadow-none">
-              <div ref={printRef} className="aspect-[1/1.4142] bg-white mx-auto w-full max-w-[210mm]" style={{ fontFamily: getFontFamily() }}>
-                {invoiceStyle === 'standard' && (
-                  <StandardTemplate logo={logo} invoiceData={invoiceData} paymentDetails={paymentDetails} />
-                )}
-                {invoiceStyle === 'modern' && (
-                  <ModernTemplate logo={logo} invoiceData={invoiceData} paymentDetails={paymentDetails} />
-                )}
-                {invoiceStyle === 'minimal' && (
-                  <MinimalTemplate logo={logo} invoiceData={invoiceData} paymentDetails={paymentDetails} />
-                )}
-                {invoiceStyle === 'artistic' && (
-                  <ArtisticTemplate logo={logo} invoiceData={invoiceData} paymentDetails={paymentDetails} />
-                )}
               </div>
             </div>
           </div>

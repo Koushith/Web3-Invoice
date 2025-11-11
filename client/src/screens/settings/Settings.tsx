@@ -1,295 +1,459 @@
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Building, Globe, DollarSign, Bell, Shield, Palette } from 'lucide-react';
+import { Textarea } from '@/components/ui/textarea';
+import { Loader2, Building2, Shield, User, Mail, Briefcase, FileText, CreditCard, Zap, DollarSign, Plus, Lock, Users2 } from 'lucide-react';
 import { PasskeyManagement } from '@/components/passkey/PasskeyManagement';
+import { useGetOrganizationQuery, useUpdateOrganizationMutation } from '@/services/api.service';
+import { toast } from 'sonner';
+import { auth } from '@/lib/firebase';
 
 export const SettingsScreen = () => {
+  const navigate = useNavigate();
+  const [isAuthReady, setIsAuthReady] = useState(false);
+  const [showBusinessDetails, setShowBusinessDetails] = useState(false);
+  const [showSecurity, setShowSecurity] = useState(false);
+  const [organizationData, setOrganizationData] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    website: '',
+    taxId: '',
+    logo: '',
+    address: {
+      street: '',
+      city: '',
+      state: '',
+      zipCode: '',
+      country: '',
+    },
+  });
+
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged((user) => {
+      if (user) {
+        setIsAuthReady(true);
+      }
+    });
+    return () => unsubscribe();
+  }, []);
+
+  const { data: organization, isLoading } = useGetOrganizationQuery(undefined, {
+    skip: !isAuthReady,
+  });
+
+  const [updateOrganization, { isLoading: isSaving }] = useUpdateOrganizationMutation();
+
+  useEffect(() => {
+    if (organization) {
+      setOrganizationData({
+        name: organization.name || '',
+        email: organization.email || '',
+        phone: organization.phone || '',
+        website: organization.website || '',
+        taxId: organization.taxId || '',
+        logo: organization.logo || '',
+        address: {
+          street: organization.address?.street || '',
+          city: organization.address?.city || '',
+          state: organization.address?.state || '',
+          zipCode: organization.address?.zipCode || '',
+          country: organization.address?.country || '',
+        },
+      });
+    }
+  }, [organization]);
+
+  const handleLogoUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setOrganizationData((prev) => ({ ...prev, logo: reader.result as string }));
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleSave = async () => {
+    try {
+      await updateOrganization(organizationData).unwrap();
+      toast.success('Settings saved successfully');
+    } catch (error: any) {
+      console.error('Save settings error:', error);
+      toast.error(error?.data?.message || 'Failed to save settings');
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-white">
+        <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen">
-      <div className="max-w-[1000px] mx-auto px-8 py-12">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-[28px] font-bold text-gray-900 tracking-tight">Settings</h1>
-          <p className="text-sm text-gray-500 mt-2">Manage your organization preferences and configuration</p>
+    <div className="min-h-screen bg-[#FEFFFE]">
+      <div className="max-w-6xl mx-auto px-8 py-8">
+        <div className="mb-10">
+          <h1 className="text-2xl font-semibold text-gray-900">Settings</h1>
         </div>
 
-        <div className="space-y-6">
-          {/* Organization Settings */}
-          <div className="bg-white/80 backdrop-blur-sm border border-gray-200/60 rounded-xl p-6 shadow-sm">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-50 to-indigo-50 flex items-center justify-center">
-                <Building className="w-5 h-5 text-blue-600" />
-              </div>
-              <div>
-                <h2 className="text-lg font-semibold text-gray-900">Organization</h2>
-                <p className="text-sm text-gray-500">Manage your business information</p>
-              </div>
-            </div>
-
-            <div className="space-y-5">
-              <div className="grid grid-cols-2 gap-5">
-                <div>
-                  <Label htmlFor="org-name" className="text-sm font-semibold text-gray-700 mb-2 block">
-                    Organization Name
-                  </Label>
-                  <Input
-                    id="org-name"
-                    defaultValue="DefInvoice Inc."
-                    className="h-11 border-gray-300 rounded-lg"
-                  />
+        {/* Personal settings */}
+        <div className="mb-10">
+          <h2 className="text-sm font-semibold text-gray-900 mb-5">Personal settings</h2>
+          <div className="grid grid-cols-3 gap-x-8 gap-y-6">
+            <button
+              onClick={() => navigate('/profile')}
+              className="px-3 py-3 -mx-3 rounded-lg hover:bg-gray-100/60 transition-colors text-left"
+            >
+              <div className="flex items-start gap-3">
+                <div className="w-8 h-8 rounded-md bg-primary/10 flex items-center justify-center flex-shrink-0">
+                  <User className="w-4 h-4 text-primary" strokeWidth={2} />
                 </div>
-                <div>
-                  <Label htmlFor="org-email" className="text-sm font-semibold text-gray-700 mb-2 block">
-                    Contact Email
-                  </Label>
-                  <Input
-                    id="org-email"
-                    type="email"
-                    defaultValue="hello@definvoice.com"
-                    className="h-11 border-gray-300 rounded-lg"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <Label htmlFor="invoice-prefix" className="text-sm font-semibold text-gray-700 mb-2 block">
-                  Invoice Number Prefix
-                </Label>
-                <Input
-                  id="invoice-prefix"
-                  defaultValue="INV"
-                  className="h-11 border-gray-300 rounded-lg w-40"
-                  placeholder="INV"
-                />
-                <p className="text-xs text-gray-500 mt-1.5">Invoices will be numbered as INV-0001, INV-0002, etc.</p>
-              </div>
-            </div>
-          </div>
-
-          {/* Regional Settings */}
-          <div className="bg-white/80 backdrop-blur-sm border border-gray-200/60 rounded-xl p-6 shadow-sm">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-emerald-50 to-green-50 flex items-center justify-center">
-                <Globe className="w-5 h-5 text-emerald-600" />
-              </div>
-              <div>
-                <h2 className="text-lg font-semibold text-gray-900">Regional Settings</h2>
-                <p className="text-sm text-gray-500">Configure localization preferences</p>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-5">
-              <div>
-                <Label htmlFor="timezone" className="text-sm font-semibold text-gray-700 mb-2 block">
-                  Timezone
-                </Label>
-                <Select defaultValue="utc">
-                  <SelectTrigger className="h-11 border-gray-300 rounded-lg">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="utc">UTC (GMT+0:00)</SelectItem>
-                    <SelectItem value="est">Eastern Time (GMT-5:00)</SelectItem>
-                    <SelectItem value="pst">Pacific Time (GMT-8:00)</SelectItem>
-                    <SelectItem value="ist">India Time (GMT+5:30)</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div>
-                <Label htmlFor="date-format" className="text-sm font-semibold text-gray-700 mb-2 block">
-                  Date Format
-                </Label>
-                <Select defaultValue="mm-dd-yyyy">
-                  <SelectTrigger className="h-11 border-gray-300 rounded-lg">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="mm-dd-yyyy">MM/DD/YYYY</SelectItem>
-                    <SelectItem value="dd-mm-yyyy">DD/MM/YYYY</SelectItem>
-                    <SelectItem value="yyyy-mm-dd">YYYY-MM-DD</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          </div>
-
-          {/* Currency & Payment */}
-          <div className="bg-white/80 backdrop-blur-sm border border-gray-200/60 rounded-xl p-6 shadow-sm">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-50 to-violet-50 flex items-center justify-center">
-                <DollarSign className="w-5 h-5 text-purple-600" />
-              </div>
-              <div>
-                <h2 className="text-lg font-semibold text-gray-900">Currency & Payment</h2>
-                <p className="text-sm text-gray-500">Configure default currency and payment settings</p>
-              </div>
-            </div>
-
-            <div className="space-y-5">
-              <div className="grid grid-cols-2 gap-5">
-                <div>
-                  <Label htmlFor="default-currency" className="text-sm font-semibold text-gray-700 mb-2 block">
-                    Default Currency
-                  </Label>
-                  <Select defaultValue="usd">
-                    <SelectTrigger className="h-11 border-gray-300 rounded-lg">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="usd">USD - US Dollar</SelectItem>
-                      <SelectItem value="eur">EUR - Euro</SelectItem>
-                      <SelectItem value="gbp">GBP - British Pound</SelectItem>
-                      <SelectItem value="eth">ETH - Ethereum</SelectItem>
-                      <SelectItem value="usdc">USDC - USD Coin</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <Label htmlFor="tax-rate" className="text-sm font-semibold text-gray-700 mb-2 block">
-                    Default Tax Rate (%)
-                  </Label>
-                  <Input
-                    id="tax-rate"
-                    type="number"
-                    defaultValue="10"
-                    className="h-11 border-gray-300 rounded-lg"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <Label htmlFor="payment-terms" className="text-sm font-semibold text-gray-700 mb-2 block">
-                  Default Payment Terms
-                </Label>
-                <Select defaultValue="net30">
-                  <SelectTrigger className="h-11 border-gray-300 rounded-lg w-64">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="immediate">Due on Receipt</SelectItem>
-                    <SelectItem value="net15">Net 15 days</SelectItem>
-                    <SelectItem value="net30">Net 30 days</SelectItem>
-                    <SelectItem value="net60">Net 60 days</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          </div>
-
-          {/* Notifications */}
-          <div className="bg-white/80 backdrop-blur-sm border border-gray-200/60 rounded-xl p-6 shadow-sm">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-orange-50 to-amber-50 flex items-center justify-center">
-                <Bell className="w-5 h-5 text-orange-600" />
-              </div>
-              <div>
-                <h2 className="text-lg font-semibold text-gray-900">Notifications</h2>
-                <p className="text-sm text-gray-500">Manage email notifications and alerts</p>
-              </div>
-            </div>
-
-            <div className="space-y-4">
-              {[
-                { id: 'invoice-sent', label: 'Invoice Sent', description: 'Get notified when an invoice is sent to a customer' },
-                { id: 'payment-received', label: 'Payment Received', description: 'Get notified when a payment is received' },
-                { id: 'invoice-overdue', label: 'Invoice Overdue', description: 'Get notified when an invoice becomes overdue' },
-                { id: 'weekly-summary', label: 'Weekly Summary', description: 'Receive a weekly summary of your invoices and payments' },
-              ].map((notification) => (
-                <div key={notification.id} className="flex items-center justify-between py-3 border-b border-gray-100 last:border-0">
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-gray-900">{notification.label}</p>
-                    <p className="text-xs text-gray-500 mt-0.5">{notification.description}</p>
+                <div className="flex-1 min-w-0">
+                  <div className="text-base font-medium text-primary mb-1">Personal details</div>
+                  <div className="text-sm text-gray-600 leading-relaxed">
+                    Contact information, password, authentication methods and your active sessions.
                   </div>
-                  <Switch defaultChecked />
                 </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Security */}
-          <div className="bg-white/80 backdrop-blur-sm border border-gray-200/60 rounded-xl p-6 shadow-sm">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-red-50 to-rose-50 flex items-center justify-center">
-                <Shield className="w-5 h-5 text-red-600" />
               </div>
-              <div>
-                <h2 className="text-lg font-semibold text-gray-900">Security</h2>
-                <p className="text-sm text-gray-500">Manage security and authentication settings</p>
-              </div>
-            </div>
+            </button>
 
-            <div className="space-y-4">
-              {/* Passkeys */}
-              <PasskeyManagement />
-
-              <div className="flex items-center justify-between pt-3 border-t border-gray-100">
-                <div>
-                  <p className="text-sm font-medium text-gray-900">Two-Factor Authentication</p>
-                  <p className="text-xs text-gray-500 mt-0.5">Add an extra layer of security to your account</p>
+            <button
+              onClick={() => navigate('/security')}
+              className="px-3 py-3 -mx-3 rounded-lg hover:bg-gray-100/60 transition-colors text-left"
+            >
+              <div className="flex items-start gap-3">
+                <div className="w-8 h-8 rounded-md bg-primary/10 flex items-center justify-center flex-shrink-0">
+                  <Shield className="w-4 h-4 text-primary" strokeWidth={2} />
                 </div>
-                <Button variant="outline" className="h-9 px-4 rounded-lg">
-                  Enable
-                </Button>
-              </div>
-
-              <div className="flex items-center justify-between pt-3 border-t border-gray-100">
-                <div>
-                  <p className="text-sm font-medium text-gray-900">Change Password</p>
-                  <p className="text-xs text-gray-500 mt-0.5">Update your account password</p>
+                <div className="flex-1 min-w-0">
+                  <div className="text-base font-medium text-primary mb-1">Security</div>
+                  <div className="text-sm text-gray-600 leading-relaxed">
+                    Authentication methods, Google account, and two-step verification.
+                  </div>
                 </div>
-                <Button variant="outline" className="h-9 px-4 rounded-lg">
-                  Change
-                </Button>
               </div>
-            </div>
-          </div>
+            </button>
 
-          {/* Appearance */}
-          <div className="bg-white/80 backdrop-blur-sm border border-gray-200/60 rounded-xl p-6 shadow-sm">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-pink-50 to-rose-50 flex items-center justify-center">
-                <Palette className="w-5 h-5 text-pink-600" />
+            <button className="px-3 py-3 -mx-3 rounded-lg hover:bg-gray-100/60 transition-colors text-left">
+              <div className="flex items-start gap-3">
+                <div className="w-8 h-8 rounded-md bg-primary/10 flex items-center justify-center flex-shrink-0">
+                  <Mail className="w-4 h-4 text-primary" strokeWidth={2} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-base font-medium text-primary mb-1">Communication preferences</div>
+                  <div className="text-sm text-gray-600 leading-relaxed">
+                    Customise the emails, SMS, and push notifications you receive.
+                  </div>
+                </div>
               </div>
-              <div>
-                <h2 className="text-lg font-semibold text-gray-900">Appearance</h2>
-                <p className="text-sm text-gray-500">Customize the look and feel</p>
-              </div>
-            </div>
+            </button>
 
-            <div>
-              <Label className="text-sm font-semibold text-gray-700 mb-3 block">
-                Theme
-              </Label>
-              <div className="grid grid-cols-3 gap-3">
-                {['Light', 'Dark', 'System'].map((theme) => (
-                  <button
-                    key={theme}
-                    className="h-20 rounded-lg border-2 border-gray-200 hover:border-[#635bff] transition-all flex items-center justify-center text-sm font-medium"
-                  >
-                    {theme}
-                  </button>
-                ))}
+            <button className="px-3 py-3 -mx-3 rounded-lg hover:bg-gray-100/60 transition-colors text-left">
+              <div className="flex items-start gap-3">
+                <div className="w-8 h-8 rounded-md bg-primary/10 flex items-center justify-center flex-shrink-0">
+                  <Briefcase className="w-4 h-4 text-primary" strokeWidth={2} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-base font-medium text-primary mb-1">Developers</div>
+                  <div className="text-sm text-gray-600 leading-relaxed">
+                    Workbench, developer tools, and more.
+                  </div>
+                </div>
               </div>
-            </div>
-          </div>
-
-          {/* Save Button */}
-          <div className="flex items-center justify-end pt-4 border-t border-gray-200">
-            <div className="flex gap-3">
-              <Button variant="outline" className="h-11 px-6 border-gray-300 rounded-lg">
-                Reset
-              </Button>
-              <Button className="h-11 px-8 bg-gradient-to-r from-[#635bff] to-[#5045e5] hover:from-[#5045e5] hover:to-[#3d38d1] text-white rounded-lg font-semibold shadow-lg shadow-[#635bff]/20">
-                Save Changes
-              </Button>
-            </div>
+            </button>
           </div>
         </div>
+
+        {/* Account settings */}
+        <div className="mb-10">
+          <h2 className="text-sm font-semibold text-gray-900 mb-5">Account settings</h2>
+          <div className="grid grid-cols-3 gap-x-8 gap-y-6">
+            <button
+              onClick={() => setShowBusinessDetails(true)}
+              className="px-3 py-3 -mx-3 rounded-lg hover:bg-gray-100/60 transition-colors text-left"
+            >
+              <div className="flex items-start gap-3">
+                <div className="w-8 h-8 rounded-md bg-primary/10 flex items-center justify-center flex-shrink-0">
+                  <Building2 className="w-4 h-4 text-primary" strokeWidth={2} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-base font-medium text-primary mb-1">Business</div>
+                  <div className="text-sm text-gray-600 leading-relaxed">
+                    Account details, account health, public info, payouts, legal entity, custom domains, and more.
+                  </div>
+                </div>
+              </div>
+            </button>
+
+            <button
+              onClick={() => navigate('/team')}
+              className="px-3 py-3 -mx-3 rounded-lg hover:bg-gray-100/60 transition-colors text-left"
+            >
+              <div className="flex items-start gap-3">
+                <div className="w-8 h-8 rounded-md bg-primary/10 flex items-center justify-center flex-shrink-0">
+                  <Users2 className="w-4 h-4 text-primary" strokeWidth={2} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-base font-medium text-primary mb-1">Team</div>
+                  <div className="text-sm text-gray-600 leading-relaxed">
+                    Manage team members, roles, and permissions.
+                  </div>
+                </div>
+              </div>
+            </button>
+
+            <button
+              onClick={() => navigate('/passkeys')}
+              className="px-3 py-3 -mx-3 rounded-lg hover:bg-gray-100/60 transition-colors text-left"
+            >
+              <div className="flex items-start gap-3">
+                <div className="w-8 h-8 rounded-md bg-primary/10 flex items-center justify-center flex-shrink-0">
+                  <Lock className="w-4 h-4 text-primary" strokeWidth={2} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-base font-medium text-primary mb-1">Passkeys</div>
+                  <div className="text-sm text-gray-600 leading-relaxed">
+                    Manage your passkeys for secure authentication.
+                  </div>
+                </div>
+              </div>
+            </button>
+
+            <button className="px-3 py-3 -mx-3 rounded-lg hover:bg-gray-100/60 transition-colors text-left">
+              <div className="flex items-start gap-3">
+                <div className="w-8 h-8 rounded-md bg-primary/10 flex items-center justify-center flex-shrink-0">
+                  <FileText className="w-4 h-4 text-primary" strokeWidth={2} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-base font-medium text-primary mb-1">Compliance and documents</div>
+                  <div className="text-sm text-gray-600 leading-relaxed">
+                    PCI compliance, documents, and legacy exports.
+                  </div>
+                </div>
+              </div>
+            </button>
+
+            <button className="px-3 py-3 -mx-3 rounded-lg hover:bg-gray-100/60 transition-colors text-left">
+              <div className="flex items-start gap-3">
+                <div className="w-8 h-8 rounded-md bg-primary/10 flex items-center justify-center flex-shrink-0">
+                  <Zap className="w-4 h-4 text-primary" strokeWidth={2} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-base font-medium text-primary mb-1">Product previews</div>
+                  <div className="text-sm text-gray-600 leading-relaxed">
+                    Try out new features.
+                  </div>
+                </div>
+              </div>
+            </button>
+
+            <button className="px-3 py-3 -mx-3 rounded-lg hover:bg-gray-100/60 transition-colors text-left">
+              <div className="flex items-start gap-3">
+                <div className="w-8 h-8 rounded-md bg-primary/10 flex items-center justify-center flex-shrink-0">
+                  <DollarSign className="w-4 h-4 text-primary" strokeWidth={2} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-base font-medium text-primary mb-1">Perks</div>
+                  <div className="text-sm text-gray-600 leading-relaxed">
+                    Discounts on tools to run your startup.
+                  </div>
+                </div>
+              </div>
+            </button>
+          </div>
+        </div>
+
+        {/* Product settings */}
+        <div className="mb-10">
+          <h2 className="text-sm font-semibold text-gray-900 mb-5">Product settings</h2>
+          <div className="grid grid-cols-3 gap-x-8 gap-y-6">
+            <button className="px-3 py-3 -mx-3 rounded-lg hover:bg-gray-100/60 transition-colors text-left">
+              <div className="flex items-start gap-3">
+                <div className="w-8 h-8 rounded-md bg-primary/10 flex items-center justify-center flex-shrink-0">
+                  <FileText className="w-4 h-4 text-primary" strokeWidth={2} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-base font-medium text-primary mb-1">Billing</div>
+                  <div className="text-sm text-gray-600 leading-relaxed">
+                    Subscriptions, invoices, quotes, and customer portal.
+                  </div>
+                </div>
+              </div>
+            </button>
+
+            <button className="px-3 py-3 -mx-3 rounded-lg hover:bg-gray-100/60 transition-colors text-left">
+              <div className="flex items-start gap-3">
+                <div className="w-8 h-8 rounded-md bg-primary/10 flex items-center justify-center flex-shrink-0">
+                  <CreditCard className="w-4 h-4 text-primary" strokeWidth={2} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-base font-medium text-primary mb-1">Payments</div>
+                  <div className="text-sm text-gray-600 leading-relaxed">
+                    Checkout, payment methods, currency conversion, and more.
+                  </div>
+                </div>
+              </div>
+            </button>
+
+            <button className="px-3 py-3 -mx-3 rounded-lg hover:bg-gray-100/60 transition-colors text-left">
+              <div className="flex items-start gap-3">
+                <div className="w-8 h-8 rounded-md bg-primary/10 flex items-center justify-center flex-shrink-0">
+                  <Plus className="w-4 h-4 text-primary" strokeWidth={2} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-base font-medium text-primary mb-1">Discover more features</div>
+                  <div className="text-sm text-gray-600 leading-relaxed">
+                    Boost revenue, manage finances, and more.
+                  </div>
+                </div>
+              </div>
+            </button>
+          </div>
+        </div>
+
+        {/* Business Details Modal */}
+        {showBusinessDetails && (
+          <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+            <div className="bg-white rounded-lg max-w-3xl w-full max-h-[90vh] overflow-y-auto">
+              <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
+                <div>
+                  <h2 className="text-lg font-semibold text-gray-900">Business details</h2>
+                  <p className="text-sm text-gray-500 mt-1">Manage your business information and branding</p>
+                </div>
+                <button onClick={() => setShowBusinessDetails(false)} className="text-gray-400 hover:text-gray-600">
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+
+              <div className="p-6 space-y-6">
+                <div>
+                  <Label className="text-sm font-medium text-gray-900 mb-3 block">Company logo</Label>
+                  <div className="flex items-start gap-4">
+                    {organizationData.logo ? (
+                      <div className="w-16 h-16 rounded-lg border border-gray-200 overflow-hidden flex items-center justify-center bg-gray-50">
+                        <img src={organizationData.logo} alt="Logo" className="w-full h-full object-contain" />
+                      </div>
+                    ) : (
+                      <div className="w-16 h-16 rounded-lg border border-gray-200 bg-gray-50 flex items-center justify-center">
+                        <Building2 className="w-6 h-6 text-gray-400" />
+                      </div>
+                    )}
+                    <div className="flex-1">
+                      <input type="file" id="logo-upload" accept="image/*" className="hidden" onChange={handleLogoUpload} />
+                      <Button type="button" variant="outline" size="sm" onClick={() => document.getElementById('logo-upload')?.click()} className="h-9 text-sm">
+                        Upload logo
+                      </Button>
+                      <p className="text-xs text-gray-500 mt-2">Square image recommended. Accepted file types: .png, .jpg, .svg</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="border-t border-gray-200" />
+
+                <div className="space-y-5">
+                  <div>
+                    <Label htmlFor="name" className="text-sm font-medium text-gray-900 mb-2 block">Business name</Label>
+                    <Input id="name" value={organizationData.name} onChange={(e) => setOrganizationData((prev) => ({ ...prev, name: e.target.value }))} className="h-10" placeholder="Your Company Inc." />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="email" className="text-sm font-medium text-gray-900 mb-2 block">Contact email</Label>
+                      <Input id="email" type="email" value={organizationData.email} onChange={(e) => setOrganizationData((prev) => ({ ...prev, email: e.target.value }))} className="h-10" placeholder="hello@company.com" />
+                    </div>
+                    <div>
+                      <Label htmlFor="phone" className="text-sm font-medium text-gray-900 mb-2 block">Phone number</Label>
+                      <Input id="phone" type="tel" value={organizationData.phone} onChange={(e) => setOrganizationData((prev) => ({ ...prev, phone: e.target.value }))} className="h-10" placeholder="+1 (555) 000-0000" />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="website" className="text-sm font-medium text-gray-900 mb-2 block">Website</Label>
+                      <Input id="website" type="url" value={organizationData.website} onChange={(e) => setOrganizationData((prev) => ({ ...prev, website: e.target.value }))} className="h-10" placeholder="https://yourcompany.com" />
+                    </div>
+                    <div>
+                      <Label htmlFor="taxId" className="text-sm font-medium text-gray-900 mb-2 block">Tax ID</Label>
+                      <Input id="taxId" value={organizationData.taxId} onChange={(e) => setOrganizationData((prev) => ({ ...prev, taxId: e.target.value }))} className="h-10" placeholder="e.g., EIN, GST, VAT" />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="border-t border-gray-200" />
+
+                <div>
+                  <Label className="text-sm font-medium text-gray-900 mb-4 block">Business address</Label>
+                  <div className="space-y-4">
+                    <div>
+                      <Label htmlFor="street" className="text-xs text-gray-600 mb-1.5 block">Street address</Label>
+                      <Textarea id="street" value={organizationData.address.street} onChange={(e) => setOrganizationData((prev) => ({ ...prev, address: { ...prev.address, street: e.target.value } }))} className="min-h-[60px] resize-none" placeholder="123 Main Street" />
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="city" className="text-xs text-gray-600 mb-1.5 block">City</Label>
+                        <Input id="city" value={organizationData.address.city} onChange={(e) => setOrganizationData((prev) => ({ ...prev, address: { ...prev.address, city: e.target.value } }))} className="h-10" placeholder="San Francisco" />
+                      </div>
+                      <div>
+                        <Label htmlFor="state" className="text-xs text-gray-600 mb-1.5 block">State / Province</Label>
+                        <Input id="state" value={organizationData.address.state} onChange={(e) => setOrganizationData((prev) => ({ ...prev, address: { ...prev.address, state: e.target.value } }))} className="h-10" placeholder="CA" />
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="zipCode" className="text-xs text-gray-600 mb-1.5 block">ZIP / Postal code</Label>
+                        <Input id="zipCode" value={organizationData.address.zipCode} onChange={(e) => setOrganizationData((prev) => ({ ...prev, address: { ...prev.address, zipCode: e.target.value } }))} className="h-10" placeholder="94103" />
+                      </div>
+                      <div>
+                        <Label htmlFor="country" className="text-xs text-gray-600 mb-1.5 block">Country</Label>
+                        <Input id="country" value={organizationData.address.country} onChange={(e) => setOrganizationData((prev) => ({ ...prev, address: { ...prev.address, country: e.target.value } }))} className="h-10" placeholder="United States" />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="sticky bottom-0 bg-white border-t border-gray-200 px-6 py-4 flex justify-end gap-3">
+                <Button variant="outline" onClick={() => setShowBusinessDetails(false)} className="h-9">Cancel</Button>
+                <Button onClick={handleSave} disabled={isSaving} className="h-9">
+                  {isSaving ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Saving...</> : 'Save'}
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Security Modal */}
+        {showSecurity && (
+          <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+            <div className="bg-white rounded-lg max-w-3xl w-full max-h-[90vh] overflow-y-auto">
+              <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
+                <div>
+                  <h2 className="text-lg font-semibold text-gray-900">Security</h2>
+                  <p className="text-sm text-gray-500 mt-1">Manage your authentication methods and account security</p>
+                </div>
+                <button onClick={() => setShowSecurity(false)} className="text-gray-400 hover:text-gray-600">
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+              <div className="p-6">
+                <PasskeyManagement />
+              </div>
+              <div className="sticky bottom-0 bg-white border-t border-gray-200 px-6 py-4 flex justify-end">
+                <Button variant="outline" onClick={() => setShowSecurity(false)} className="h-9">Close</Button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

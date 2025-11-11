@@ -124,4 +124,100 @@ router.put('/:id', authenticate, requireRole('admin', 'superadmin'), async (req:
   }
 });
 
+/**
+ * @route   GET /api/users/profile/me
+ * @desc    Get current user profile
+ * @access  Private
+ */
+router.get('/profile/me', authenticate, async (req: Request, res: Response) => {
+  try {
+    const user = await User.findOne({ firebaseUid: req.user?.uid }).select('-__v -passkeys');
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found',
+      });
+    }
+
+    res.json({
+      success: true,
+      data: user,
+    });
+  } catch (error: any) {
+    console.error('Get profile error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch profile',
+      error: error.message,
+    });
+  }
+});
+
+/**
+ * @route   PUT /api/users/profile/me
+ * @desc    Update current user profile
+ * @access  Private
+ */
+router.put('/profile/me', authenticate, async (req: Request, res: Response) => {
+  try {
+    const {
+      firstName,
+      lastName,
+      displayName,
+      phone,
+      language,
+      jobTitle,
+      department,
+      bio,
+      city,
+      country,
+      timezone,
+      dateFormat,
+      photoURL,
+    } = req.body;
+
+    const updateData: any = {};
+    if (firstName !== undefined) updateData.firstName = firstName;
+    if (lastName !== undefined) updateData.lastName = lastName;
+    if (displayName !== undefined) updateData.displayName = displayName;
+    if (phone !== undefined) updateData.phone = phone;
+    if (language !== undefined) updateData.language = language;
+    if (jobTitle !== undefined) updateData.jobTitle = jobTitle;
+    if (department !== undefined) updateData.department = department;
+    if (bio !== undefined) updateData.bio = bio;
+    if (city !== undefined) updateData.city = city;
+    if (country !== undefined) updateData.country = country;
+    if (timezone !== undefined) updateData.timezone = timezone;
+    if (dateFormat !== undefined) updateData.dateFormat = dateFormat;
+    if (photoURL !== undefined) updateData.photoURL = photoURL;
+
+    const user = await User.findOneAndUpdate(
+      { firebaseUid: req.user?.uid },
+      { $set: updateData },
+      { new: true, runValidators: true }
+    ).select('-__v -passkeys');
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found',
+      });
+    }
+
+    res.json({
+      success: true,
+      message: 'Profile updated successfully',
+      data: user,
+    });
+  } catch (error: any) {
+    console.error('Update profile error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to update profile',
+      error: error.message,
+    });
+  }
+});
+
 export default router;

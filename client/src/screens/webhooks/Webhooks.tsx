@@ -1,9 +1,10 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import { Webhook, Plus, MoreVertical, CheckCircle, XCircle, Clock, ExternalLink } from 'lucide-react';
+import { Webhook, Plus, MoreVertical, CheckCircle, XCircle, Clock, ExternalLink, ArrowLeft } from 'lucide-react';
 
 interface WebhookEndpoint {
   id: string;
@@ -25,6 +26,7 @@ interface WebhookLog {
 }
 
 export const WebhooksScreen = () => {
+  const navigate = useNavigate();
   const [showNewWebhookModal, setShowNewWebhookModal] = useState(false);
   const [selectedEvents, setSelectedEvents] = useState<Set<string>>(new Set());
 
@@ -99,8 +101,19 @@ export const WebhooksScreen = () => {
   };
 
   return (
-    <div className="min-h-screen">
-      <div className="max-w-[1200px] mx-auto px-8 py-12">
+    <div className="min-h-screen bg-[#FEFFFE]">
+      <div className="max-w-6xl mx-auto px-8 py-8">
+        {/* Back button */}
+        <div className="mb-6">
+          <button
+            onClick={() => navigate('/settings')}
+            className="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900 transition-colors"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            <span>Settings</span>
+          </button>
+        </div>
+
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-[28px] font-bold text-gray-900 tracking-tight">Webhooks</h1>

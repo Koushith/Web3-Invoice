@@ -23,6 +23,18 @@ export interface IUser extends Document {
   role: 'owner' | 'admin' | 'accountant' | 'viewer';
   isActive: boolean;
   passkeys: IPasskey[];
+  // Profile fields
+  firstName?: string;
+  lastName?: string;
+  phone?: string;
+  language?: string;
+  jobTitle?: string;
+  department?: string;
+  bio?: string;
+  city?: string;
+  country?: string;
+  timezone?: string;
+  dateFormat?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -76,6 +88,52 @@ const UserSchema: Schema = new Schema(
         lastUsedAt: { type: Date },
       },
     ],
+    // Profile fields
+    firstName: {
+      type: String,
+      trim: true,
+    },
+    lastName: {
+      type: String,
+      trim: true,
+    },
+    phone: {
+      type: String,
+      trim: true,
+    },
+    language: {
+      type: String,
+      default: 'en',
+    },
+    jobTitle: {
+      type: String,
+      trim: true,
+    },
+    department: {
+      type: String,
+      trim: true,
+    },
+    bio: {
+      type: String,
+      trim: true,
+      maxlength: 500,
+    },
+    city: {
+      type: String,
+      trim: true,
+    },
+    country: {
+      type: String,
+      trim: true,
+    },
+    timezone: {
+      type: String,
+      default: 'UTC',
+    },
+    dateFormat: {
+      type: String,
+      default: 'MM/DD/YYYY',
+    },
   },
   {
     timestamps: true,
