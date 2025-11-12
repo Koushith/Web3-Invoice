@@ -97,14 +97,14 @@ export const PaymentsScreen = () => {
 
   return (
     <div className="min-h-screen bg-[#FEFFFE]">
-      <div className="border-b border-gray-200">
-        <div className="max-w-[1400px] mx-auto px-6 sm:px-8 lg:px-12">
+      <div className="border-b border-gray-200 md:border-b">
+        <div className="max-w-[1400px] mx-auto">
           {/* Header */}
-          <div className="py-8">
+          <div className="py-4 md:py-8">
             <div className="flex items-center justify-between">
               <div className="flex-1">
-                <h1 className="text-2xl font-semibold text-gray-900">Payments</h1>
-                <p className="text-sm text-gray-500 mt-1">
+                <h1 className="text-xl md:text-2xl font-semibold text-gray-900">Payments</h1>
+                <p className="text-xs md:text-sm text-gray-500 mt-1">
                   {filteredPayments.length} {filteredPayments.length === 1 ? 'payment' : 'payments'}
                 </p>
               </div>
@@ -112,8 +112,8 @@ export const PaymentsScreen = () => {
           </div>
 
           {/* Filters Bar */}
-          <div className="flex items-center gap-3 pb-4">
-            <div className="relative flex-1 max-w-xs">
+          <div className="flex items-center gap-2 md:gap-3 pb-4 flex-wrap">
+            <div className="relative flex-1 min-w-[200px]">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
               <Input
                 placeholder="Search"
@@ -125,8 +125,8 @@ export const PaymentsScreen = () => {
               />
             </div>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="h-9 w-[140px] text-sm border-gray-300 rounded-md">
-                <SelectValue placeholder="All statuses" />
+              <SelectTrigger className="h-9 w-[110px] md:w-[140px] text-xs md:text-sm border-gray-300 rounded-md">
+                <SelectValue placeholder="Status" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All statuses</SelectItem>
@@ -136,8 +136,8 @@ export const PaymentsScreen = () => {
               </SelectContent>
             </Select>
             <Select value={methodFilter} onValueChange={setMethodFilter}>
-              <SelectTrigger className="h-9 w-[140px] text-sm border-gray-300 rounded-md">
-                <SelectValue placeholder="All methods" />
+              <SelectTrigger className="h-9 w-[110px] md:w-[140px] text-xs md:text-sm border-gray-300 rounded-md">
+                <SelectValue placeholder="Method" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All methods</SelectItem>
@@ -149,19 +149,19 @@ export const PaymentsScreen = () => {
             </Select>
             <Button
               variant="outline"
-              className="h-9 px-3 text-sm font-medium border-gray-300 rounded-md hover:bg-gray-50"
+              className="h-9 px-2 md:px-3 text-sm font-medium border-gray-300 rounded-md hover:bg-gray-50 hidden sm:flex"
             >
-              <Filter className="w-4 h-4 mr-1.5" />
-              More filters
+              <Filter className="w-4 h-4 md:mr-1.5" />
+              <span className="hidden md:inline">More filters</span>
             </Button>
           </div>
         </div>
       </div>
 
       {/* Content */}
-      <div className="max-w-[1400px] mx-auto px-6 sm:px-8 lg:px-12">
-        {/* Table */}
-        <div className="mt-6">
+      <div className="max-w-[1400px] mx-auto">
+        {/* Desktop Table */}
+        <div className="mt-6 hidden md:block">
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
@@ -255,6 +255,73 @@ export const PaymentsScreen = () => {
 
           {/* Results count */}
           <div className="mt-6 pb-8 text-sm text-gray-500">
+            Showing {filteredPayments.length} {filteredPayments.length === 1 ? 'result' : 'results'}
+          </div>
+        </div>
+
+        {/* Mobile Card View */}
+        <div className="md:hidden mt-4 space-y-3">
+          {filteredPayments.map((payment) => (
+            <div
+              key={payment.id}
+              className="bg-white border border-gray-200 rounded-lg p-4 active:scale-98 transition-transform cursor-pointer animate-slide-up"
+            >
+              {/* Header */}
+              <div className="flex items-start justify-between mb-3">
+                <div className="flex-1">
+                  <div className="text-sm font-semibold text-[#635bff]">
+                    {payment.invoice}
+                  </div>
+                  <div className="text-sm text-gray-900 mt-0.5">
+                    {payment.customer}
+                  </div>
+                  <div className="text-xs font-mono text-gray-500 mt-1">
+                    {payment.transactionId}
+                  </div>
+                </div>
+                <span
+                  className={`inline-flex items-center px-2 py-1 text-xs font-medium rounded-md border ${getStatusBadge(
+                    payment.status
+                  )}`}
+                >
+                  {payment.status.charAt(0).toUpperCase() + payment.status.slice(1)}
+                </span>
+              </div>
+
+              {/* Details Grid */}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <div className="text-xs text-gray-500 mb-0.5">Amount</div>
+                  <div className="text-sm font-semibold text-gray-900">
+                    ${payment.amount.toLocaleString('en-US', {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    })}
+                  </div>
+                </div>
+                <div>
+                  <div className="text-xs text-gray-500 mb-0.5">Method</div>
+                  <div className="text-sm text-gray-900">
+                    {getMethodLabel(payment.method)}
+                  </div>
+                </div>
+              </div>
+
+              {/* Footer */}
+              <div className="mt-3 pt-3 border-t border-gray-100">
+                <div className="text-xs text-gray-500">
+                  {new Date(payment.date).toLocaleDateString('en-US', {
+                    month: 'short',
+                    day: 'numeric',
+                    year: 'numeric',
+                  })}
+                </div>
+              </div>
+            </div>
+          ))}
+
+          {/* Results count */}
+          <div className="py-4 text-xs text-center text-gray-500">
             Showing {filteredPayments.length} {filteredPayments.length === 1 ? 'result' : 'results'}
           </div>
         </div>

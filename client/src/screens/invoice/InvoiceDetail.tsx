@@ -1,120 +1,115 @@
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Download, Printer, Send, MoreVertical, CheckCircle, Clock, XCircle, Edit, Trash2, Copy } from 'lucide-react';
+import { ArrowLeft, Download, Send, MoreVertical, Copy, Edit2, User, CreditCard, FileText, Info } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { useGetInvoiceQuery } from '@/services/api.service';
+import { toast } from 'sonner';
 
 export const InvoiceDetailScreen = () => {
   const navigate = useNavigate();
-  const { id } = useParams();
+  const { id } = useParams<{ id: string }>();
 
-  // Mock data - replace with API call
-  const invoice = {
-    id: 'INV-001',
-    number: 'INV-001',
-    status: 'paid',
-    customer: {
-      name: 'Acme Corporation',
-      email: 'contact@acme.com',
-      address: '123 Main Street\nSan Francisco, CA 94103\nUnited States',
-    },
-    issueDate: '2024-02-15',
-    dueDate: '2024-03-15',
-    items: [
-      { id: '1', description: 'Website Design', quantity: 1, rate: 5000, amount: 5000 },
-      { id: '2', description: 'Development Hours', quantity: 40, rate: 150, amount: 6000 },
-      { id: '3', description: 'Hosting Setup', quantity: 1, rate: 500, amount: 500 },
-    ],
-    subtotal: 11500,
-    tax: 1150,
-    total: 12650,
-    currency: 'USD',
-    notes: 'Thank you for your business!',
-    paymentMethod: 'Bank Transfer',
-  };
+  const { data: invoice, isLoading, error } = useGetInvoiceQuery(id!);
 
-  const getStatusColor = (status: string) => {
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <p className="text-gray-500">Loading invoice...</p>
+      </div>
+    );
+  }
+
+  if (error || !invoice) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-gray-900 font-semibold mb-2">Invoice not found</p>
+          <Button onClick={() => navigate('/invoices')} variant="outline">
+            Back to Invoices
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  const getStatusBadge = (status: string) => {
     switch (status) {
       case 'paid':
-        return 'bg-green-50 text-green-700 ring-1 ring-green-200/50';
+        return <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-green-50 text-green-700 border border-green-200">Paid</span>;
       case 'pending':
-        return 'bg-yellow-50 text-yellow-700 ring-1 ring-yellow-200/50';
+        return <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200">Pending</span>;
       case 'overdue':
-        return 'bg-red-50 text-red-700 ring-1 ring-red-200/50';
-      default:
-        return 'bg-gray-50 text-gray-700 ring-1 ring-gray-200/50';
-    }
-  };
-
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'paid':
-        return <CheckCircle className="w-5 h-5" />;
-      case 'pending':
-        return <Clock className="w-5 h-5" />;
-      case 'overdue':
-        return <XCircle className="w-5 h-5" />;
+        return <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-red-50 text-red-700 border border-red-200">Overdue</span>;
+      case 'draft':
+        return <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-gray-50 text-gray-700 border border-gray-200">Draft</span>;
       default:
         return null;
     }
   };
 
   return (
-    <div className="min-h-screen">
-      <div className="max-w-[1100px] mx-auto px-8 py-12">
+    <div className="min-h-screen bg-white">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 py-6 md:py-8">
         {/* Header */}
-        <div className="mb-8">
+        <div className="mb-6 md:mb-8">
           <button
             onClick={() => navigate('/invoices')}
-            className="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900 mb-4 group"
+            className="flex items-center gap-1 text-sm text-[#635BFF] hover:text-[#5045e5] mb-4 md:mb-6 font-medium active:scale-95"
           >
-            <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
-            Back to Invoices
+            <ArrowLeft className="w-4 h-4" />
+            Invoices
           </button>
 
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row items-start justify-between gap-4">
             <div>
-              <div className="flex items-center gap-3 mb-2">
-                <h1 className="text-[28px] font-bold text-gray-900 tracking-tight">{invoice.number}</h1>
-                <span className={`inline-flex items-center gap-1.5 px-3 py-1 text-sm font-semibold rounded-full ${getStatusColor(invoice.status)}`}>
-                  {getStatusIcon(invoice.status)}
-                  {invoice.status.charAt(0).toUpperCase() + invoice.status.slice(1)}
-                </span>
+              <div className="flex flex-wrap items-center gap-2 md:gap-3 mb-2">
+                <h1 className="text-2xl md:text-3xl font-semibold text-gray-900">{invoice.invoiceNumber}</h1>
+                {getStatusBadge(invoice.status)}
               </div>
-              <p className="text-sm text-gray-500">
-                Issued {new Date(invoice.issueDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+              <p className="text-sm md:text-base text-gray-600">
+                Billed to {invoice.customer?.name || 'Customer'} · ${invoice.total.toLocaleString()}
               </p>
             </div>
 
-            <div className="flex items-center gap-3">
+            <div className="flex flex-wrap items-center gap-2">
               <Button
                 variant="outline"
                 size="sm"
-                className="h-10 px-4 border-gray-300 rounded-lg"
+                className="h-9 px-3 md:px-4 text-xs md:text-sm font-medium border-gray-300 hidden sm:flex"
               >
-                <Printer className="w-4 h-4 mr-2" />
-                Print
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-10 px-4 border-gray-300 rounded-lg"
-              >
-                <Download className="w-4 h-4 mr-2" />
-                Download
+                Edit draft
               </Button>
               <Button
                 size="sm"
-                className="h-10 px-4 bg-gradient-to-r from-[#635bff] to-[#5045e5] hover:from-[#5045e5] hover:to-[#3d38d1] text-white rounded-lg font-semibold shadow-lg shadow-[#635bff]/20"
+                className="h-9 px-3 md:px-4 text-xs md:text-sm font-medium bg-[#635BFF] hover:bg-[#5045e5] text-white active:scale-95"
               >
-                <Send className="w-4 h-4 mr-2" />
-                Send
+                <Send className="w-4 h-4 md:mr-1.5" />
+                <span className="hidden md:inline">Send invoice</span>
               </Button>
               <Button
                 variant="outline"
                 size="sm"
-                className="h-10 w-10 p-0 border-gray-300 rounded-lg"
+                className="h-9 px-3 md:px-4 text-xs md:text-sm font-medium border-gray-300 hidden lg:flex"
               >
-                <MoreVertical className="w-4 h-4" />
+                Charge customer
               </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm" className="h-9 w-9 p-0 border-gray-300 active:scale-95">
+                    <MoreVertical className="w-4 h-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48">
+                  <DropdownMenuItem>
+                    <Copy className="w-4 h-4 mr-2" />
+                    Copy invoice ID
+                  </DropdownMenuItem>
+                  <DropdownMenuItem>
+                    <Download className="w-4 h-4 mr-2" />
+                    Download PDF
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </div>
         </div>
@@ -122,97 +117,137 @@ export const InvoiceDetailScreen = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-6">
-            {/* Invoice Details Card */}
-            <div className="bg-white/80 backdrop-blur-sm border border-gray-200/60 rounded-xl p-8 shadow-sm">
-              {/* Bill To / From */}
-              <div className="grid grid-cols-2 gap-12 mb-8">
+            {/* Recent Activity */}
+            <div className="border border-gray-200 rounded-lg p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-base font-semibold text-gray-900">Recent activity</h3>
+                <Button variant="outline" size="sm" className="h-8 px-3 text-xs border-gray-300">
+                  + Add note
+                </Button>
+              </div>
+              <div className="text-center py-12">
+                <p className="text-sm text-gray-500">No recent activity</p>
+              </div>
+            </div>
+
+            {/* Summary */}
+            <div className="border border-gray-200 rounded-lg p-4 md:p-6">
+              <h3 className="text-sm md:text-base font-semibold text-gray-900 mb-4 md:mb-6">Summary</h3>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-x-8 md:gap-x-12 gap-y-4 md:gap-y-6 mb-6 md:mb-8">
+                {/* Billed to */}
                 <div>
-                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Bill To</p>
-                  <div>
-                    <p className="font-semibold text-gray-900 mb-1">{invoice.customer.name}</p>
-                    <p className="text-sm text-gray-600 whitespace-pre-line">{invoice.customer.address}</p>
-                    <p className="text-sm text-gray-600 mt-2">{invoice.customer.email}</p>
-                  </div>
+                  <h4 className="text-xs font-semibold text-gray-700 mb-3">Billed to</h4>
+                  <button className="flex items-center gap-2 text-sm text-blue-600 hover:text-blue-700 mb-2">
+                    <User className="w-4 h-4" />
+                    {invoice.customer?.name || 'Customer'}
+                  </button>
+                  <p className="text-sm text-gray-600">{invoice.customer?.email || '-'}</p>
                 </div>
 
+                {/* Invoice number */}
                 <div>
-                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">From</p>
-                  <div>
-                    <p className="font-semibold text-gray-900 mb-1">DefInvoice Inc.</p>
-                    <p className="text-sm text-gray-600 whitespace-pre-line">
-                      456 Business Ave{'\n'}
-                      New York, NY 10001{'\n'}
-                      United States
-                    </p>
-                    <p className="text-sm text-gray-600 mt-2">hello@definvoice.com</p>
+                  <h4 className="text-xs font-semibold text-gray-700 mb-3">Invoice number</h4>
+                  <p className="text-sm text-gray-900">{invoice.invoiceNumber}</p>
+                </div>
+
+                {/* Billing details */}
+                <div>
+                  <h4 className="text-xs font-semibold text-gray-700 mb-3">Billing details</h4>
+                  <p className="text-sm text-gray-600">{invoice.customer?.address || 'No address'}</p>
+                  {invoice.customer?.phone && <p className="text-sm text-gray-600 mt-1">{invoice.customer.phone}</p>}
+                </div>
+
+                {/* Currency */}
+                <div>
+                  <h4 className="text-xs font-semibold text-gray-700 mb-3">Currency</h4>
+                  <p className="text-sm text-gray-900">{invoice.currency}</p>
+                </div>
+
+                {/* Notes */}
+                <div className="col-span-2">
+                  <h4 className="text-xs font-semibold text-gray-700 mb-3">Notes</h4>
+                  <p className="text-sm text-gray-600">{invoice.notes || '-'}</p>
+                </div>
+
+                {/* Payment method */}
+                <div>
+                  <h4 className="text-xs font-semibold text-gray-700 mb-3">Payment method</h4>
+                  <p className="text-sm text-gray-900">{invoice.paymentMethod || 'Not specified'}</p>
+                </div>
+
+                {/* Tax calculation */}
+                <div>
+                  <h4 className="text-xs font-semibold text-gray-700 mb-3">Tax calculation</h4>
+                  <div className="flex items-center gap-1 text-sm text-gray-900">
+                    <span>{invoice.taxRate > 0 ? `${invoice.taxRate}% tax applied` : 'No tax rate applied'}</span>
+                    <Info className="w-3 h-3 text-gray-400" />
                   </div>
                 </div>
               </div>
 
-              {/* Line Items */}
-              <div className="mb-8">
-                <table className="w-full">
+              {/* Line Items Table */}
+              <div className="border-t border-gray-200 pt-6">
+                <div className="overflow-x-auto">
+                <table className="w-full min-w-[500px]">
                   <thead>
                     <tr className="border-b border-gray-200">
-                      <th className="py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Description</th>
-                      <th className="py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wide">Qty</th>
-                      <th className="py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wide">Rate</th>
-                      <th className="py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wide">Amount</th>
+                      <th className="pb-3 text-left text-xs font-semibold text-gray-700">Description</th>
+                      <th className="pb-3 text-right text-xs font-semibold text-gray-700">Qty</th>
+                      <th className="pb-3 text-right text-xs font-semibold text-gray-700">Unit price</th>
+                      <th className="pb-3 text-right text-xs font-semibold text-gray-700">Amount</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {invoice.items.map((item) => (
-                      <tr key={item.id} className="border-b border-gray-100 last:border-0">
-                        <td className="py-4 text-sm text-gray-900">{item.description}</td>
-                        <td className="py-4 text-sm text-gray-600 text-right">{item.quantity}</td>
-                        <td className="py-4 text-sm text-gray-600 text-right">${item.rate.toFixed(2)}</td>
-                        <td className="py-4 text-sm font-semibold text-gray-900 text-right">${item.amount.toFixed(2)}</td>
+                    {invoice.items?.map((item) => (
+                      <tr key={item.id} className="border-b border-gray-100">
+                        <td className="py-3 text-sm text-gray-900">{item.description}</td>
+                        <td className="py-3 text-sm text-gray-600 text-right">{item.quantity}</td>
+                        <td className="py-3 text-sm text-gray-600 text-right">${item.unitPrice.toLocaleString()}</td>
+                        <td className="py-3 text-sm text-gray-900 text-right">${item.amount.toLocaleString()}</td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
-              </div>
+                </div>
 
-              {/* Totals */}
-              <div className="flex justify-end">
-                <div className="w-80 space-y-3">
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-gray-600">Subtotal</span>
-                    <span className="font-semibold text-gray-900">${invoice.subtotal.toFixed(2)}</span>
-                  </div>
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-gray-600">Tax (10%)</span>
-                    <span className="font-semibold text-gray-900">${invoice.tax.toFixed(2)}</span>
-                  </div>
-                  <div className="flex items-center justify-between text-lg font-bold pt-3 border-t border-gray-200">
-                    <span className="text-gray-900">Total</span>
-                    <span className="text-gray-900">${invoice.total.toFixed(2)} {invoice.currency}</span>
+                {/* Totals */}
+                <div className="mt-6 flex justify-end">
+                  <div className="w-full sm:w-80 space-y-2">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-gray-600">Subtotal</span>
+                      <span className="text-gray-900">${invoice.subtotal.toLocaleString()}</span>
+                    </div>
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-gray-600">Tax {invoice.taxRate > 0 && `(${invoice.taxRate}%)`}</span>
+                      <span className="text-gray-900">{invoice.taxAmount ? `$${invoice.taxAmount.toLocaleString()}` : '-'}</span>
+                    </div>
+                    <div className="flex items-center justify-between text-sm font-semibold pt-2 border-t border-gray-200">
+                      <span className="text-gray-900">Total</span>
+                      <span className="text-gray-900">${invoice.total.toLocaleString()}</span>
+                    </div>
+                    <div className="flex items-center justify-between text-sm pt-4 border-t border-gray-200">
+                      <span className="text-gray-600">Amount paid</span>
+                      <span className="text-gray-900">${invoice.amountPaid?.toLocaleString() || '0.00'}</span>
+                    </div>
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-gray-600">Amount due</span>
+                      <span className="text-gray-900 font-semibold">${invoice.amountDue?.toLocaleString() || '0.00'}</span>
+                    </div>
                   </div>
                 </div>
               </div>
-
-              {/* Notes */}
-              {invoice.notes && (
-                <div className="mt-8 pt-8 border-t border-gray-200">
-                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Notes</p>
-                  <p className="text-sm text-gray-600">{invoice.notes}</p>
-                </div>
-              )}
             </div>
 
-            {/* Payment Information */}
-            <div className="bg-white/80 backdrop-blur-sm border border-gray-200/60 rounded-xl p-6 shadow-sm">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Payment Information</h3>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Payment Method</p>
-                  <p className="text-sm text-gray-900">{invoice.paymentMethod}</p>
-                </div>
-                <div>
-                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Due Date</p>
-                  <p className="text-sm text-gray-900">
-                    {new Date(invoice.dueDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
-                  </p>
+            {/* Tax Calculation */}
+            <div className="border border-gray-200 rounded-lg p-6">
+              <h3 className="text-base font-semibold text-gray-900 mb-4">Tax calculation</h3>
+              <div className="text-center py-8">
+                <p className="text-sm text-gray-500 mb-4">No tax rate applied.</p>
+                <div className="flex items-center justify-center gap-1 text-sm text-gray-600">
+                  <Info className="w-4 h-4" />
+                  <span>Calculate tax automatically on future invoices using Stripe Tax.</span>
+                  <button className="text-[#635BFF] hover:text-[#5045e5] ml-1">Start now</button>
                 </div>
               </div>
             </div>
@@ -220,62 +255,81 @@ export const InvoiceDetailScreen = () => {
 
           {/* Sidebar */}
           <div className="space-y-6">
-            {/* Quick Actions */}
-            <div className="bg-white/80 backdrop-blur-sm border border-gray-200/60 rounded-xl p-6 shadow-sm">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
-              <div className="space-y-2">
-                <Button
-                  variant="outline"
-                  className="w-full h-10 justify-start border-gray-300 rounded-lg"
-                  onClick={() => navigate(`/invoices/${id}/edit`)}
-                >
-                  <Edit className="w-4 h-4 mr-2" />
-                  Edit Invoice
+            {/* Details */}
+            <div className="border border-gray-200 rounded-lg p-5">
+              <div className="flex items-center justify-between mb-5">
+                <h3 className="text-base font-semibold text-gray-900">Details</h3>
+                <Button variant="ghost" size="sm" className="h-6 w-6 p-0 hover:bg-gray-100">
+                  <Edit2 className="w-3.5 h-3.5 text-gray-600" />
                 </Button>
-                <Button
-                  variant="outline"
-                  className="w-full h-10 justify-start border-gray-300 rounded-lg"
-                >
-                  <Copy className="w-4 h-4 mr-2" />
-                  Duplicate
-                </Button>
-                <Button
-                  variant="outline"
-                  className="w-full h-10 justify-start border-gray-300 rounded-lg"
-                >
-                  <Send className="w-4 h-4 mr-2" />
-                  Send Reminder
-                </Button>
-                <Button
-                  variant="outline"
-                  className="w-full h-10 justify-start border-red-200 text-red-600 hover:bg-red-50 rounded-lg"
-                >
-                  <Trash2 className="w-4 h-4 mr-2" />
-                  Delete
-                </Button>
+              </div>
+
+              <div className="space-y-5">
+                <div>
+                  <p className="text-xs text-gray-500 mb-2">ID</p>
+                  <div className="flex items-center gap-2">
+                    <code className="text-xs font-mono text-gray-900">{invoice.id}</code>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-5 w-5 p-0 hover:bg-gray-100"
+                      onClick={() => {
+                        navigator.clipboard.writeText(invoice.id);
+                        toast.success('Invoice ID copied to clipboard');
+                      }}
+                    >
+                      <Copy className="w-3.5 h-3.5 text-gray-500" />
+                    </Button>
+                  </div>
+                </div>
+
+                <div>
+                  <p className="text-xs text-gray-500 mb-2">Issue Date</p>
+                  <p className="text-sm text-gray-900">
+                    {new Date(invoice.issueDate).toLocaleDateString('en-US', {
+                      day: 'numeric',
+                      month: 'short',
+                      year: 'numeric',
+                    })}
+                  </p>
+                </div>
+
+                {invoice.dueDate && (
+                  <div>
+                    <p className="text-xs text-gray-500 mb-2">Due Date</p>
+                    <p className="text-sm text-gray-900">
+                      {new Date(invoice.dueDate).toLocaleDateString('en-US', {
+                        day: 'numeric',
+                        month: 'short',
+                        year: 'numeric',
+                      })}
+                    </p>
+                  </div>
+                )}
+
+                <div>
+                  <p className="text-xs text-gray-500 mb-2">Created</p>
+                  <p className="text-sm text-gray-900">
+                    {new Date(invoice.createdAt).toLocaleDateString('en-US', {
+                      day: 'numeric',
+                      month: 'short',
+                      hour: '2-digit',
+                      minute: '2-digit'
+                    })}
+                  </p>
+                </div>
               </div>
             </div>
 
-            {/* Activity Timeline */}
-            <div className="bg-white/80 backdrop-blur-sm border border-gray-200/60 rounded-xl p-6 shadow-sm">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Activity</h3>
-              <div className="space-y-4">
-                {[
-                  { event: 'Invoice paid', time: '2 days ago', icon: CheckCircle, color: 'text-green-500' },
-                  { event: 'Payment received', time: '2 days ago', icon: CheckCircle, color: 'text-green-500' },
-                  { event: 'Invoice viewed', time: '5 days ago', icon: Clock, color: 'text-blue-500' },
-                  { event: 'Invoice sent', time: '1 week ago', icon: Send, color: 'text-purple-500' },
-                  { event: 'Invoice created', time: '1 week ago', icon: CheckCircle, color: 'text-gray-500' },
-                ].map((activity, index) => (
-                  <div key={index} className="flex items-start gap-3">
-                    <activity.icon className={`w-5 h-5 ${activity.color} flex-shrink-0 mt-0.5`} />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-gray-900">{activity.event}</p>
-                      <p className="text-xs text-gray-500 mt-0.5">{activity.time}</p>
-                    </div>
-                  </div>
-                ))}
+            {/* Metadata */}
+            <div className="border border-gray-200 rounded-lg p-5">
+              <div className="flex items-center justify-between mb-5">
+                <h3 className="text-base font-semibold text-gray-900">Metadata</h3>
+                <Button variant="ghost" size="sm" className="h-6 w-6 p-0 hover:bg-gray-100">
+                  <Edit2 className="w-3.5 h-3.5 text-gray-600" />
+                </Button>
               </div>
+              <p className="text-sm text-gray-500">No metadata</p>
             </div>
           </div>
         </div>

@@ -1,5 +1,23 @@
 import QRCode from 'react-qr-code';
 
+// Helper function to get currency symbol
+const getCurrencySymbol = (currency?: string): string => {
+  if (!currency) return '$';
+
+  const currencySymbols: Record<string, string> = {
+    USD: '$',
+    EUR: '€',
+    GBP: '£',
+    INR: '₹',
+    JPY: '¥',
+    CNY: '¥',
+    CAD: 'C$',
+    AUD: 'A$',
+  };
+
+  return currencySymbols[currency] || currency;
+};
+
 interface InvoiceItem {
   description: string;
   quantity: number;
@@ -18,6 +36,7 @@ interface InvoiceData {
   items: InvoiceItem[];
   notes: string;
   terms: string;
+  currency?: string;
 }
 
 interface PaymentDetails {
@@ -43,6 +62,8 @@ interface TemplateProps {
 }
 
 export function StandardTemplate({ logo, invoiceData, paymentDetails }: TemplateProps) {
+  const currencySymbol = getCurrencySymbol(invoiceData.currency);
+
   return (
     <div className="p-[25mm] space-y-8">
       {/* Header Section */}
@@ -126,8 +147,8 @@ export function StandardTemplate({ logo, invoiceData, paymentDetails }: Template
               <tr key={index}>
                 <td className="py-4 text-sm">{item.description}</td>
                 <td className="py-4 text-sm text-right">{item.quantity}</td>
-                <td className="py-4 text-sm text-right">${item.price.toFixed(2)}</td>
-                <td className="py-4 text-sm text-right">${(item.quantity * item.price).toFixed(2)}</td>
+                <td className="py-4 text-sm text-right">{currencySymbol}{item.price.toFixed(2)}</td>
+                <td className="py-4 text-sm text-right">{currencySymbol}{(item.quantity * item.price).toFixed(2)}</td>
               </tr>
             ))}
           </tbody>
@@ -137,7 +158,7 @@ export function StandardTemplate({ logo, invoiceData, paymentDetails }: Template
                 Total
               </td>
               <td className="py-4 text-right font-semibold text-lg">
-                ${invoiceData.items.reduce((sum, item) => sum + item.quantity * item.price, 0).toFixed(2)}
+                {currencySymbol}{invoiceData.items.reduce((sum, item) => sum + item.quantity * item.price, 0).toFixed(2)}
               </td>
             </tr>
           </tfoot>
@@ -236,6 +257,8 @@ export function StandardTemplate({ logo, invoiceData, paymentDetails }: Template
 }
 
 export function ModernTemplate({ logo, invoiceData, paymentDetails }: TemplateProps) {
+  const currencySymbol = getCurrencySymbol(invoiceData.currency);
+
   return (
     <div className="p-[25mm] space-y-8">
       {/* Header with gradient */}
@@ -325,8 +348,8 @@ export function ModernTemplate({ logo, invoiceData, paymentDetails }: TemplatePr
               <tr key={index} className="border-b border-gray-100">
                 <td className="py-4 px-4 text-sm font-medium">{item.description}</td>
                 <td className="py-4 px-4 text-sm text-right">{item.quantity}</td>
-                <td className="py-4 px-4 text-sm text-right">${item.price.toFixed(2)}</td>
-                <td className="py-4 px-4 text-sm text-right font-semibold">${(item.quantity * item.price).toFixed(2)}</td>
+                <td className="py-4 px-4 text-sm text-right">{currencySymbol}{item.price.toFixed(2)}</td>
+                <td className="py-4 px-4 text-sm text-right font-semibold">{currencySymbol}{(item.quantity * item.price).toFixed(2)}</td>
               </tr>
             ))}
           </tbody>
@@ -336,7 +359,7 @@ export function ModernTemplate({ logo, invoiceData, paymentDetails }: TemplatePr
                 Total
               </td>
               <td className="py-4 px-4 text-right font-bold text-2xl">
-                ${invoiceData.items.reduce((sum, item) => sum + item.quantity * item.price, 0).toFixed(2)}
+                {currencySymbol}{invoiceData.items.reduce((sum, item) => sum + item.quantity * item.price, 0).toFixed(2)}
               </td>
             </tr>
           </tfoot>
@@ -442,6 +465,8 @@ export function ModernTemplate({ logo, invoiceData, paymentDetails }: TemplatePr
 }
 
 export function MinimalTemplate({ logo, invoiceData, paymentDetails }: TemplateProps) {
+  const currencySymbol = getCurrencySymbol(invoiceData.currency);
+
   return (
     <div className="p-[30mm] space-y-12">
       {/* Header */}
@@ -491,9 +516,9 @@ export function MinimalTemplate({ logo, invoiceData, paymentDetails }: TemplateP
           <div key={index} className="flex justify-between items-center py-3 border-b border-gray-200">
             <div className="flex-1">
               <p className="font-medium text-gray-900">{item.description}</p>
-              <p className="text-sm text-gray-500 mt-1">{item.quantity} × ${item.price.toFixed(2)}</p>
+              <p className="text-sm text-gray-500 mt-1">{item.quantity} × {currencySymbol}{item.price.toFixed(2)}</p>
             </div>
-            <p className="font-semibold text-gray-900 text-lg">${(item.quantity * item.price).toFixed(2)}</p>
+            <p className="font-semibold text-gray-900 text-lg">{currencySymbol}{(item.quantity * item.price).toFixed(2)}</p>
           </div>
         ))}
       </div>
@@ -504,7 +529,7 @@ export function MinimalTemplate({ logo, invoiceData, paymentDetails }: TemplateP
           <div className="flex gap-12 items-baseline">
             <p className="text-lg font-light text-gray-600">Total</p>
             <p className="text-4xl font-light text-gray-900">
-              ${invoiceData.items.reduce((sum, item) => sum + item.quantity * item.price, 0).toFixed(2)}
+              {currencySymbol}{invoiceData.items.reduce((sum, item) => sum + item.quantity * item.price, 0).toFixed(2)}
             </p>
           </div>
         </div>
@@ -596,6 +621,8 @@ export function MinimalTemplate({ logo, invoiceData, paymentDetails }: TemplateP
 }
 
 export function ArtisticTemplate({ logo, invoiceData, paymentDetails }: TemplateProps) {
+  const currencySymbol = getCurrencySymbol(invoiceData.currency);
+
   return (
     <div className="p-[25mm] space-y-10 relative" style={{ fontFamily: "'Courier New', monospace" }}>
       {/* Header */}
@@ -638,7 +665,7 @@ export function ArtisticTemplate({ logo, invoiceData, paymentDetails }: Template
           )}
           <div className="flex justify-between">
             <span className="text-gray-600">Amount Due</span>
-            <span className="font-medium">${invoiceData.items.reduce((sum, item) => sum + item.quantity * item.price, 0).toFixed(0)}</span>
+            <span className="font-medium">{currencySymbol}{invoiceData.items.reduce((sum, item) => sum + item.quantity * item.price, 0).toFixed(0)}</span>
           </div>
         </div>
       </div>
@@ -652,7 +679,7 @@ export function ArtisticTemplate({ logo, invoiceData, paymentDetails }: Template
         {invoiceData.items.map((item, index) => (
           <div key={index} className="flex justify-between text-sm">
             <span>{item.description}</span>
-            <span className="font-medium">{item.quantity * item.price}</span>
+            <span className="font-medium">{currencySymbol}{item.quantity * item.price}</span>
           </div>
         ))}
       </div>
@@ -660,7 +687,7 @@ export function ArtisticTemplate({ logo, invoiceData, paymentDetails }: Template
       {/* Total */}
       <div className="flex justify-between text-base">
         <span className="font-semibold">Total</span>
-        <span className="font-semibold">${invoiceData.items.reduce((sum, item) => sum + item.quantity * item.price, 0).toFixed(2)} USD</span>
+        <span className="font-semibold">{currencySymbol}{invoiceData.items.reduce((sum, item) => sum + item.quantity * item.price, 0).toFixed(2)}</span>
       </div>
 
       {/* Floral Design - Bottom Left */}
@@ -797,6 +824,7 @@ export function ArtisticTemplate({ logo, invoiceData, paymentDetails }: Template
 
 // Professional Template - Clean enterprise design
 export function GradientTemplate({ logo, invoiceData, paymentDetails }: TemplateProps) {
+  const currencySymbol = getCurrencySymbol(invoiceData.currency);
   const subtotal = invoiceData.items.reduce((sum, item) => sum + item.quantity * item.price, 0);
   const total = subtotal;
 
@@ -863,8 +891,8 @@ export function GradientTemplate({ logo, invoiceData, paymentDetails }: Template
               <tr key={index} className={`border-b border-gray-200 ${index % 2 === 0 ? 'bg-gray-50' : 'bg-white'}`}>
                 <td className="py-3 px-4 text-gray-900">{item.description}</td>
                 <td className="py-3 px-4 text-center text-gray-700">{item.quantity}</td>
-                <td className="py-3 px-4 text-right text-gray-700">${item.price.toFixed(2)}</td>
-                <td className="py-3 px-4 text-right text-gray-900 font-semibold">${(item.quantity * item.price).toFixed(2)}</td>
+                <td className="py-3 px-4 text-right text-gray-700">{currencySymbol}{item.price.toFixed(2)}</td>
+                <td className="py-3 px-4 text-right text-gray-900 font-semibold">{currencySymbol}{(item.quantity * item.price).toFixed(2)}</td>
               </tr>
             ))}
           </tbody>
@@ -876,11 +904,11 @@ export function GradientTemplate({ logo, invoiceData, paymentDetails }: Template
         <div className="w-80">
           <div className="flex justify-between py-2 border-b border-gray-200">
             <span className="text-gray-600">Subtotal</span>
-            <span className="text-gray-900 font-semibold">${subtotal.toFixed(2)}</span>
+            <span className="text-gray-900 font-semibold">{currencySymbol}{subtotal.toFixed(2)}</span>
           </div>
           <div className="flex justify-between py-3 bg-gray-900 px-4 mt-2">
             <span className="text-white font-bold">Total Due</span>
-            <span className="text-white font-bold text-xl">${total.toFixed(2)}</span>
+            <span className="text-white font-bold text-xl">{currencySymbol}{total.toFixed(2)}</span>
           </div>
         </div>
       </div>
@@ -923,6 +951,7 @@ export function GradientTemplate({ logo, invoiceData, paymentDetails }: Template
 
 // Executive Template - Corporate blue theme
 export function GlassTemplate({ logo, invoiceData, paymentDetails }: TemplateProps) {
+  const currencySymbol = getCurrencySymbol(invoiceData.currency);
   const subtotal = invoiceData.items.reduce((sum, item) => sum + item.quantity * item.price, 0);
   const total = subtotal;
 
@@ -992,8 +1021,8 @@ export function GlassTemplate({ logo, invoiceData, paymentDetails }: TemplatePro
               <tr key={index} className="border-b border-gray-200">
                 <td className="py-4 px-0 text-gray-900 font-medium">{item.description}</td>
                 <td className="py-4 px-4 text-center text-gray-700">{item.quantity}</td>
-                <td className="py-4 px-4 text-right text-gray-700">${item.price.toFixed(2)}</td>
-                <td className="py-4 px-4 text-right text-gray-900 font-semibold">${(item.quantity * item.price).toFixed(2)}</td>
+                <td className="py-4 px-4 text-right text-gray-700">{currencySymbol}{item.price.toFixed(2)}</td>
+                <td className="py-4 px-4 text-right text-gray-900 font-semibold">{currencySymbol}{(item.quantity * item.price).toFixed(2)}</td>
               </tr>
             ))}
           </tbody>
@@ -1005,11 +1034,11 @@ export function GlassTemplate({ logo, invoiceData, paymentDetails }: TemplatePro
         <div className="w-96">
           <div className="flex justify-between py-3 border-b border-gray-300">
             <span className="text-gray-600 font-semibold">Subtotal</span>
-            <span className="text-gray-900 font-semibold">${subtotal.toFixed(2)}</span>
+            <span className="text-gray-900 font-semibold">{currencySymbol}{subtotal.toFixed(2)}</span>
           </div>
           <div className="flex justify-between py-4 bg-blue-600 px-6 mt-3">
-            <span className="text-white font-bold text-lg">Amount Due (USD)</span>
-            <span className="text-white font-bold text-2xl">${total.toFixed(2)}</span>
+            <span className="text-white font-bold text-lg">Amount Due</span>
+            <span className="text-white font-bold text-2xl">{currencySymbol}{total.toFixed(2)}</span>
           </div>
         </div>
       </div>
@@ -1077,6 +1106,7 @@ export function GlassTemplate({ logo, invoiceData, paymentDetails }: TemplatePro
 
 // Classic Template - Traditional business format
 export function ElegantTemplate({ logo, invoiceData, paymentDetails }: TemplateProps) {
+  const currencySymbol = getCurrencySymbol(invoiceData.currency);
   const subtotal = invoiceData.items.reduce((sum, item) => sum + item.quantity * item.price, 0);
   const total = subtotal;
 
@@ -1155,8 +1185,8 @@ export function ElegantTemplate({ logo, invoiceData, paymentDetails }: TemplateP
               <tr key={index} className={`border-b border-gray-300 ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}`}>
                 <td className="py-3 px-4 text-gray-900 border-r border-gray-300">{item.description}</td>
                 <td className="py-3 px-4 text-center text-gray-700 border-r border-gray-300">{item.quantity}</td>
-                <td className="py-3 px-4 text-right text-gray-700 border-r border-gray-300">${item.price.toFixed(2)}</td>
-                <td className="py-3 px-4 text-right text-gray-900 font-semibold">${(item.quantity * item.price).toFixed(2)}</td>
+                <td className="py-3 px-4 text-right text-gray-700 border-r border-gray-300">{currencySymbol}{item.price.toFixed(2)}</td>
+                <td className="py-3 px-4 text-right text-gray-900 font-semibold">{currencySymbol}{(item.quantity * item.price).toFixed(2)}</td>
               </tr>
             ))}
           </tbody>
@@ -1168,11 +1198,11 @@ export function ElegantTemplate({ logo, invoiceData, paymentDetails }: TemplateP
         <div className="w-80 border-2 border-gray-300">
           <div className="flex justify-between py-2 px-4 bg-gray-50 border-b border-gray-300">
             <span className="text-gray-700 font-semibold">Subtotal:</span>
-            <span className="text-gray-900 font-semibold">${subtotal.toFixed(2)}</span>
+            <span className="text-gray-900 font-semibold">{currencySymbol}{subtotal.toFixed(2)}</span>
           </div>
           <div className="flex justify-between py-3 px-4 bg-gray-800">
             <span className="text-white font-bold text-lg">Total Due:</span>
-            <span className="text-white font-bold text-xl">${total.toFixed(2)}</span>
+            <span className="text-white font-bold text-xl">{currencySymbol}{total.toFixed(2)}</span>
           </div>
         </div>
       </div>

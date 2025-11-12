@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Trash2, Plus, ArrowLeft, Loader2, Printer, Download } from 'lucide-react';
+import { Trash2, Plus, ArrowLeft, Loader2, Printer, Download, ChevronDown, ChevronUp } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useNavigate } from 'react-router-dom';
@@ -81,14 +81,29 @@ export const NewInvoice = () => {
   const [logo] = useState<string | null>(null);
   const [invoiceStyle, setInvoiceStyle] = useState<InvoiceStyle>('standard');
   const [previewZoom, setPreviewZoom] = useState(0.8);
+  const [currency, setCurrency] = useState('USD');
+  const [customCurrency, setCustomCurrency] = useState('');
+  const [showCustomCurrency, setShowCustomCurrency] = useState(false);
+  const [currencyType, setCurrencyType] = useState<'fiat' | 'crypto'>('fiat');
+  const [showBillingDetails, setShowBillingDetails] = useState(false);
+  const [showPaymentDetails, setShowPaymentDetails] = useState(false);
+  const [showAdditionalOptions, setShowAdditionalOptions] = useState(false);
+  const [invoicePrefix, setInvoicePrefix] = useState('INV');
+  const [taxRate, setTaxRate] = useState(0);
   const [invoiceData, setInvoiceData] = useState({
     invoiceNumber: '',
     date: new Date().toISOString().split('T')[0],
     dueDate: '',
     fromCompany: '',
     fromAddress: '',
+    fromEmail: '',
+    fromPhone: '',
+    fromTaxId: '',
     toCompany: '',
     toAddress: '',
+    toEmail: '',
+    toPhone: '',
+    toTaxId: '',
     items: [] as InvoiceItem[],
     notes: '',
     terms: '',
@@ -130,12 +145,24 @@ export const NewInvoice = () => {
     skip: !isAuthReady,
   });
 
+  // Sync payment method with currency type
+  useEffect(() => {
+    if (currencyType === 'crypto') {
+      setPaymentDetails((prev) => ({ ...prev, method: 'crypto' }));
+    } else if (currencyType === 'fiat') {
+      setPaymentDetails((prev) => ({ ...prev, method: 'bank' }));
+    }
+  }, [currencyType]);
+
   // Pre-populate from fields with organization data
   useEffect(() => {
     if (organization) {
       setInvoiceData((prev) => ({
         ...prev,
         fromCompany: organization.name || '',
+        fromEmail: organization.email || '',
+        fromPhone: organization.phone || '',
+        fromTaxId: organization.taxId || '',
         fromAddress: organization.address
           ? [
               organization.address.street,
@@ -148,6 +175,16 @@ export const NewInvoice = () => {
               .join('\n')
           : '',
       }));
+
+      // Set invoice prefix from organization settings
+      if (organization.settings?.invoicePrefix) {
+        setInvoicePrefix(organization.settings.invoicePrefix);
+      }
+
+      // Set default currency from organization settings
+      if (organization.settings?.defaultCurrency) {
+        setCurrency(organization.settings.defaultCurrency);
+      }
     }
   }, [organization]);
 
@@ -162,6 +199,9 @@ export const NewInvoice = () => {
         setInvoiceData((prev) => ({
           ...prev,
           toCompany: customer.company || customer.name,
+          toEmail: customer.email || '',
+          toPhone: customer.phone || '',
+          toTaxId: customer.taxId || '',
           toAddress: customer.address?.street
             ? `${customer.address.street}\n${customer.address.city}, ${customer.address.state} ${customer.address.postalCode}\n${customer.address.country}`
             : '',
@@ -263,20 +303,35 @@ export const NewInvoice = () => {
     }
 
     try {
-      const invoicePayload = {
+      // Build full invoice number with prefix
+      const fullInvoiceNumber = `${invoicePrefix}-${invoiceData.invoiceNumber}`;
+
+      // Get currency - use custom if entered, otherwise selected currency
+      const finalCurrency = showCustomCurrency && customCurrency ? customCurrency : currency;
+
+      const invoicePayload: any = {
         customerId: selectedCustomerId,
+        invoiceNumber: fullInvoiceNumber,
         issueDate: invoiceData.date,
-        dueDate: invoiceData.dueDate || undefined,
-        currency: Currency.USD,
-        items: validItems.map((item) => ({
+        currency: finalCurrency as Currency,
+        lineItems: validItems.map((item) => ({
           description: item.description.trim(),
           quantity: item.quantity,
           unitPrice: item.price,
         })),
-        taxRate: 0,
-        notes: invoiceData.notes || undefined,
-        terms: invoiceData.terms || undefined,
+        taxRate: taxRate,
       };
+
+      // Only add optional fields if they have values
+      if (invoiceData.dueDate?.trim()) {
+        invoicePayload.dueDate = invoiceData.dueDate;
+      }
+      if (invoiceData.notes?.trim()) {
+        invoicePayload.notes = invoiceData.notes;
+      }
+      if (invoiceData.terms?.trim()) {
+        invoicePayload.terms = invoiceData.terms;
+      }
 
       await createInvoice(invoicePayload).unwrap();
       toast.success('Invoice created successfully');
@@ -292,34 +347,42 @@ export const NewInvoice = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <div className="bg-white border-b border-gray-200">
-        <div className="max-w-[1600px] mx-auto px-8">
+      <div className="bg-white border-b border-gray-200 sticky top-0 z-30">
+        <div className="max-w-[1800px] mx-auto px-4 md:px-8">
           <div className="flex items-center justify-between h-14">
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 md:gap-3">
               <button
                 onClick={() => navigate('/invoices')}
-                className="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900"
+                className="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900 active:scale-95 transition-transform"
               >
                 <ArrowLeft className="w-4 h-4" />
               </button>
-              <h1 className="text-base font-medium text-gray-900">Create invoice</h1>
+              <h1 className="text-sm md:text-base font-medium text-gray-900">Create invoice</h1>
             </div>
-            <div className="flex items-center gap-3">
-              <Button variant="outline" onClick={() => navigate('/invoices')} className="h-9 px-4">
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                onClick={() => navigate('/invoices')}
+                className="h-9 px-3 md:px-4 text-xs md:text-sm hidden sm:flex"
+              >
                 Cancel
               </Button>
               <Button
                 onClick={handleCreateInvoice}
                 disabled={isCreating || !selectedCustomerId}
-                className="h-9 px-4 bg-[#635BFF] hover:bg-[#5046E5]"
+                className="h-9 px-3 md:px-4 text-xs md:text-sm bg-[#635BFF] hover:bg-[#5046E5] active:scale-95 transition-transform"
               >
                 {isCreating ? (
                   <>
                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Creating...
+                    <span className="hidden sm:inline">Creating...</span>
+                    <span className="sm:hidden">...</span>
                   </>
                 ) : (
-                  'Create invoice'
+                  <>
+                    <span className="hidden sm:inline">Create invoice</span>
+                    <span className="sm:hidden">Create</span>
+                  </>
                 )}
               </Button>
             </div>
@@ -327,18 +390,18 @@ export const NewInvoice = () => {
         </div>
       </div>
 
-      <div className="max-w-[1800px] mx-auto px-8 py-8">
-        <div className="grid grid-cols-1 xl:grid-cols-[600px_1fr] gap-10">
+      <div className="max-w-[1800px] mx-auto px-4 md:px-8 py-4 md:py-8">
+        <div className="grid grid-cols-1 xl:grid-cols-[600px_1fr] gap-4 md:gap-10">
           {/* Left Side - Form */}
-          <div className="space-y-6">
+          <div className="space-y-3 md:space-y-4">
             {/* Customer Section */}
             <div className="bg-white border border-gray-200 rounded-lg">
-              <div className="p-6 border-b border-gray-200">
+              <div className="p-4 md:p-5 border-b border-gray-100">
                 <h2 className="text-sm font-semibold text-gray-900">Customer</h2>
               </div>
-              <div className="p-6">
+              <div className="p-4 md:p-5">
                 <Select value={selectedCustomerId} onValueChange={setSelectedCustomerId}>
-                  <SelectTrigger className="h-10">
+                  <SelectTrigger className="h-9 text-sm">
                     <SelectValue placeholder="Find or add a customer..." />
                   </SelectTrigger>
                   <SelectContent>
@@ -355,37 +418,256 @@ export const NewInvoice = () => {
               </div>
             </div>
 
-            {/* Currency */}
+            {/* Invoice Details - Combined */}
             <div className="bg-white border border-gray-200 rounded-lg">
-              <div className="p-6 border-b border-gray-200">
-                <h2 className="text-sm font-semibold text-gray-900">Currency</h2>
+              <div className="p-4 md:p-5">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
+                  {/* Invoice Number */}
+                  <div>
+                    <Label className="text-xs text-gray-600 mb-1.5 block">Invoice #</Label>
+                    <div className="flex gap-1.5">
+                      <Input
+                        placeholder="INV"
+                        value={invoicePrefix}
+                        onChange={(e) => setInvoicePrefix(e.target.value.toUpperCase())}
+                        className="h-9 w-20 text-sm"
+                      />
+                      <span className="flex items-center text-gray-300">-</span>
+                      <Input
+                        placeholder="001"
+                        value={invoiceData.invoiceNumber}
+                        onChange={(e) => setInvoiceData({ ...invoiceData, invoiceNumber: e.target.value })}
+                        className="h-9 flex-1 text-sm"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Issue Date */}
+                  <div>
+                    <Label className="text-xs text-gray-600 mb-1.5 block">Issue date</Label>
+                    <Input
+                      type="date"
+                      value={invoiceData.date}
+                      onChange={(e) => setInvoiceData({ ...invoiceData, date: e.target.value })}
+                      className="h-9 text-sm"
+                    />
+                  </div>
+
+                  {/* Currency Type */}
+                  <div>
+                    <Label className="text-xs text-gray-600 mb-1.5 block">Invoice currency</Label>
+                    <div className="flex gap-1.5 mb-1.5">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setCurrencyType('fiat');
+                          setCurrency('USD');
+                          setShowCustomCurrency(false);
+                        }}
+                        className={`flex-1 h-8 rounded text-xs font-medium transition-colors ${
+                          currencyType === 'fiat'
+                            ? 'bg-[#635BFF] text-white'
+                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                        }`}
+                      >
+                        Fiat
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setCurrencyType('crypto');
+                          setCurrency('BTC');
+                          setShowCustomCurrency(false);
+                        }}
+                        className={`flex-1 h-8 rounded text-xs font-medium transition-colors ${
+                          currencyType === 'crypto'
+                            ? 'bg-[#635BFF] text-white'
+                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                        }`}
+                      >
+                        Crypto
+                      </button>
+                    </div>
+                    {!showCustomCurrency ? (
+                      <Select value={currency} onValueChange={setCurrency}>
+                        <SelectTrigger className="h-9 text-sm">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {currencyType === 'fiat' ? (
+                            <>
+                              <SelectItem value="USD">USD - US Dollar</SelectItem>
+                              <SelectItem value="EUR">EUR - Euro</SelectItem>
+                              <SelectItem value="GBP">GBP - Pound</SelectItem>
+                              <SelectItem value="INR">INR - Rupee</SelectItem>
+                              <SelectItem value="CAD">CAD - Canadian Dollar</SelectItem>
+                              <SelectItem value="AUD">AUD - Australian Dollar</SelectItem>
+                              <SelectItem value="JPY">JPY - Yen</SelectItem>
+                            </>
+                          ) : (
+                            <>
+                              <SelectItem value="BTC">BTC - Bitcoin</SelectItem>
+                              <SelectItem value="ETH">ETH - Ethereum</SelectItem>
+                              <SelectItem value="USDT">USDT - Tether</SelectItem>
+                              <SelectItem value="USDC">USDC - USD Coin</SelectItem>
+                            </>
+                          )}
+                        </SelectContent>
+                      </Select>
+                    ) : (
+                      <Input
+                        placeholder="Enter code"
+                        value={customCurrency}
+                        onChange={(e) => {
+                          setCustomCurrency(e.target.value.toUpperCase());
+                          setCurrency(e.target.value.toUpperCase());
+                        }}
+                        className="h-9 text-sm"
+                      />
+                    )}
+                    <p className="text-[11px] text-gray-500 mt-1">Currency for invoice amounts</p>
+                  </div>
+
+                  {/* Due Date */}
+                  <div>
+                    <Label className="text-xs text-gray-600 mb-1.5 block">Due date <span className="text-gray-400 text-[10px]">(optional)</span></Label>
+                    <Input
+                      type="date"
+                      value={invoiceData.dueDate}
+                      onChange={(e) => setInvoiceData({ ...invoiceData, dueDate: e.target.value })}
+                      className="h-9 text-sm"
+                    />
+                  </div>
+                </div>
+
+                {/* Tax Rate - Full Width */}
+                <div className="mt-4 pt-4 border-t border-gray-100">
+                  <Label className="text-xs text-gray-600 mb-1.5 block">Tax rate (%)</Label>
+                  <Input
+                    type="number"
+                    placeholder="0"
+                    min="0"
+                    max="100"
+                    step="0.01"
+                    value={taxRate}
+                    onChange={(e) => setTaxRate(Number(e.target.value))}
+                    className="h-9 text-sm w-32"
+                  />
+                  <p className="text-[11px] text-gray-500 mt-1">Enter 18 for 18% GST/VAT</p>
+                </div>
               </div>
-              <div className="p-6">
-                <Select defaultValue="USD">
-                  <SelectTrigger className="h-10">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="USD">USD - US Dollar</SelectItem>
-                    <SelectItem value="EUR">EUR - Euro</SelectItem>
-                    <SelectItem value="GBP">GBP - British Pound</SelectItem>
-                  </SelectContent>
-                </Select>
-                <p className="text-xs text-gray-500 mt-2">
-                  Selecting a new currency will clear all items from the invoice.
-                </p>
-              </div>
+            </div>
+
+            {/* Billing Information - Collapsible */}
+            <div className="bg-white border border-gray-200 rounded-lg">
+              <button
+                type="button"
+                onClick={() => setShowBillingDetails(!showBillingDetails)}
+                className="w-full p-5 flex items-center justify-between hover:bg-gray-50 transition-colors"
+              >
+                <div className="flex-1 text-left">
+                  <div className="flex items-center gap-2">
+                    <h2 className="text-sm font-semibold text-gray-900">Billing information</h2>
+                    <span className="text-[10px] text-gray-500 bg-gray-100 px-2 py-0.5 rounded">Auto-filled</span>
+                  </div>
+                  {!showBillingDetails && (
+                    <p className="text-xs text-gray-600 mt-1">
+                      {invoiceData.fromCompany || 'Your Organization'} → {invoiceData.toCompany || 'Customer'}
+                    </p>
+                  )}
+                </div>
+                {showBillingDetails ? (
+                  <ChevronUp className="w-4 h-4 text-gray-400" />
+                ) : (
+                  <ChevronDown className="w-4 h-4 text-gray-400" />
+                )}
+              </button>
+
+              {showBillingDetails && (
+                <div className="px-4 md:px-5 pb-4 md:pb-5 border-t border-gray-100">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 mt-4">
+                    {/* From */}
+                    <div className="space-y-3">
+                      <h3 className="text-xs font-semibold text-gray-700 uppercase tracking-wide mb-3">From</h3>
+                      <Input
+                        placeholder="Company name"
+                        value={invoiceData.fromCompany}
+                        onChange={(e) => setInvoiceData({ ...invoiceData, fromCompany: e.target.value })}
+                        className="h-9 text-sm"
+                      />
+                      <Input
+                        type="email"
+                        placeholder="Email"
+                        value={invoiceData.fromEmail}
+                        onChange={(e) => setInvoiceData({ ...invoiceData, fromEmail: e.target.value })}
+                        className="h-9 text-sm"
+                      />
+                      <Input
+                        placeholder="Phone"
+                        value={invoiceData.fromPhone}
+                        onChange={(e) => setInvoiceData({ ...invoiceData, fromPhone: e.target.value })}
+                        className="h-9 text-sm"
+                      />
+                      <Input
+                        placeholder="Tax ID / GST"
+                        value={invoiceData.fromTaxId}
+                        onChange={(e) => setInvoiceData({ ...invoiceData, fromTaxId: e.target.value })}
+                        className="h-9 text-sm"
+                      />
+                      <Textarea
+                        placeholder="Address"
+                        value={invoiceData.fromAddress}
+                        onChange={(e) => setInvoiceData({ ...invoiceData, fromAddress: e.target.value })}
+                        className="min-h-[60px] resize-none text-sm"
+                      />
+                    </div>
+
+                    {/* Bill To */}
+                    <div className="space-y-3">
+                      <h3 className="text-xs font-semibold text-gray-700 uppercase tracking-wide mb-3">Bill To</h3>
+                      <Input
+                        placeholder="Customer / Company name"
+                        value={invoiceData.toCompany}
+                        onChange={(e) => setInvoiceData({ ...invoiceData, toCompany: e.target.value })}
+                        className="h-9 text-sm"
+                      />
+                      <Input
+                        type="email"
+                        placeholder="Email"
+                        value={invoiceData.toEmail}
+                        onChange={(e) => setInvoiceData({ ...invoiceData, toEmail: e.target.value })}
+                        className="h-9 text-sm"
+                      />
+                      <Input
+                        placeholder="Phone"
+                        value={invoiceData.toPhone}
+                        onChange={(e) => setInvoiceData({ ...invoiceData, toPhone: e.target.value })}
+                        className="h-9 text-sm"
+                      />
+                      <Input
+                        placeholder="Tax ID / GST"
+                        value={invoiceData.toTaxId}
+                        onChange={(e) => setInvoiceData({ ...invoiceData, toTaxId: e.target.value })}
+                        className="h-9 text-sm"
+                      />
+                      <Textarea
+                        placeholder="Billing address"
+                        value={invoiceData.toAddress}
+                        onChange={(e) => setInvoiceData({ ...invoiceData, toAddress: e.target.value })}
+                        className="min-h-[60px] resize-none text-sm"
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Items Section */}
             <div className="bg-white border border-gray-200 rounded-lg">
-              <div className="p-6 border-b border-gray-200">
-                <h2 className="text-sm font-semibold text-gray-900">Items</h2>
-                <p className="text-xs text-gray-500 mt-1">
-                  Add single, one-time items or products from your product catalogue to this invoice.
-                </p>
+              <div className="p-4 md:p-5 border-b border-gray-100">
+                <h2 className="text-sm font-semibold text-gray-900">Line items</h2>
               </div>
-              <div className="p-6">
+              <div className="p-4 md:p-5">
                 <div className="space-y-3">
                   {invoiceData.items.map((item, index) => {
                     const hasEmptyDescription = !item.description?.trim();
@@ -393,7 +675,7 @@ export const NewInvoice = () => {
                     const hasInvalidPrice = item.price < 0;
 
                     return (
-                      <div key={index} className="border border-gray-200 rounded-md p-4">
+                      <div key={index} className="border border-gray-200 rounded-md p-3 md:p-4">
                         <div className="space-y-3">
                           <Input
                             placeholder="Description"
@@ -408,7 +690,7 @@ export const NewInvoice = () => {
                               hasEmptyDescription && item.description !== '' ? 'border-red-300' : ''
                             )}
                           />
-                          <div className="grid grid-cols-3 gap-3">
+                          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                             <div>
                               <Label className="text-xs text-gray-600 mb-1 block">Qty</Label>
                               <Input
@@ -438,7 +720,7 @@ export const NewInvoice = () => {
                                 className={cn('h-10', hasInvalidPrice ? 'border-red-300' : '')}
                               />
                             </div>
-                            <div>
+                            <div className="col-span-2 sm:col-span-1">
                               <Label className="text-xs text-gray-600 mb-1 block">Amount</Label>
                               <div className="h-10 flex items-center">
                                 <span className="text-sm font-medium text-gray-900">
@@ -490,202 +772,232 @@ export const NewInvoice = () => {
               </div>
             </div>
 
-            {/* Payment Collection */}
+            {/* Payment Collection - Collapsible */}
             <div className="bg-white border border-gray-200 rounded-lg">
-              <div className="p-6 border-b border-gray-200">
-                <h2 className="text-sm font-semibold text-gray-900">Payment collection</h2>
-              </div>
-              <div className="p-6 space-y-4">
-                <div>
-                  <Label className="text-xs text-gray-600 mb-2 block">Due date</Label>
-                  <Select defaultValue="30">
-                    <SelectTrigger className="h-10">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="7">Due in 7 days</SelectItem>
-                      <SelectItem value="15">Due in 15 days</SelectItem>
-                      <SelectItem value="30">Due in 30 days</SelectItem>
-                      <SelectItem value="60">Due in 60 days</SelectItem>
-                      <SelectItem value="custom">Custom</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <p className="text-xs text-gray-500 mt-2">
-                    This invoice will be due 30 days after the invoice is finalized or sent (11 December 2025 if sent
-                    today).
-                  </p>
+              <button
+                type="button"
+                onClick={() => setShowPaymentDetails(!showPaymentDetails)}
+                className="w-full p-5 flex items-center justify-between hover:bg-gray-50 transition-colors"
+              >
+                <div className="flex-1 text-left">
+                  <div className="flex items-center gap-2">
+                    <h2 className="text-sm font-semibold text-gray-900">Payment details</h2>
+                    <span className="text-[10px] text-gray-500 bg-gray-100 px-2 py-0.5 rounded">Optional</span>
+                  </div>
+                  {!showPaymentDetails && (
+                    <p className="text-xs text-gray-600 mt-1">
+                      {paymentDetails.method === 'bank' ? 'Bank transfer' :
+                       paymentDetails.method === 'crypto' ? 'Cryptocurrency' : 'Other'}
+                    </p>
+                  )}
                 </div>
+                {showPaymentDetails ? (
+                  <ChevronUp className="w-4 h-4 text-gray-400" />
+                ) : (
+                  <ChevronDown className="w-4 h-4 text-gray-400" />
+                )}
+              </button>
 
-                <div>
-                  <Label htmlFor="payment-method" className="text-xs text-gray-600 mb-2 block">
-                    Payment method
-                  </Label>
-                  <Select
-                    value={paymentDetails.method}
-                    onValueChange={(value: PaymentMethod) => setPaymentDetails({ ...paymentDetails, method: value })}
-                  >
-                    <SelectTrigger className="h-10">
-                      <SelectValue placeholder="Select payment method" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="bank">Bank transfer</SelectItem>
-                      <SelectItem value="crypto">Cryptocurrency</SelectItem>
-                      <SelectItem value="other">Other</SelectItem>
-                    </SelectContent>
-                  </Select>
+              {showPaymentDetails && (
+                <div className="px-5 pb-5 border-t border-gray-100">
+                  <div className="space-y-4 mt-4">
+                    {currencyType === 'fiat' ? (
+                      <div>
+                        <Label className="text-xs text-gray-600 mb-1.5 block">Payment method</Label>
+                        <Select
+                          value={paymentDetails.method}
+                          onValueChange={(value: PaymentMethod) => setPaymentDetails({ ...paymentDetails, method: value })}
+                        >
+                          <SelectTrigger className="h-9 text-sm">
+                            <SelectValue placeholder="Select payment method" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="bank">Bank transfer</SelectItem>
+                            <SelectItem value="other">Other</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <p className="text-[11px] text-gray-500 mt-1">How customers can pay this invoice</p>
+                      </div>
+                    ) : (
+                      <div>
+                        <p className="text-xs text-gray-600 mb-2">Payment method: <span className="font-medium">Cryptocurrency</span></p>
+                        <p className="text-[11px] text-gray-500">Auto-selected based on invoice currency</p>
+                      </div>
+                    )}
+
+                    {/* Bank Details */}
+                    {paymentDetails.method === 'bank' && (
+                      <div className="space-y-3">
+                        <Input
+                          placeholder="Bank name"
+                          value={paymentDetails.bankDetails?.bankName}
+                          onChange={(e) =>
+                            setPaymentDetails({
+                              ...paymentDetails,
+                              bankDetails: { ...paymentDetails.bankDetails, bankName: e.target.value },
+                            })
+                          }
+                          className="h-9 text-sm"
+                        />
+                        <Input
+                          placeholder="Account name"
+                          value={paymentDetails.bankDetails?.accountName}
+                          onChange={(e) =>
+                            setPaymentDetails({
+                              ...paymentDetails,
+                              bankDetails: { ...paymentDetails.bankDetails, accountName: e.target.value },
+                            })
+                          }
+                          className="h-9 text-sm"
+                        />
+                        <Input
+                          placeholder="Account number"
+                          value={paymentDetails.bankDetails?.accountNumber}
+                          onChange={(e) =>
+                            setPaymentDetails({
+                              ...paymentDetails,
+                              bankDetails: { ...paymentDetails.bankDetails, accountNumber: e.target.value },
+                            })
+                          }
+                          className="h-9 text-sm"
+                        />
+                        <Input
+                          placeholder="SWIFT/BIC (optional)"
+                          value={paymentDetails.bankDetails?.swiftCode}
+                          onChange={(e) =>
+                            setPaymentDetails({
+                              ...paymentDetails,
+                              bankDetails: { ...paymentDetails.bankDetails, swiftCode: e.target.value },
+                            })
+                          }
+                          className="h-9 text-sm"
+                        />
+                      </div>
+                    )}
+
+                    {/* Crypto Details */}
+                    {paymentDetails.method === 'crypto' && (
+                      <div className="space-y-3">
+                        <Select
+                          value={paymentDetails.cryptoDetails?.currency}
+                          onValueChange={(value) =>
+                            setPaymentDetails({
+                              ...paymentDetails,
+                              cryptoDetails: { ...paymentDetails.cryptoDetails, currency: value },
+                            })
+                          }
+                        >
+                          <SelectTrigger className="h-9 text-sm">
+                            <SelectValue placeholder="Select currency" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="BTC">Bitcoin (BTC)</SelectItem>
+                            <SelectItem value="ETH">Ethereum (ETH)</SelectItem>
+                            <SelectItem value="USDT">Tether (USDT)</SelectItem>
+                            <SelectItem value="USDC">USD Coin (USDC)</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <Select
+                          value={paymentDetails.cryptoDetails?.network}
+                          onValueChange={(value) =>
+                            setPaymentDetails({
+                              ...paymentDetails,
+                              cryptoDetails: { ...paymentDetails.cryptoDetails, network: value },
+                            })
+                          }
+                        >
+                          <SelectTrigger className="h-9 text-sm">
+                            <SelectValue placeholder="Select chain" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Ethereum">Ethereum</SelectItem>
+                            <SelectItem value="Polygon">Polygon</SelectItem>
+                            <SelectItem value="BSC">Binance Smart Chain</SelectItem>
+                            <SelectItem value="Arbitrum">Arbitrum</SelectItem>
+                            <SelectItem value="Optimism">Optimism</SelectItem>
+                            <SelectItem value="Base">Base</SelectItem>
+                            <SelectItem value="Solana">Solana</SelectItem>
+                            <SelectItem value="Bitcoin">Bitcoin</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <Input
+                          placeholder="Wallet address"
+                          value={paymentDetails.cryptoDetails?.walletAddress}
+                          onChange={(e) =>
+                            setPaymentDetails({
+                              ...paymentDetails,
+                              cryptoDetails: { ...paymentDetails.cryptoDetails, walletAddress: e.target.value },
+                            })
+                          }
+                          className="h-9 font-mono text-xs"
+                        />
+                      </div>
+                    )}
+
+                    {/* Other Payment Details */}
+                    {paymentDetails.method === 'other' && (
+                      <div>
+                        <Textarea
+                          placeholder="Enter payment instructions..."
+                          value={paymentDetails.otherDetails}
+                          onChange={(e) =>
+                            setPaymentDetails({
+                              ...paymentDetails,
+                              otherDetails: e.target.value,
+                            })
+                          }
+                          className="min-h-[80px] resize-none text-sm"
+                        />
+                      </div>
+                    )}
+                  </div>
                 </div>
-
-                {/* Bank Details */}
-                {paymentDetails.method === 'bank' && (
-                  <div className="space-y-3">
-                    <Input
-                      placeholder="Bank name"
-                      value={paymentDetails.bankDetails?.bankName}
-                      onChange={(e) =>
-                        setPaymentDetails({
-                          ...paymentDetails,
-                          bankDetails: { ...paymentDetails.bankDetails, bankName: e.target.value },
-                        })
-                      }
-                      className="h-10"
-                    />
-                    <Input
-                      placeholder="Account name"
-                      value={paymentDetails.bankDetails?.accountName}
-                      onChange={(e) =>
-                        setPaymentDetails({
-                          ...paymentDetails,
-                          bankDetails: { ...paymentDetails.bankDetails, accountName: e.target.value },
-                        })
-                      }
-                      className="h-10"
-                    />
-                    <Input
-                      placeholder="Account number"
-                      value={paymentDetails.bankDetails?.accountNumber}
-                      onChange={(e) =>
-                        setPaymentDetails({
-                          ...paymentDetails,
-                          bankDetails: { ...paymentDetails.bankDetails, accountNumber: e.target.value },
-                        })
-                      }
-                      className="h-10"
-                    />
-                    <Input
-                      placeholder="SWIFT/BIC (optional)"
-                      value={paymentDetails.bankDetails?.swiftCode}
-                      onChange={(e) =>
-                        setPaymentDetails({
-                          ...paymentDetails,
-                          bankDetails: { ...paymentDetails.bankDetails, swiftCode: e.target.value },
-                        })
-                      }
-                      className="h-10"
-                    />
-                  </div>
-                )}
-
-                {/* Crypto Details */}
-                {paymentDetails.method === 'crypto' && (
-                  <div className="space-y-3">
-                    <Select
-                      value={paymentDetails.cryptoDetails?.currency}
-                      onValueChange={(value) =>
-                        setPaymentDetails({
-                          ...paymentDetails,
-                          cryptoDetails: { ...paymentDetails.cryptoDetails, currency: value },
-                        })
-                      }
-                    >
-                      <SelectTrigger className="h-10">
-                        <SelectValue placeholder="Select currency" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="BTC">Bitcoin (BTC)</SelectItem>
-                        <SelectItem value="ETH">Ethereum (ETH)</SelectItem>
-                        <SelectItem value="USDT">Tether (USDT)</SelectItem>
-                        <SelectItem value="USDC">USD Coin (USDC)</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <Select
-                      value={paymentDetails.cryptoDetails?.network}
-                      onValueChange={(value) =>
-                        setPaymentDetails({
-                          ...paymentDetails,
-                          cryptoDetails: { ...paymentDetails.cryptoDetails, network: value },
-                        })
-                      }
-                    >
-                      <SelectTrigger className="h-10">
-                        <SelectValue placeholder="Select chain" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Ethereum">Ethereum</SelectItem>
-                        <SelectItem value="Polygon">Polygon</SelectItem>
-                        <SelectItem value="BSC">Binance Smart Chain</SelectItem>
-                        <SelectItem value="Arbitrum">Arbitrum</SelectItem>
-                        <SelectItem value="Optimism">Optimism</SelectItem>
-                        <SelectItem value="Base">Base</SelectItem>
-                        <SelectItem value="Solana">Solana</SelectItem>
-                        <SelectItem value="Bitcoin">Bitcoin</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <Input
-                      placeholder="Wallet address"
-                      value={paymentDetails.cryptoDetails?.walletAddress}
-                      onChange={(e) =>
-                        setPaymentDetails({
-                          ...paymentDetails,
-                          cryptoDetails: { ...paymentDetails.cryptoDetails, walletAddress: e.target.value },
-                        })
-                      }
-                      className="h-10 font-mono text-sm"
-                    />
-                  </div>
-                )}
-
-                {/* Other Payment Details */}
-                {paymentDetails.method === 'other' && (
-                  <div>
-                    <Textarea
-                      placeholder="Enter payment instructions..."
-                      value={paymentDetails.otherDetails}
-                      onChange={(e) =>
-                        setPaymentDetails({
-                          ...paymentDetails,
-                          otherDetails: e.target.value,
-                        })
-                      }
-                      className="min-h-[80px] resize-none"
-                    />
-                  </div>
-                )}
-              </div>
+              )}
             </div>
 
-            {/* Additional Options */}
+            {/* Additional Options - Collapsible */}
             <div className="bg-white border border-gray-200 rounded-lg">
-              <div className="p-6 border-b border-gray-200">
-                <h2 className="text-sm font-semibold text-gray-900">Additional options</h2>
-                <p className="text-xs text-gray-500 mt-1">
-                  Customize your invoice with additional fields to better suit your business needs and compliance
-                  requirements.
-                </p>
-              </div>
-              <div className="p-6 space-y-4">
-                <div>
-                  <Label htmlFor="notes" className="text-xs text-gray-600 mb-2 block">
-                    Memo (optional)
-                  </Label>
-                  <Textarea
-                    id="notes"
-                    value={invoiceData.notes}
-                    onChange={(e) => setInvoiceData({ ...invoiceData, notes: e.target.value })}
-                    placeholder="Add a note to the invoice..."
-                    className="min-h-[80px] resize-none"
-                  />
+              <button
+                type="button"
+                onClick={() => setShowAdditionalOptions(!showAdditionalOptions)}
+                className="w-full p-5 flex items-center justify-between hover:bg-gray-50 transition-colors"
+              >
+                <div className="flex-1 text-left">
+                  <div className="flex items-center gap-2">
+                    <h2 className="text-sm font-semibold text-gray-900">Additional options</h2>
+                    <span className="text-[10px] text-gray-500 bg-gray-100 px-2 py-0.5 rounded">Optional</span>
+                  </div>
+                  {!showAdditionalOptions && invoiceData.notes && (
+                    <p className="text-xs text-gray-600 mt-1 truncate">
+                      {invoiceData.notes}
+                    </p>
+                  )}
                 </div>
-              </div>
+                {showAdditionalOptions ? (
+                  <ChevronUp className="w-4 h-4 text-gray-400" />
+                ) : (
+                  <ChevronDown className="w-4 h-4 text-gray-400" />
+                )}
+              </button>
+
+              {showAdditionalOptions && (
+                <div className="px-5 pb-5 border-t border-gray-100">
+                  <div className="space-y-4 mt-4">
+                    <div>
+                      <Label htmlFor="notes" className="text-xs text-gray-600 mb-1.5 block">
+                        Memo
+                      </Label>
+                      <Textarea
+                        id="notes"
+                        value={invoiceData.notes}
+                        onChange={(e) => setInvoiceData({ ...invoiceData, notes: e.target.value })}
+                        placeholder="Add a note to the invoice..."
+                        className="min-h-[80px] resize-none text-sm"
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
@@ -774,25 +1086,81 @@ export const NewInvoice = () => {
                     }}
                   >
                     {invoiceStyle === 'standard' && (
-                      <StandardTemplate logo={logo} invoiceData={invoiceData} paymentDetails={paymentDetails} />
+                      <StandardTemplate
+                        logo={logo}
+                        invoiceData={{
+                          ...invoiceData,
+                          invoiceNumber: `${invoicePrefix}-${invoiceData.invoiceNumber || '001'}`,
+                          currency: showCustomCurrency && customCurrency ? customCurrency : currency,
+                        }}
+                        paymentDetails={paymentDetails}
+                      />
                     )}
                     {invoiceStyle === 'modern' && (
-                      <ModernTemplate logo={logo} invoiceData={invoiceData} paymentDetails={paymentDetails} />
+                      <ModernTemplate
+                        logo={logo}
+                        invoiceData={{
+                          ...invoiceData,
+                          invoiceNumber: `${invoicePrefix}-${invoiceData.invoiceNumber || '001'}`,
+                          currency: showCustomCurrency && customCurrency ? customCurrency : currency,
+                        }}
+                        paymentDetails={paymentDetails}
+                      />
                     )}
                     {invoiceStyle === 'minimal' && (
-                      <MinimalTemplate logo={logo} invoiceData={invoiceData} paymentDetails={paymentDetails} />
+                      <MinimalTemplate
+                        logo={logo}
+                        invoiceData={{
+                          ...invoiceData,
+                          invoiceNumber: `${invoicePrefix}-${invoiceData.invoiceNumber || '001'}`,
+                          currency: showCustomCurrency && customCurrency ? customCurrency : currency,
+                        }}
+                        paymentDetails={paymentDetails}
+                      />
                     )}
                     {invoiceStyle === 'artistic' && (
-                      <ArtisticTemplate logo={logo} invoiceData={invoiceData} paymentDetails={paymentDetails} />
+                      <ArtisticTemplate
+                        logo={logo}
+                        invoiceData={{
+                          ...invoiceData,
+                          invoiceNumber: `${invoicePrefix}-${invoiceData.invoiceNumber || '001'}`,
+                          currency: showCustomCurrency && customCurrency ? customCurrency : currency,
+                        }}
+                        paymentDetails={paymentDetails}
+                      />
                     )}
                     {invoiceStyle === 'gradient' && (
-                      <GradientTemplate logo={logo} invoiceData={invoiceData} paymentDetails={paymentDetails} />
+                      <GradientTemplate
+                        logo={logo}
+                        invoiceData={{
+                          ...invoiceData,
+                          invoiceNumber: `${invoicePrefix}-${invoiceData.invoiceNumber || '001'}`,
+                          currency: showCustomCurrency && customCurrency ? customCurrency : currency,
+                        }}
+                        paymentDetails={paymentDetails}
+                      />
                     )}
                     {invoiceStyle === 'glass' && (
-                      <GlassTemplate logo={logo} invoiceData={invoiceData} paymentDetails={paymentDetails} />
+                      <GlassTemplate
+                        logo={logo}
+                        invoiceData={{
+                          ...invoiceData,
+                          invoiceNumber: `${invoicePrefix}-${invoiceData.invoiceNumber || '001'}`,
+                          currency: showCustomCurrency && customCurrency ? customCurrency : currency,
+                        }}
+                        paymentDetails={paymentDetails}
+                      />
                     )}
                     {invoiceStyle === 'elegant' && (
-                      <ElegantTemplate logo={logo} invoiceData={invoiceData} paymentDetails={paymentDetails} />
+                      <ElegantTemplate
+                        logo={logo}
+                        invoiceData={{
+                          ...invoiceData,
+                          invoiceNumber: `${invoicePrefix}-${invoiceData.invoiceNumber || '001'}`,
+                          currency: showCustomCurrency && customCurrency ? customCurrency : currency,
+                        }}
+                        paymentDetails={paymentDetails}
+                      />
                     )}
                   </div>
                 </div>

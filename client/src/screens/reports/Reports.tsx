@@ -50,16 +50,16 @@ const topCustomers = [
 export const ReportsScreen = () => {
   return (
     <div className="min-h-screen">
-      <div className="max-w-[1400px] mx-auto px-8 py-12">
+      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 md:px-8 py-6 md:py-12">
         {/* Header */}
-        <div className="flex justify-between items-center mb-8">
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6 md:mb-8">
           <div>
-            <h1 className="text-[26px] font-bold text-gray-900 tracking-tight">Reports & Analytics</h1>
-            <p className="text-[14px] text-gray-500 mt-1.5">Detailed insights into your business performance</p>
+            <h1 className="text-xl md:text-[26px] font-bold text-gray-900 tracking-tight">Reports & Analytics</h1>
+            <p className="text-xs md:text-[14px] text-gray-500 mt-1 md:mt-1.5">Detailed insights into your business performance</p>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 md:gap-3">
             <Select defaultValue="30days">
-              <SelectTrigger className="h-10 w-[180px] border-gray-300 rounded-lg">
+              <SelectTrigger className="h-9 md:h-10 w-[140px] md:w-[180px] border-gray-300 rounded-lg text-xs md:text-sm">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -71,17 +71,17 @@ export const ReportsScreen = () => {
             </Select>
             <Button
               variant="outline"
-              className="h-10 px-4 border-gray-300 rounded-lg"
+              className="h-9 md:h-10 px-3 md:px-4 border-gray-300 rounded-lg text-xs md:text-sm"
             >
-              <Download className="w-4 h-4 mr-2" />
-              Export Report
+              <Download className="w-4 h-4 md:mr-2" />
+              <span className="hidden md:inline">Export Report</span>
             </Button>
           </div>
         </div>
 
         {/* Key Metrics */}
-        <div className="grid grid-cols-4 gap-5 mb-8">
-          <div className="bg-white/80 backdrop-blur-sm border border-gray-200/60 rounded-xl p-6 shadow-sm">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-5 mb-6 md:mb-8">
+          <div className="bg-white/80 backdrop-blur-sm border border-gray-200/60 rounded-xl p-4 md:p-6 shadow-sm">
             <div className="flex items-center justify-between mb-3">
               <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-green-50 to-emerald-50 flex items-center justify-center">
                 <DollarSign className="w-5 h-5 text-green-600" />
@@ -95,7 +95,7 @@ export const ReportsScreen = () => {
             <p className="text-xs text-gray-500 mt-1">Total Revenue</p>
           </div>
 
-          <div className="bg-white/80 backdrop-blur-sm border border-gray-200/60 rounded-xl p-6 shadow-sm">
+          <div className="bg-white/80 backdrop-blur-sm border border-gray-200/60 rounded-xl p-4 md:p-6 shadow-sm">
             <div className="flex items-center justify-between mb-3">
               <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-50 to-indigo-50 flex items-center justify-center">
                 <FileText className="w-5 h-5 text-blue-600" />
@@ -109,7 +109,7 @@ export const ReportsScreen = () => {
             <p className="text-xs text-gray-500 mt-1">Total Invoices</p>
           </div>
 
-          <div className="bg-white/80 backdrop-blur-sm border border-gray-200/60 rounded-xl p-6 shadow-sm">
+          <div className="bg-white/80 backdrop-blur-sm border border-gray-200/60 rounded-xl p-4 md:p-6 shadow-sm">
             <div className="flex items-center justify-between mb-3">
               <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-50 to-violet-50 flex items-center justify-center">
                 <Users className="w-5 h-5 text-purple-600" />
@@ -123,7 +123,7 @@ export const ReportsScreen = () => {
             <p className="text-xs text-gray-500 mt-1">Active Customers</p>
           </div>
 
-          <div className="bg-white/80 backdrop-blur-sm border border-gray-200/60 rounded-xl p-6 shadow-sm">
+          <div className="bg-white/80 backdrop-blur-sm border border-gray-200/60 rounded-xl p-4 md:p-6 shadow-sm">
             <div className="flex items-center justify-between mb-3">
               <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-orange-50 to-amber-50 flex items-center justify-center">
                 <Calendar className="w-5 h-5 text-orange-600" />
@@ -139,9 +139,9 @@ export const ReportsScreen = () => {
         </div>
 
         {/* Charts Row 1 */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 mb-4 md:mb-6">
           {/* Revenue vs Expenses */}
-          <div className="lg:col-span-2 bg-white/80 backdrop-blur-sm border border-gray-200/60 rounded-xl p-6 shadow-sm">
+          <div className="lg:col-span-2 bg-white/80 backdrop-blur-sm border border-gray-200/60 rounded-xl p-4 md:p-6 shadow-sm">
             <div className="flex items-center justify-between mb-6">
               <div>
                 <h3 className="text-lg font-semibold text-gray-900">Revenue vs Expenses</h3>
@@ -188,7 +188,7 @@ export const ReportsScreen = () => {
           </div>
 
           {/* Invoice Status */}
-          <div className="bg-white/80 backdrop-blur-sm border border-gray-200/60 rounded-xl p-6 shadow-sm">
+          <div className="bg-white/80 backdrop-blur-sm border border-gray-200/60 rounded-xl p-4 md:p-6 shadow-sm">
             <div className="mb-6">
               <h3 className="text-lg font-semibold text-gray-900">Invoice Status</h3>
               <p className="text-sm text-gray-500 mt-1">Distribution overview</p>
@@ -228,9 +228,9 @@ export const ReportsScreen = () => {
         </div>
 
         {/* Charts Row 2 */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
           {/* Customer Growth */}
-          <div className="bg-white/80 backdrop-blur-sm border border-gray-200/60 rounded-xl p-6 shadow-sm">
+          <div className="bg-white/80 backdrop-blur-sm border border-gray-200/60 rounded-xl p-4 md:p-6 shadow-sm">
             <div className="mb-6">
               <h3 className="text-lg font-semibold text-gray-900">Customer Growth</h3>
               <p className="text-sm text-gray-500 mt-1">Monthly new customers</p>
@@ -260,7 +260,7 @@ export const ReportsScreen = () => {
           </div>
 
           {/* Top Customers */}
-          <div className="bg-white/80 backdrop-blur-sm border border-gray-200/60 rounded-xl p-6 shadow-sm">
+          <div className="bg-white/80 backdrop-blur-sm border border-gray-200/60 rounded-xl p-4 md:p-6 shadow-sm">
             <div className="mb-6">
               <h3 className="text-lg font-semibold text-gray-900">Top Customers</h3>
               <p className="text-sm text-gray-500 mt-1">By revenue generated</p>

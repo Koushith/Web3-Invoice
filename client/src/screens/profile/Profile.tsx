@@ -60,7 +60,7 @@ export const ProfileScreen = () => {
 
   return (
     <div className="min-h-screen bg-[#FEFFFE]">
-      <div className="max-w-6xl mx-auto px-8 py-8">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 md:px-8 py-6 md:py-8">
         {/* Back button */}
         <div className="mb-6">
           <button
@@ -73,8 +73,8 @@ export const ProfileScreen = () => {
         </div>
 
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-[28px] font-semibold text-gray-900">Personal details</h1>
+        <div className="mb-6 md:mb-8">
+          <h1 className="text-xl md:text-[28px] font-semibold text-gray-900">Personal details</h1>
           <div className="flex items-center gap-1.5 mt-1">
             <span className="text-sm text-gray-600">Global setting</span>
             <span className="text-gray-400 text-xs">ⓘ</span>
@@ -127,7 +127,7 @@ export const ProfileScreen = () => {
 
           {editingSection === 'user' ? (
             <div className="space-y-4 bg-white p-4 rounded-md border border-gray-200">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="text-sm font-medium text-gray-700 block mb-1.5">First name</label>
                   <Input
@@ -157,8 +157,8 @@ export const ProfileScreen = () => {
           ) : (
             <div className="space-y-5">
               {/* Email */}
-              <div className="flex items-start">
-                <div className="w-40 flex-shrink-0">
+              <div className="flex flex-col sm:flex-row sm:items-start gap-1 sm:gap-0">
+                <div className="w-full sm:w-40 flex-shrink-0">
                   <span className="text-sm font-medium text-gray-700">Email</span>
                 </div>
                 <div className="flex-1">
@@ -167,8 +167,8 @@ export const ProfileScreen = () => {
               </div>
 
               {/* Name */}
-              <div className="flex items-start">
-                <div className="w-40 flex-shrink-0">
+              <div className="flex flex-col sm:flex-row sm:items-start gap-1 sm:gap-0">
+                <div className="w-full sm:w-40 flex-shrink-0">
                   <span className="text-sm font-medium text-gray-700">Name</span>
                 </div>
                 <div className="flex-1">
@@ -181,8 +181,8 @@ export const ProfileScreen = () => {
               </div>
 
               {/* Password */}
-              <div className="flex items-start">
-                <div className="w-40 flex-shrink-0">
+              <div className="flex flex-col sm:flex-row sm:items-start gap-1 sm:gap-0">
+                <div className="w-full sm:w-40 flex-shrink-0">
                   <span className="text-sm font-medium text-gray-700">Password</span>
                 </div>
                 <div className="flex-1">
@@ -191,8 +191,8 @@ export const ProfileScreen = () => {
               </div>
 
               {/* Contact phone */}
-              <div className="flex items-start">
-                <div className="w-40 flex-shrink-0">
+              <div className="flex flex-col sm:flex-row sm:items-start gap-1 sm:gap-0">
+                <div className="w-full sm:w-40 flex-shrink-0">
                   <div className="flex items-center gap-1">
                     <span className="text-sm font-medium text-gray-700">Contact phone</span>
                     <span className="text-gray-400 text-xs">ⓘ</span>
@@ -271,8 +271,8 @@ export const ProfileScreen = () => {
           <p className="text-sm text-gray-600 mb-5">Places where you're logged into Stripe.</p>
 
           {/* Sessions Table */}
-          <div className="bg-white rounded-md border border-gray-200">
-            <table className="w-full">
+          <div className="bg-white rounded-md border border-gray-200 overflow-x-auto">
+            <table className="w-full min-w-[600px]">
               <thead className="border-b border-gray-200">
                 <tr>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Location</th>

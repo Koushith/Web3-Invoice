@@ -78,12 +78,12 @@ export const TeamScreen = () => {
 
   return (
     <div className="min-h-screen bg-[#FEFFFE]">
-      <div className="max-w-6xl mx-auto px-8 py-8">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 md:px-8 py-6 md:py-8">
         {/* Back button */}
-        <div className="mb-6">
+        <div className="mb-4 md:mb-6">
           <button
             onClick={() => navigate('/settings')}
-            className="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900 transition-colors"
+            className="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900 transition-colors active:scale-95"
           >
             <ArrowLeft className="w-4 h-4" />
             <span>Settings</span>
@@ -91,13 +91,13 @@ export const TeamScreen = () => {
         </div>
 
         {/* Header */}
-        <div className="mb-6">
-          <h1 className="text-2xl font-semibold text-gray-900">Team and security</h1>
+        <div className="mb-4 md:mb-6">
+          <h1 className="text-xl md:text-2xl font-semibold text-gray-900">Team and security</h1>
         </div>
 
         {/* Tabs */}
-        <div className="border-b border-gray-200 mb-6">
-          <div className="flex gap-6">
+        <div className="border-b border-gray-200 mb-4 md:mb-6 overflow-x-auto scrollbar-hide">
+          <div className="flex gap-4 md:gap-6 min-w-max px-1">
             <button
               onClick={() => setActiveTab('team')}
               className={`pb-3 px-1 text-sm font-medium border-b-2 transition-colors ${
@@ -152,29 +152,31 @@ export const TeamScreen = () => {
         </div>
 
         {/* Filter tabs */}
-        <div className="flex items-center gap-0 mb-5 bg-white w-fit rounded-md overflow-hidden">
-          <button className="px-4 py-2 text-sm font-medium text-primary bg-blue-50">
-            All members
-            <span className="ml-2 text-gray-500 font-normal">{teamMembers.length}</span>
-          </button>
-          <button className="px-4 py-2 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-50">
-            Active members
-            <span className="ml-2 text-gray-500">{teamMembers.filter((m) => m.status === 'active').length}</span>
-          </button>
-          <button className="px-4 py-2 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-50">
-            Pending invites
-            <span className="ml-2 text-gray-500">{teamMembers.filter((m) => m.status === 'pending').length}</span>
-          </button>
-          <button className="px-4 py-2 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-50">
-            Inactive members
-            <span className="ml-2 text-gray-500">0</span>
-          </button>
+        <div className="overflow-x-auto scrollbar-hide mb-5">
+          <div className="flex items-center gap-0 bg-white w-fit rounded-md overflow-hidden min-w-max">
+            <button className="px-3 md:px-4 py-2 text-xs md:text-sm font-medium text-primary bg-blue-50 whitespace-nowrap">
+              All members
+              <span className="ml-2 text-gray-500 font-normal">{teamMembers.length}</span>
+            </button>
+            <button className="px-3 md:px-4 py-2 text-xs md:text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-50 whitespace-nowrap">
+              Active members
+              <span className="ml-2 text-gray-500">{teamMembers.filter((m) => m.status === 'active').length}</span>
+            </button>
+            <button className="px-3 md:px-4 py-2 text-xs md:text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-50 whitespace-nowrap">
+              Pending invites
+              <span className="ml-2 text-gray-500">{teamMembers.filter((m) => m.status === 'pending').length}</span>
+            </button>
+            <button className="px-3 md:px-4 py-2 text-xs md:text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-50 whitespace-nowrap">
+              Inactive members
+              <span className="ml-2 text-gray-500">0</span>
+            </button>
+          </div>
         </div>
 
         {/* Table header with actions */}
         <div className="bg-white">
-          <div className="px-0 py-3 flex items-center justify-between">
-            <div className="flex items-center gap-2">
+          <div className="px-0 py-3 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+            <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide hidden md:flex">
               <button className="flex items-center gap-1.5 text-xs text-gray-500 hover:text-gray-900 px-2.5 py-1.5 rounded-md hover:bg-gray-50">
                 <Shield className="w-3.5 h-3.5" />
                 <span>Roles</span>
@@ -191,20 +193,21 @@ export const TeamScreen = () => {
               </button>
             </div>
             <div className="flex items-center gap-2">
-              <Button variant="outline" size="sm" className="h-8 px-3 border-gray-300 rounded-md text-xs font-medium">
+              <Button variant="outline" size="sm" className="h-8 px-2 md:px-3 border-gray-300 rounded-md text-xs font-medium hidden sm:flex">
                 Export
               </Button>
               <Button
                 onClick={() => setShowInviteModal(true)}
-                className="h-8 px-3 bg-primary hover:bg-primary/90 text-white rounded-md text-xs font-medium"
+                className="h-8 px-2 md:px-3 bg-primary hover:bg-primary/90 text-white rounded-md text-xs font-medium active:scale-95"
               >
-                <Plus className="w-3.5 h-3.5 mr-1.5" />
-                Add member
+                <Plus className="w-3.5 h-3.5 md:mr-1.5" />
+                <span className="hidden md:inline">Add member</span>
               </Button>
             </div>
           </div>
 
-          {/* Table */}
+          {/* Desktop Table */}
+          <div className="hidden md:block overflow-x-auto">
           <table className="w-full">
             <thead className="border-b border-gray-200">
               <tr>
@@ -252,6 +255,59 @@ export const TeamScreen = () => {
           </table>
 
           <div className="py-3 text-[11px] text-gray-500 border-t border-gray-200">Viewing 1 of 1 results</div>
+          </div>
+
+          {/* Mobile Card View */}
+          <div className="md:hidden space-y-3 mt-4">
+            {filteredMembers.map((member) => (
+              <div
+                key={member.id}
+                className="bg-white border border-gray-200 rounded-lg p-4 active:scale-98 transition-transform"
+              >
+                {/* Header */}
+                <div className="flex items-start gap-3 mb-3">
+                  <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-white text-sm font-medium flex-shrink-0">
+                    {member.avatar}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-semibold text-gray-900">
+                      {member.name}
+                    </div>
+                    <div className="text-xs text-gray-600 mt-0.5">
+                      {member.email}
+                    </div>
+                    <div className="flex items-center gap-1.5 mt-2 flex-wrap">
+                      {member.role === 'owner' && (
+                        <>
+                          <span className="px-1.5 py-0.5 text-[11px] bg-gray-100 text-gray-600 rounded">You</span>
+                          <span className="px-1.5 py-0.5 text-[11px] bg-gray-100 text-gray-600 rounded">Owner</span>
+                        </>
+                      )}
+                      {member.role !== 'owner' && (
+                        <span className="px-1.5 py-0.5 text-[11px] bg-gray-100 text-gray-600 rounded">
+                          {getRoleLabel(member.role)}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Details */}
+                <div className="space-y-2 pt-3 border-t border-gray-100">
+                  <div className="flex justify-between text-xs">
+                    <span className="text-gray-500">Last active</span>
+                    <span className="text-gray-900">{member.lastActive}</span>
+                  </div>
+                  <div className="flex justify-between text-xs">
+                    <span className="text-gray-500">Status</span>
+                    <span className={`${member.status === 'active' ? 'text-green-600' : 'text-yellow-600'}`}>
+                      {member.status.charAt(0).toUpperCase() + member.status.slice(1)}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
 
         {/* Invite Modal */}

@@ -53,9 +53,15 @@ export enum Currency {
   USD = 'USD',
   EUR = 'EUR',
   GBP = 'GBP',
+  INR = 'INR',
+  JPY = 'JPY',
+  CNY = 'CNY',
+  CAD = 'CAD',
+  AUD = 'AUD',
   ETH = 'ETH',
   BTC = 'BTC',
   USDC = 'USDC',
+  USDT = 'USDT',
 }
 
 // ==================== Base Interfaces ====================
@@ -227,8 +233,10 @@ export interface Invoice extends BaseEntity, SoftDeletable {
   paidDate?: Date | string;
   items: InvoiceItem[];
   subtotal: number;
-  tax: number;
+  taxAmount: number;
   taxRate: number;
+  amountPaid: number;
+  amountDue: number;
   discount?: number;
   discountType?: 'percentage' | 'fixed';
   total: number;
@@ -252,9 +260,10 @@ export interface InvoiceItem {
 
 export interface CreateInvoiceDTO {
   customerId: string;
+  invoiceNumber?: string;
   issueDate: Date | string;
   dueDate?: Date | string;
-  items: Omit<InvoiceItem, 'id' | 'amount'>[];
+  lineItems: Omit<InvoiceItem, 'id' | 'amount'>[];
   taxRate: number;
   discount?: number;
   discountType?: 'percentage' | 'fixed';
