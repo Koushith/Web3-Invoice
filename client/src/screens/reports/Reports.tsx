@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import {
   AreaChart,
   Area,
@@ -11,18 +12,11 @@ import {
   LineChart,
   Line,
 } from 'recharts';
-import { Download, TrendingUp, TrendingDown, DollarSign, Users, FileText, Calendar } from 'lucide-react';
+import { Download, TrendingUp, TrendingDown, DollarSign, Users, FileText, Calendar, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-
-const revenueData = [
-  { month: 'Jan', revenue: 45000, expenses: 32000 },
-  { month: 'Feb', revenue: 52000, expenses: 35000 },
-  { month: 'Mar', revenue: 48000, expenses: 33000 },
-  { month: 'Apr', revenue: 61000, expenses: 38000 },
-  { month: 'May', revenue: 55000, expenses: 36000 },
-  { month: 'Jun', revenue: 67000, expenses: 40000 },
-];
+import { useGetDashboardMetricsQuery, useGetRevenueChartQuery } from '@/services/api.service';
+import { auth } from '@/lib/firebase';
 
 const invoiceStatusData = [
   { name: 'Paid', value: 65, color: '#22c55e' },
@@ -48,6 +42,33 @@ const topCustomers = [
 ];
 
 export const ReportsScreen = () => {
+  const [isAuthReady, setIsAuthReady] = useState(false);
+  const [period, setPeriod] = useState<'week' | 'month' | 'year'>('month');
+
+  // Wait for Firebase auth
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged((user) => {
+      if (user) {
+        setIsAuthReady(true);
+      }
+    });
+    return () => unsubscribe();
+  }, []);
+
+  // Fetch dashboard metrics
+  const { data: metrics, isLoading: metricsLoading } = useGetDashboardMetricsQuery(
+    {},
+    { skip: !isAuthReady }
+  );
+
+  // Fetch revenue chart data
+  const { data: revenueChartData, isLoading: revenueLoading } = useGetRevenueChartQuery(
+    { period },
+    { skip: !isAuthReady }
+  );
+
+  const revenueData = revenueChartData || [];
+
   return (
     <div className="min-h-screen">
       <div className="max-w-[1400px] mx-auto px-4 sm:px-6 md:px-8 py-6 md:py-12">
@@ -80,63 +101,81 @@ export const ReportsScreen = () => {
         </div>
 
         {/* Key Metrics */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-5 mb-6 md:mb-8">
-          <div className="bg-white/80 backdrop-blur-sm border border-gray-200/60 rounded-xl p-4 md:p-6 shadow-sm">
-            <div className="flex items-center justify-between mb-3">
-              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-green-50 to-emerald-50 flex items-center justify-center">
-                <DollarSign className="w-5 h-5 text-green-600" />
-              </div>
-              <span className="flex items-center gap-1 text-xs font-semibold text-green-600">
-                <TrendingUp className="w-3 h-3" />
-                +12.5%
-              </span>
-            </div>
-            <p className="text-2xl font-bold text-gray-900">$156,420</p>
-            <p className="text-xs text-gray-500 mt-1">Total Revenue</p>
+        {metricsLoading ? (
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
           </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-5 mb-6 md:mb-8">
+            <div className="bg-white/80 backdrop-blur-sm border border-gray-200/60 rounded-xl p-4 md:p-6 shadow-sm">
+              <div className="flex items-center justify-between mb-3">
+                <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-green-50 to-emerald-50 flex items-center justify-center">
+                  <DollarSign className="w-5 h-5 text-green-600" />
+                </div>
+                {metrics?.revenueChange !== undefined && (
+                  <span className={`flex items-center gap-1 text-xs font-semibold ${metrics.revenueChange >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                    {metrics.revenueChange >= 0 ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
+                    {metrics.revenueChange >= 0 ? '+' : ''}{metrics.revenueChange.toFixed(1)}%
+                  </span>
+                )}
+              </div>
+              <p className="text-2xl font-bold text-gray-900">
+                ${(metrics?.totalRevenue || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              </p>
+              <p className="text-xs text-gray-500 mt-1">Total Revenue</p>
+            </div>
 
-          <div className="bg-white/80 backdrop-blur-sm border border-gray-200/60 rounded-xl p-4 md:p-6 shadow-sm">
-            <div className="flex items-center justify-between mb-3">
-              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-50 to-indigo-50 flex items-center justify-center">
-                <FileText className="w-5 h-5 text-blue-600" />
+            <div className="bg-white/80 backdrop-blur-sm border border-gray-200/60 rounded-xl p-4 md:p-6 shadow-sm">
+              <div className="flex items-center justify-between mb-3">
+                <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-50 to-indigo-50 flex items-center justify-center">
+                  <FileText className="w-5 h-5 text-blue-600" />
+                </div>
+                {metrics?.invoiceChange !== undefined && (
+                  <span className={`flex items-center gap-1 text-xs font-semibold ${metrics.invoiceChange >= 0 ? 'text-blue-600' : 'text-red-600'}`}>
+                    {metrics.invoiceChange >= 0 ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
+                    {metrics.invoiceChange >= 0 ? '+' : ''}{metrics.invoiceChange.toFixed(1)}%
+                  </span>
+                )}
               </div>
-              <span className="flex items-center gap-1 text-xs font-semibold text-blue-600">
-                <TrendingUp className="w-3 h-3" />
-                +8.2%
-              </span>
+              <p className="text-2xl font-bold text-gray-900">{metrics?.totalInvoices || 0}</p>
+              <p className="text-xs text-gray-500 mt-1">Total Invoices</p>
             </div>
-            <p className="text-2xl font-bold text-gray-900">142</p>
-            <p className="text-xs text-gray-500 mt-1">Total Invoices</p>
-          </div>
 
-          <div className="bg-white/80 backdrop-blur-sm border border-gray-200/60 rounded-xl p-4 md:p-6 shadow-sm">
-            <div className="flex items-center justify-between mb-3">
-              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-50 to-violet-50 flex items-center justify-center">
-                <Users className="w-5 h-5 text-purple-600" />
+            <div className="bg-white/80 backdrop-blur-sm border border-gray-200/60 rounded-xl p-4 md:p-6 shadow-sm">
+              <div className="flex items-center justify-between mb-3">
+                <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-50 to-violet-50 flex items-center justify-center">
+                  <Users className="w-5 h-5 text-purple-600" />
+                </div>
+                {metrics?.paymentChange !== undefined && (
+                  <span className={`flex items-center gap-1 text-xs font-semibold ${metrics.paymentChange >= 0 ? 'text-purple-600' : 'text-red-600'}`}>
+                    {metrics.paymentChange >= 0 ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
+                    {metrics.paymentChange >= 0 ? '+' : ''}{metrics.paymentChange.toFixed(1)}%
+                  </span>
+                )}
               </div>
-              <span className="flex items-center gap-1 text-xs font-semibold text-purple-600">
-                <TrendingUp className="w-3 h-3" />
-                +15.3%
-              </span>
+              <p className="text-2xl font-bold text-gray-900">
+                ${(metrics?.pendingPayments || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              </p>
+              <p className="text-xs text-gray-500 mt-1">Pending Payments</p>
             </div>
-            <p className="text-2xl font-bold text-gray-900">89</p>
-            <p className="text-xs text-gray-500 mt-1">Active Customers</p>
-          </div>
 
-          <div className="bg-white/80 backdrop-blur-sm border border-gray-200/60 rounded-xl p-4 md:p-6 shadow-sm">
-            <div className="flex items-center justify-between mb-3">
-              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-orange-50 to-amber-50 flex items-center justify-center">
-                <Calendar className="w-5 h-5 text-orange-600" />
+            <div className="bg-white/80 backdrop-blur-sm border border-gray-200/60 rounded-xl p-4 md:p-6 shadow-sm">
+              <div className="flex items-center justify-between mb-3">
+                <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-orange-50 to-amber-50 flex items-center justify-center">
+                  <Calendar className="w-5 h-5 text-orange-600" />
+                </div>
+                {metrics?.overdueChange !== undefined && (
+                  <span className={`flex items-center gap-1 text-xs font-semibold ${metrics.overdueChange <= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                    {metrics.overdueChange <= 0 ? <TrendingDown className="w-3 h-3" /> : <TrendingUp className="w-3 h-3" />}
+                    {metrics.overdueChange >= 0 ? '+' : ''}{metrics.overdueChange.toFixed(1)}%
+                  </span>
+                )}
               </div>
-              <span className="flex items-center gap-1 text-xs font-semibold text-red-600">
-                <TrendingDown className="w-3 h-3" />
-                -3.1%
-              </span>
+              <p className="text-2xl font-bold text-gray-900">{metrics?.overdueInvoices || 0}</p>
+              <p className="text-xs text-gray-500 mt-1">Overdue Invoices</p>
             </div>
-            <p className="text-2xl font-bold text-gray-900">$12,350</p>
-            <p className="text-xs text-gray-500 mt-1">Overdue Amount</p>
           </div>
-        </div>
+        )}
 
         {/* Charts Row 1 */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 mb-4 md:mb-6">

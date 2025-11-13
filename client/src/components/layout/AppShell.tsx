@@ -1,5 +1,5 @@
 import { Button } from '@/components/ui/button';
-import { LayoutDashboard, FileText, Users, Settings, LogOut, Key, Webhook, DollarSign, Menu, X } from 'lucide-react';
+import { LayoutDashboard, FileText, Users, Settings, LogOut, Key, Webhook, Wallet } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import { useState } from 'react';
@@ -130,7 +130,7 @@ function AppSidebar({ isMobileMenuOpen }: { isMobileMenuOpen: boolean }) {
           <NavItem icon={<LayoutDashboard size={20} />} label="Home" to="/" />
           <NavItem icon={<FileText size={20} />} label="Invoices" to="/invoices" />
           <NavItem icon={<Users size={20} />} label="Customers" to="/customers" />
-          <NavItem icon={<DollarSign size={20} />} label="Payments" to="/payments" />
+          <NavItem icon={<Wallet size={20} />} label="Transactions" to="/transactions" />
           <NavItem icon={<Settings size={20} />} label="Settings" to="/settings" />
 
           <div className="mt-8 mb-3 px-3">
@@ -217,7 +217,7 @@ function MobileSidebarContent({ onNavigate }: { onNavigate: () => void }) {
         <NavItem icon={<LayoutDashboard size={20} />} label="Home" to="/" onClick={onNavigate} />
         <NavItem icon={<FileText size={20} />} label="Invoices" to="/invoices" onClick={onNavigate} />
         <NavItem icon={<Users size={20} />} label="Customers" to="/customers" onClick={onNavigate} />
-        <NavItem icon={<DollarSign size={20} />} label="Payments" to="/payments" onClick={onNavigate} />
+        <NavItem icon={<Wallet size={20} />} label="Transactions" to="/transactions" onClick={onNavigate} />
         <NavItem icon={<Settings size={20} />} label="Settings" to="/settings" onClick={onNavigate} />
 
         <div className="mt-8 mb-3 px-3">

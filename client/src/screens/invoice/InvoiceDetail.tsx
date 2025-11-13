@@ -1,15 +1,65 @@
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Download, Send, MoreVertical, Copy, Edit2, User, CreditCard, FileText, Info } from 'lucide-react';
+import { ArrowLeft, Download, Send, MoreVertical, Copy, Edit2, User, CreditCard, FileText, Info, Link2, Check } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { useState } from 'react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { useGetInvoiceQuery } from '@/services/api.service';
+import { useGetInvoiceQuery, useSendInvoiceMutation } from '@/services/api.service';
 import { toast } from 'sonner';
 
 export const InvoiceDetailScreen = () => {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
+  const [linkCopied, setLinkCopied] = useState(false);
 
   const { data: invoice, isLoading, error } = useGetInvoiceQuery(id!);
+  const [sendInvoice, { isLoading: isSending }] = useSendInvoiceMutation();
+
+  const handleSendInvoice = async () => {
+    if (!id) return;
+
+    try {
+      const result = await sendInvoice(id).unwrap();
+
+      toast.success('Invoice sent!', {
+        description: 'The invoice link is now available.',
+      });
+
+      // Auto-copy the link to clipboard
+      if (result.publicUrl) {
+        try {
+          await navigator.clipboard.writeText(result.publicUrl);
+          toast.info('Invoice link copied to clipboard!');
+        } catch (err) {
+          console.error('Failed to copy link:', err);
+        }
+      }
+    } catch (err: any) {
+      console.error('Failed to send invoice:', err);
+      toast.error(err?.data?.message || 'Failed to send invoice');
+    }
+  };
+
+  const copyInvoiceLink = async () => {
+    if (!invoice?.publicId) {
+      toast.error('Public link not available for this invoice');
+      return;
+    }
+
+    const publicUrl = `${window.location.origin}/invoice/${invoice.publicId}`;
+
+    try {
+      await navigator.clipboard.writeText(publicUrl);
+      setLinkCopied(true);
+      toast.success('Invoice link copied to clipboard!');
+
+      setTimeout(() => {
+        setLinkCopied(false);
+      }, 2000);
+    } catch (err) {
+      console.error('Failed to copy:', err);
+      toast.error('Failed to copy link');
+    }
+  };
 
   if (isLoading) {
     return (
@@ -80,11 +130,31 @@ export const InvoiceDetailScreen = () => {
                 Edit draft
               </Button>
               <Button
+                onClick={copyInvoiceLink}
+                variant="outline"
                 size="sm"
-                className="h-9 px-3 md:px-4 text-xs md:text-sm font-medium bg-[#635BFF] hover:bg-[#5045e5] text-white active:scale-95"
+                className="h-9 px-3 md:px-4 text-xs md:text-sm font-medium border-gray-300"
+              >
+                {linkCopied ? (
+                  <>
+                    <Check className="w-4 h-4 md:mr-1.5 text-green-600" />
+                    <span className="hidden md:inline text-green-600">Copied!</span>
+                  </>
+                ) : (
+                  <>
+                    <Link2 className="w-4 h-4 md:mr-1.5" />
+                    <span className="hidden md:inline">Copy link</span>
+                  </>
+                )}
+              </Button>
+              <Button
+                onClick={handleSendInvoice}
+                disabled={isSending}
+                size="sm"
+                className="h-9 px-3 md:px-4 text-xs md:text-sm font-medium bg-[#635BFF] hover:bg-[#5045e5] text-white active:scale-95 disabled:opacity-50"
               >
                 <Send className="w-4 h-4 md:mr-1.5" />
-                <span className="hidden md:inline">Send invoice</span>
+                <span className="hidden md:inline">{isSending ? 'Sending...' : 'Send invoice'}</span>
               </Button>
               <Button
                 variant="outline"

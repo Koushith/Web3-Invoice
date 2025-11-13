@@ -34,7 +34,7 @@ export const getPayments = asyncHandler(async (req: Request, res: Response) => {
   const total = await Payment.countDocuments(query);
 
   res.json({
-    payments,
+    data: payments,
     pagination: {
       total,
       page: Number(page),
@@ -66,7 +66,7 @@ export const getPayment = asyncHandler(async (req: Request, res: Response) => {
     throw new AppError('Payment not found', 404, 'PAYMENT_NOT_FOUND');
   }
 
-  res.json({ payment });
+  res.json({ data: payment });
 });
 
 /**
@@ -143,8 +143,8 @@ export const createPayment = asyncHandler(async (req: Request, res: Response) =>
   });
 
   res.status(201).json({
+    data: payment,
     message: 'Payment recorded successfully',
-    payment,
     invoice: {
       id: invoice._id,
       amountPaid: invoice.amountPaid,
@@ -181,6 +181,7 @@ export const getInvoicePayments = asyncHandler(async (req: Request, res: Respons
   }).sort({ createdAt: -1 });
 
   res.json({
+    data: payments,
     invoice: {
       id: invoice._id,
       invoiceNumber: invoice.invoiceNumber,
@@ -189,6 +190,5 @@ export const getInvoicePayments = asyncHandler(async (req: Request, res: Respons
       amountDue: invoice.amountDue,
       status: invoice.status,
     },
-    payments,
   });
 });

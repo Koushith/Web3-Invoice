@@ -1,4 +1,4 @@
-import { LayoutDashboard, FileText, Users, DollarSign, Menu } from 'lucide-react';
+import { LayoutDashboard, FileText, Users, Wallet, Menu } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { useState } from 'react';
@@ -107,9 +107,9 @@ export function MobileBottomNav() {
             to="/customers"
           />
           <BottomNavItem
-            icon={<DollarSign size={20} strokeWidth={2} />}
-            label="Payments"
-            to="/payments"
+            icon={<Wallet size={20} strokeWidth={2} />}
+            label="Transactions"
+            to="/transactions"
           />
 
           {/* Menu Sheet Trigger */}

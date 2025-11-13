@@ -8,7 +8,9 @@ import { SignupScreen } from './screens/auth/Signup';
 import { ForgotPasswordScreen } from './screens/auth/ForgotPassword';
 import { InvoiceDetailScreen } from './screens/invoice/InvoiceDetail';
 import { CustomerDetailScreen } from './screens/customer/CustomerDetail';
+import { EditCustomerScreen } from './screens/customer/EditCustomer';
 import { PaymentsScreen } from './screens/payments/Payments';
+import { PublicInvoiceScreen } from './screens/public/PublicInvoice';
 import { ReportsScreen } from './screens/reports/Reports';
 import { TeamScreen } from './screens/team/Team';
 import { SettingsScreen } from './screens/settings/Settings';
@@ -64,7 +66,12 @@ const router = createBrowserRouter([
         errorElement: <ErrorScreen />,
       },
       {
-        path: '/payments',
+        path: '/customers/:id/edit',
+        element: <EditCustomerScreen />,
+        errorElement: <ErrorScreen />,
+      },
+      {
+        path: '/transactions',
         element: <PaymentsScreen />,
         errorElement: <ErrorScreen />,
       },
@@ -130,6 +137,12 @@ const router = createBrowserRouter([
   {
     path: '/forgot-password',
     element: <ForgotPasswordScreen />,
+    errorElement: <ErrorScreen />,
+  },
+  // Public invoice view - no authentication required
+  {
+    path: '/invoice/:publicId',
+    element: <PublicInvoiceScreen />,
     errorElement: <ErrorScreen />,
   },
   // Invoice creation - fullscreen without sidebar

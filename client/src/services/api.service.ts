@@ -201,13 +201,13 @@ export const apiService = createApi({
       ],
     }),
 
-    sendInvoice: builder.mutation<Invoice, string>({
+    sendInvoice: builder.mutation<{ invoice: Invoice; publicUrl: string; emailSent: boolean }, string>({
       query: (id) => ({
         url: `/invoices/${id}/send`,
         method: 'POST',
       }),
-      transformResponse: (response: ApiResponse<Invoice>) => response.data!,
-      invalidatesTags: (_result, _error, id) => [{ type: 'Invoice', id }],
+      transformResponse: (response: ApiResponse<{ invoice: Invoice; publicUrl: string; emailSent: boolean }>) => response.data!,
+      invalidatesTags: (_result, _error, id) => [{ type: 'Invoice', id }, { type: 'Invoice', id: 'LIST' }],
     }),
 
     markInvoiceAsPaid: builder.mutation<Invoice, {

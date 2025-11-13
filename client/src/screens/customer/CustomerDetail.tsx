@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Edit, Trash2, Plus, Loader2 } from 'lucide-react';
+import { ArrowLeft, Edit, Trash2, Plus, Loader2, ExternalLink } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { useGetCustomerQuery, useDeleteCustomerMutation } from '@/services/api.service';
+import { useGetCustomerQuery, useDeleteCustomerMutation, useGetInvoicesQuery, useGetPaymentsQuery } from '@/services/api.service';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
 import { auth } from '@/lib/firebase';
@@ -27,6 +27,35 @@ export const CustomerDetailScreen = () => {
   const { data: customer, isLoading, error } = useGetCustomerQuery(id!, {
     skip: !isAuthReady || !id,
   });
+
+  // Fetch customer invoices
+  const { data: invoicesData, isLoading: invoicesLoading } = useGetInvoicesQuery(
+    {
+      filters: { customerId: id },
+      limit: 10,
+      sort: 'createdAt',
+      order: 'desc',
+    },
+    {
+      skip: !isAuthReady || !id,
+    }
+  );
+
+  // Fetch customer payments
+  const { data: paymentsData, isLoading: paymentsLoading } = useGetPaymentsQuery(
+    {
+      filters: { customerId: id },
+      limit: 10,
+      sort: 'createdAt',
+      order: 'desc',
+    },
+    {
+      skip: !isAuthReady || !id,
+    }
+  );
+
+  const invoices = invoicesData?.data || [];
+  const payments = paymentsData?.data || [];
 
   const handleDelete = async () => {
     if (!confirm('Are you sure you want to delete this customer? This action cannot be undone.')) {
@@ -151,25 +180,155 @@ export const CustomerDetailScreen = () => {
 
                 <div className="bg-white border border-gray-200 rounded-lg p-5">
                   <p className="text-sm text-gray-500">Invoices</p>
-                  <p className="text-2xl font-semibold text-gray-900 mt-1">0</p>
+                  <p className="text-2xl font-semibold text-gray-900 mt-1">
+                    {invoicesLoading ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      invoicesData?.pagination?.total || 0
+                    )}
+                  </p>
                 </div>
               </div>
             </div>
 
             {/* Invoices Section */}
             <div>
-              <h2 className="text-sm font-medium text-gray-900 mb-4">Invoices</h2>
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-sm font-medium text-gray-900">Invoices</h2>
+                <Button
+                  onClick={() => navigate('/invoices/new')}
+                  className="bg-[#635bff] hover:bg-[#0a2540] text-white text-sm font-medium px-3 h-8 rounded-md"
+                  size="sm"
+                >
+                  <Plus className="w-4 h-4 mr-1.5" />
+                  New
+                </Button>
+              </div>
               <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
-                <div className="px-6 py-12 text-center">
-                  <p className="text-sm text-gray-500 mb-4">No invoices yet</p>
-                  <Button
-                    onClick={() => navigate('/invoices/new')}
-                    className="bg-[#635bff] hover:bg-[#0a2540] text-white text-sm font-medium px-4 h-9 rounded-md"
-                  >
-                    <Plus className="w-4 h-4 mr-1.5" />
-                    Create invoice
-                  </Button>
-                </div>
+                {invoicesLoading ? (
+                  <div className="px-6 py-12 text-center">
+                    <Loader2 className="w-6 h-6 animate-spin text-gray-400 mx-auto" />
+                  </div>
+                ) : invoices.length === 0 ? (
+                  <div className="px-6 py-12 text-center">
+                    <p className="text-sm text-gray-500 mb-4">No invoices yet</p>
+                    <Button
+                      onClick={() => navigate('/invoices/new')}
+                      variant="outline"
+                      className="text-sm font-medium"
+                    >
+                      <Plus className="w-4 h-4 mr-1.5" />
+                      Create invoice
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="divide-y divide-gray-200">
+                    {invoices.map((invoice: any) => (
+                      <div
+                        key={invoice.id || invoice._id}
+                        onClick={() => navigate(`/invoices/${invoice.id || invoice._id}`)}
+                        className="px-6 py-4 hover:bg-gray-50 cursor-pointer transition-colors"
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-3">
+                              <p className="text-sm font-medium text-gray-900">
+                                {invoice.invoiceNumber}
+                              </p>
+                              <span
+                                className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
+                                  invoice.status === 'paid'
+                                    ? 'bg-green-100 text-green-800'
+                                    : invoice.status === 'overdue'
+                                    ? 'bg-red-100 text-red-800'
+                                    : invoice.status === 'sent'
+                                    ? 'bg-blue-100 text-blue-800'
+                                    : 'bg-gray-100 text-gray-800'
+                                }`}
+                              >
+                                {invoice.status}
+                              </span>
+                            </div>
+                            <p className="text-xs text-gray-500 mt-1">
+                              {invoice.createdAt ? format(new Date(invoice.createdAt), 'MMM d, yyyy') : '—'}
+                              {invoice.dueDate && ` • Due ${format(new Date(invoice.dueDate), 'MMM d, yyyy')}`}
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-3">
+                            <div className="text-right">
+                              <p className="text-sm font-semibold text-gray-900">
+                                {invoice.currency} {(invoice.total || 0).toLocaleString('en-US', {
+                                  minimumFractionDigits: 2,
+                                  maximumFractionDigits: 2,
+                                })}
+                              </p>
+                            </div>
+                            <ExternalLink className="w-4 h-4 text-gray-400" />
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Payments Section */}
+            <div>
+              <h2 className="text-sm font-medium text-gray-900 mb-4">Payment History</h2>
+              <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+                {paymentsLoading ? (
+                  <div className="px-6 py-12 text-center">
+                    <Loader2 className="w-6 h-6 animate-spin text-gray-400 mx-auto" />
+                  </div>
+                ) : payments.length === 0 ? (
+                  <div className="px-6 py-12 text-center">
+                    <p className="text-sm text-gray-500">No payments yet</p>
+                  </div>
+                ) : (
+                  <div className="divide-y divide-gray-200">
+                    {payments.map((payment: any) => (
+                      <div
+                        key={payment.id || payment._id}
+                        className="px-6 py-4"
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-3">
+                              <p className="text-sm font-medium text-gray-900">
+                                {payment.paymentMethod?.replace(/_/g, ' ').replace(/\b\w/g, (l: string) => l.toUpperCase()) || 'Payment'}
+                              </p>
+                              <span
+                                className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
+                                  payment.status === 'completed'
+                                    ? 'bg-green-100 text-green-800'
+                                    : payment.status === 'pending'
+                                    ? 'bg-yellow-100 text-yellow-800'
+                                    : payment.status === 'failed'
+                                    ? 'bg-red-100 text-red-800'
+                                    : 'bg-gray-100 text-gray-800'
+                                }`}
+                              >
+                                {payment.status}
+                              </span>
+                            </div>
+                            <p className="text-xs text-gray-500 mt-1">
+                              {payment.createdAt ? format(new Date(payment.createdAt), 'MMM d, yyyy h:mm a') : '—'}
+                            </p>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-sm font-semibold text-gray-900">
+                              {payment.currency || 'USD'} {(payment.amount || 0).toLocaleString('en-US', {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2,
+                              })}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
           </div>

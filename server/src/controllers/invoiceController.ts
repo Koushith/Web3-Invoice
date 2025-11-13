@@ -151,8 +151,6 @@ export const createInvoice = asyncHandler(async (req: Request, res: Response) =>
     total: 0,
     amountPaid: 0,
     amountDue: 0,
-    // Store payment address for crypto payments (customer pays gas, not you!)
-    cryptoPaymentAddress: organization.walletAddress,
   });
 
   res.status(201).json({
@@ -346,6 +344,94 @@ Date: ${new Date().toISOString()}`;
 
   res.json({
     message: 'Invoice marked as paid successfully',
+    data: invoice,
+  });
+});
+
+/**
+ * Send invoice to customer (generates link and updates status)
+ */
+export const sendInvoice = asyncHandler(async (req: Request, res: Response) => {
+  const user = req.user?.user;
+  const { id } = req.params;
+
+  if (!user?.organizationId) {
+    throw new AppError('Organization not found', 404, 'ORG_NOT_FOUND');
+  }
+
+  const invoice = await Invoice.findOne({
+    _id: id,
+    organizationId: user.organizationId,
+  })
+    .populate('customerId', 'name email company')
+    .populate('organizationId', 'name email');
+
+  if (!invoice) {
+    throw new AppError('Invoice not found', 404, 'INVOICE_NOT_FOUND');
+  }
+
+  // Ensure invoice has a publicId
+  if (!invoice.publicId) {
+    const characters = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
+    let publicId = '';
+    for (let i = 0; i < 12; i++) {
+      publicId += characters.charAt(Math.floor(Math.random() * characters.length));
+    }
+    invoice.publicId = publicId;
+  }
+
+  // Update invoice status to 'sent'
+  if (invoice.status === 'draft') {
+    invoice.status = 'sent';
+  }
+
+  invoice.sentAt = new Date();
+  await invoice.save();
+
+  // Generate public URL
+  const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+  const publicUrl = `${frontendUrl}/invoice/${invoice.publicId}`;
+
+  // In production, you would send an email here
+  // For now, we'll return the link
+  res.json({
+    message: 'Invoice sent successfully',
+    data: {
+      invoice,
+      publicUrl,
+      emailSent: false, // Set to true when email service is configured
+    },
+  });
+});
+
+/**
+ * Get invoice by public ID (no authentication required)
+ */
+export const getPublicInvoice = asyncHandler(async (req: Request, res: Response) => {
+  const { publicId } = req.params;
+
+  if (!publicId) {
+    throw new AppError('Public ID is required', 400, 'INVALID_REQUEST');
+  }
+
+  const invoice = await Invoice.findOne({ publicId })
+    .populate('customerId', 'name email company address phone')
+    .populate('organizationId', 'name email phone address logo website')
+    .lean();
+
+  if (!invoice) {
+    throw new AppError('Invoice not found', 404, 'INVOICE_NOT_FOUND');
+  }
+
+  // Update viewedAt timestamp if first time viewing
+  if (!invoice.viewedAt) {
+    await Invoice.findOneAndUpdate(
+      { publicId },
+      { viewedAt: new Date(), status: invoice.status === 'sent' ? 'viewed' : invoice.status }
+    );
+  }
+
+  res.json({
     data: invoice,
   });
 });

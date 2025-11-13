@@ -32,6 +32,9 @@ export interface IInvoice extends Document {
   remindersSent: number;
   lastReminderAt?: Date;
 
+  // Public sharing
+  publicId?: string;
+
   // Recurring
   isRecurring: boolean;
   recurringInterval?: 'weekly' | 'monthly' | 'quarterly' | 'yearly';
@@ -66,7 +69,7 @@ const InvoiceSchema: Schema = new Schema(
     status: {
       type: String,
       enum: ['draft', 'sent', 'viewed', 'paid', 'partial', 'overdue', 'cancelled'],
-      default: 'draft',
+      default: 'sent',
       index: true,
     },
     issueDate: {
@@ -178,6 +181,12 @@ const InvoiceSchema: Schema = new Schema(
     lastReminderAt: {
       type: Date,
     },
+    publicId: {
+      type: String,
+      unique: true,
+      sparse: true,
+      index: true,
+    },
     isRecurring: {
       type: Boolean,
       default: false,
@@ -246,6 +255,20 @@ InvoiceSchema.pre('save', function(this: IInvoice, next) {
     }
   }
 
+  next();
+});
+
+// Pre-save hook to generate publicId
+InvoiceSchema.pre('save', function(this: IInvoice, next) {
+  if (this.isNew && !this.publicId) {
+    // Generate a unique public ID (8 random alphanumeric characters)
+    const characters = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
+    let publicId = '';
+    for (let i = 0; i < 12; i++) {
+      publicId += characters.charAt(Math.floor(Math.random() * characters.length));
+    }
+    this.publicId = publicId;
+  }
   next();
 });
 
