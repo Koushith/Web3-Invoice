@@ -12,9 +12,10 @@ import {
   LineChart,
   Line,
 } from 'recharts';
-import { Download, TrendingUp, TrendingDown, DollarSign, Users, FileText, Calendar, Loader2 } from 'lucide-react';
+import { Download, TrendingUp, TrendingDown, DollarSign, Users, FileText, Calendar } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { StatCardSkeleton } from '@/components/ui/skeleton';
 import { useGetDashboardMetricsQuery, useGetRevenueChartQuery } from '@/services/api.service';
 import { auth } from '@/lib/firebase';
 
@@ -102,8 +103,11 @@ export const ReportsScreen = () => {
 
         {/* Key Metrics */}
         {metricsLoading ? (
-          <div className="flex items-center justify-center py-12">
-            <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-5 mb-6 md:mb-8">
+            <StatCardSkeleton />
+            <StatCardSkeleton />
+            <StatCardSkeleton />
+            <StatCardSkeleton />
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-5 mb-6 md:mb-8">

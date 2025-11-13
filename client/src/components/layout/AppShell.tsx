@@ -1,5 +1,5 @@
 import { Button } from '@/components/ui/button';
-import { LayoutDashboard, FileText, Users, Settings, LogOut, Key, Webhook, Wallet } from 'lucide-react';
+import { LayoutDashboard, FileText, Users, Settings, LogOut, Key, Webhook, Wallet, MessageSquare } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import { useState } from 'react';
@@ -134,6 +134,11 @@ function AppSidebar({ isMobileMenuOpen }: { isMobileMenuOpen: boolean }) {
           <NavItem icon={<Settings size={20} />} label="Settings" to="/settings" />
 
           <div className="mt-8 mb-3 px-3">
+            <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Community</div>
+          </div>
+          <NavItem icon={<MessageSquare size={20} />} label="Feedback" to="/feedback" />
+
+          <div className="mt-8 mb-3 px-3">
             <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Developer</div>
           </div>
           <NavItem icon={<Key size={20} />} label="API Keys" to="/api-keys" />
@@ -219,6 +224,11 @@ function MobileSidebarContent({ onNavigate }: { onNavigate: () => void }) {
         <NavItem icon={<Users size={20} />} label="Customers" to="/customers" onClick={onNavigate} />
         <NavItem icon={<Wallet size={20} />} label="Transactions" to="/transactions" onClick={onNavigate} />
         <NavItem icon={<Settings size={20} />} label="Settings" to="/settings" onClick={onNavigate} />
+
+        <div className="mt-8 mb-3 px-3">
+          <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Community</div>
+        </div>
+        <NavItem icon={<MessageSquare size={20} />} label="Feedback" to="/feedback" onClick={onNavigate} />
 
         <div className="mt-8 mb-3 px-3">
           <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Developer</div>

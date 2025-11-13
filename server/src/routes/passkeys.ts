@@ -27,7 +27,19 @@ const ALLOWED_ORIGINS = process.env.ALLOWED_ORIGINS
   : ['http://localhost:5173', 'http://localhost:5174'];
 
 // Store challenges temporarily (in production, use Redis)
-const challenges = new Map<string, string>();
+// Format: { challenge: string, timestamp: number }
+const challenges = new Map<string, { challenge: string; timestamp: number }>();
+
+// Clean up expired challenges (older than 5 minutes)
+setInterval(() => {
+  const now = Date.now();
+  const fiveMinutes = 5 * 60 * 1000;
+  for (const [key, value] of challenges.entries()) {
+    if (now - value.timestamp > fiveMinutes) {
+      challenges.delete(key);
+    }
+  }
+}, 60 * 1000); // Run every minute
 
 /**
  * POST /api/passkeys/register-options
@@ -63,7 +75,7 @@ router.post('/register-options', authenticate, async (req: Request, res: Respons
     });
 
     // Store challenge for verification
-    challenges.set(userId, options.challenge);
+    challenges.set(userId, { challenge: options.challenge, timestamp: Date.now() });
 
     res.json({ success: true, data: options });
   } catch (error: any) {
@@ -93,14 +105,14 @@ router.post('/register', authenticate, async (req: Request, res: Response) => {
       return res.status(404).json({ success: false, message: 'User not found' });
     }
 
-    const expectedChallenge = challenges.get(userId);
-    if (!expectedChallenge) {
+    const challengeData = challenges.get(userId);
+    if (!challengeData) {
       return res.status(400).json({ success: false, message: 'Challenge not found' });
     }
 
     const verification = await verifyRegistrationResponse({
       response,
-      expectedChallenge,
+      expectedChallenge: challengeData.challenge,
       expectedOrigin: ALLOWED_ORIGINS,
       expectedRPID: RP_ID,
     });
@@ -160,7 +172,10 @@ router.post('/auth-options', async (req: Request, res: Response) => {
       });
 
       // Store challenge with a temporary key
-      challenges.set(`auth:usernameless:${options.challenge}`, options.challenge);
+      challenges.set(`auth:usernameless:${options.challenge}`, {
+        challenge: options.challenge,
+        timestamp: Date.now(),
+      });
 
       return res.json({ success: true, data: options });
     }
@@ -181,7 +196,10 @@ router.post('/auth-options', async (req: Request, res: Response) => {
     });
 
     // Store challenge with email as key
-    challenges.set(`auth:${email.toLowerCase()}`, options.challenge);
+    challenges.set(`auth:${email.toLowerCase()}`, {
+      challenge: options.challenge,
+      timestamp: Date.now(),
+    });
 
     res.json({ success: true, data: options });
   } catch (error: any) {
@@ -206,6 +224,10 @@ router.post('/auth', async (req: Request, res: Response) => {
     let expectedChallenge;
     let passkey;
 
+    // Extract the challenge from the response
+    const clientDataJSON = JSON.parse(Buffer.from(response.response.clientDataJSON, 'base64').toString('utf-8'));
+    const challengeFromResponse = clientDataJSON.challenge;
+
     // Usernameless authentication - find user by credential ID
     if (!email) {
       // Find user with matching credential ID
@@ -217,21 +239,21 @@ router.post('/auth', async (req: Request, res: Response) => {
         return res.status(404).json({ success: false, message: 'Passkey not found' });
       }
 
-      // Try to find challenge with usernameless key pattern
-      // We need to check all usernameless challenges to find the right one
-      let foundChallenge = false;
-      for (const [key, value] of challenges.entries()) {
-        if (key.startsWith('auth:usernameless:')) {
-          expectedChallenge = value;
-          challenges.delete(key); // Clean up immediately
-          foundChallenge = true;
-          break;
-        }
+      // Look up the exact challenge using the challenge from the response
+      const challengeKey = `auth:usernameless:${challengeFromResponse}`;
+      const challengeData = challenges.get(challengeKey);
+
+      if (!challengeData) {
+        return res.status(400).json({
+          success: false,
+          message: 'Challenge not found or expired. Please try signing in again.',
+        });
       }
 
-      if (!foundChallenge || !expectedChallenge) {
-        return res.status(400).json({ success: false, message: 'Challenge not found or expired' });
-      }
+      expectedChallenge = challengeData.challenge;
+
+      // Clean up challenge
+      challenges.delete(challengeKey);
 
       // Find the specific passkey
       passkey = user.passkeys.find((p) => p.credentialID === response.rawId);
@@ -242,10 +264,12 @@ router.post('/auth', async (req: Request, res: Response) => {
         return res.status(404).json({ success: false, message: 'User not found' });
       }
 
-      expectedChallenge = challenges.get(`auth:${email.toLowerCase()}`);
-      if (!expectedChallenge) {
+      const challengeData = challenges.get(`auth:${email.toLowerCase()}`);
+      if (!challengeData) {
         return res.status(400).json({ success: false, message: 'Challenge not found' });
       }
+
+      expectedChallenge = challengeData.challenge;
 
       // Find the passkey (response.rawId is already a Base64URLString)
       passkey = user.passkeys.find((p) => p.credentialID === response.rawId);

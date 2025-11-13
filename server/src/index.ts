@@ -11,6 +11,9 @@ import passkeyRoutes from './routes/passkeys.js';
 import customerRoutes from './routes/customerRoutes.js';
 import invoiceRoutes from './routes/invoiceRoutes.js';
 import organizationRoutes from './routes/organizationRoutes.js';
+import feedbackRoutes from './routes/feedbackRoutes.js';
+import paymentRoutes from './routes/paymentRoutes.js';
+import dashboardRoutes from './routes/dashboardRoutes.js';
 
 // Initialize express app
 const app = express();
@@ -44,7 +47,10 @@ app.use('/api/users', userRoutes);
 app.use('/api/passkeys', passkeyRoutes);
 app.use('/api/customers', customerRoutes);
 app.use('/api/invoices', invoiceRoutes);
+app.use('/api/payments', paymentRoutes);
+app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/organization', organizationRoutes);
+app.use('/api/feedback', feedbackRoutes);
 
 // 404 handler
 app.use((req: Request, res: Response) => {

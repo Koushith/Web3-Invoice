@@ -1,8 +1,10 @@
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Download, Send, MoreVertical, Copy, Edit2, User, CreditCard, FileText, Info, Link2, Check } from 'lucide-react';
+import { ArrowLeft, Download, Send, MoreVertical, Copy, Edit2, User, CreditCard, FileText, Info, Link2, Check, AlertCircle } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useState } from 'react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { DetailSkeleton } from '@/components/ui/skeleton';
+import { EmptyState } from '@/components/ui/empty-state';
 import { useGetInvoiceQuery, useSendInvoiceMutation } from '@/services/api.service';
 import { toast } from 'sonner';
 
@@ -63,21 +65,24 @@ export const InvoiceDetailScreen = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
-        <p className="text-gray-500">Loading invoice...</p>
+      <div className="min-h-screen bg-[#FEFFFE] p-4 md:p-8">
+        <div className="max-w-5xl mx-auto">
+          <DetailSkeleton />
+        </div>
       </div>
     );
   }
 
   if (error || !invoice) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-gray-900 font-semibold mb-2">Invoice not found</p>
-          <Button onClick={() => navigate('/invoices')} variant="outline">
-            Back to Invoices
-          </Button>
-        </div>
+      <div className="min-h-screen bg-[#FEFFFE] flex items-center justify-center p-4">
+        <EmptyState
+          icon={AlertCircle}
+          title="Invoice not found"
+          description="The invoice you are looking for does not exist or has been removed."
+          actionLabel="Back to Invoices"
+          onAction={() => navigate('/invoices')}
+        />
       </div>
     );
   }

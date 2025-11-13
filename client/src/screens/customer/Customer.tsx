@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
-import { Plus, Search, Loader2, MoreVertical, Filter } from 'lucide-react';
+import { Plus, Search, MoreVertical, Filter, Users } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { TableSkeleton, CardSkeleton } from '@/components/ui/skeleton';
+import { EmptyState } from '@/components/ui/empty-state';
 import { useNavigate } from 'react-router-dom';
 import { useGetCustomersQuery } from '@/services/api.service';
 import { format } from 'date-fns';
@@ -89,42 +91,38 @@ export const CustomersScreen = () => {
       <div className="max-w-[1400px] mx-auto">
         {/* Loading State */}
         {(!isAuthReady || isLoading) && (
-          <div className="flex items-center justify-center py-24">
-            <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+          <div className="mt-6">
+            <div className="hidden md:block">
+              <TableSkeleton rows={5} />
+            </div>
+            <div className="md:hidden">
+              <CardSkeleton count={3} />
+            </div>
           </div>
         )}
 
         {/* Error State */}
         {error && (
-          <div className="py-24 text-center">
-            <p className="text-sm text-red-600">Failed to load customers. Please try again.</p>
-          </div>
+          <EmptyState
+            icon={Users}
+            title="Failed to load customers"
+            description="There was an error loading your customers. Please try again later."
+          />
         )}
 
         {/* Empty State */}
         {isAuthReady && !isLoading && !error && customers.length === 0 && (
-          <div className="py-24 text-center">
-            <div className="mx-auto w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center mb-4">
-              <Plus className="w-6 h-6 text-gray-400" />
-            </div>
-            <h3 className="text-sm font-medium text-gray-900 mb-1">
-              {searchQuery ? 'No customers found' : 'No customers yet'}
-            </h3>
-            <p className="text-sm text-gray-500 mb-6">
-              {searchQuery
+          <EmptyState
+            icon={Users}
+            title={searchQuery ? 'No customers found' : 'No customers yet'}
+            description={
+              searchQuery
                 ? 'Try adjusting your search to find what you are looking for.'
-                : 'Get started by creating a new customer.'}
-            </p>
-            {!searchQuery && (
-              <Button
-                onClick={() => navigate('/customers/new')}
-                className="bg-[#635bff] hover:bg-[#0a2540] text-white text-sm font-medium px-4 h-9 rounded-md"
-              >
-                <Plus className="w-4 h-4 mr-1.5" />
-                New customer
-              </Button>
-            )}
-          </div>
+                : 'Get started by adding your first customer to send them invoices.'
+            }
+            actionLabel={!searchQuery ? 'Add customer' : undefined}
+            onAction={!searchQuery ? () => navigate('/customers/new') : undefined}
+          />
         )}
 
         {/* Desktop Table View & Mobile Card View */}

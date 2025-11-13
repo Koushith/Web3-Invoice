@@ -66,34 +66,44 @@ export const getDashboardStats = asyncHandler(async (req: Request, res: Response
   // Get customer count
   const customerCount = await Customer.countDocuments({ organizationId, isActive: true });
 
+  // Calculate counts for different statuses
+  const paidInvoices = allInvoices.filter(inv => inv.status === 'paid').length;
+  const pendingInvoices = allInvoices.filter(inv => ['sent', 'viewed', 'partial'].includes(inv.status)).length;
+
   res.json({
-    stats: {
+    data: {
       totalRevenue,
-      outstanding,
-      totalPaid,
-      averageInvoice,
-      overdueCount,
+      totalInvoices: allInvoices.length,
+      paidInvoices,
+      pendingInvoices,
+      overdueInvoices: overdueCount,
+      averageInvoiceValue: averageInvoice || 0,
+      outstandingAmount: outstanding,
+      paidAmount: totalPaid,
       customerCount,
-      invoiceCount: allInvoices.length,
+      statusBreakdown: statusCounts,
+      recentInvoices,
+      recentPayments,
     },
-    statusBreakdown: statusCounts,
-    recentInvoices,
-    recentPayments,
   });
 });
 
 /**
- * Get revenue data for charts (last 30 days)
+ * Get revenue data for charts
  */
 export const getRevenueData = asyncHandler(async (req: Request, res: Response) => {
   const user = req.user?.user;
-  const { days = 30 } = req.query;
+  const { period = 'week' } = req.query;
 
   if (!user?.organizationId) {
     throw new AppError('Organization not found', 404, 'ORG_NOT_FOUND');
   }
 
-  const daysNum = Number(days);
+  // Calculate days based on period
+  let daysNum = 7;
+  if (period === 'month') daysNum = 30;
+  if (period === 'year') daysNum = 365;
+
   const startDate = new Date();
   startDate.setDate(startDate.getDate() - daysNum);
 
@@ -118,7 +128,6 @@ export const getRevenueData = asyncHandler(async (req: Request, res: Response) =
   ]);
 
   res.json({
-    period: `Last ${daysNum} days`,
     data: revenueData.map(item => ({
       date: item._id,
       amount: item.amount,
@@ -176,5 +185,5 @@ export const getActivityFeed = asyncHandler(async (req: Request, res: Response) 
     .sort((a, b) => b.date.getTime() - a.date.getTime())
     .slice(0, Number(limit));
 
-  res.json({ activities });
+  res.json({ data: activities });
 });

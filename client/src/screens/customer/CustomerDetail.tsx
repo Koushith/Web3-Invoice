@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Edit, Trash2, Plus, Loader2, ExternalLink } from 'lucide-react';
+import { ArrowLeft, Edit, Trash2, Plus, ExternalLink, AlertCircle } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { DetailSkeleton } from '@/components/ui/skeleton';
+import { EmptyState } from '@/components/ui/empty-state';
 import { useGetCustomerQuery, useDeleteCustomerMutation, useGetInvoicesQuery, useGetPaymentsQuery } from '@/services/api.service';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
@@ -74,19 +76,24 @@ export const CustomerDetailScreen = () => {
 
   if (!isAuthReady || isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
+      <div className="min-h-screen bg-[#FEFFFE] p-4 md:p-8">
+        <div className="max-w-5xl mx-auto">
+          <DetailSkeleton />
+        </div>
       </div>
     );
   }
 
   if (error || !customer) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-red-600 mb-4">Failed to load customer details</p>
-          <Button onClick={() => navigate('/customers')}>Back to Customers</Button>
-        </div>
+      <div className="min-h-screen bg-[#FEFFFE] flex items-center justify-center p-4">
+        <EmptyState
+          icon={AlertCircle}
+          title="Customer not found"
+          description="The customer you are looking for does not exist or has been removed."
+          actionLabel="Back to Customers"
+          onAction={() => navigate('/customers')}
+        />
       </div>
     );
   }

@@ -11,7 +11,7 @@ const router = Router();
 // All routes require authentication
 router.use(authenticate);
 
-router.get('/stats', getDashboardStats);
+router.get('/metrics', getDashboardStats);
 router.get('/revenue', getRevenueData);
 router.get('/activity', getActivityFeed);
 

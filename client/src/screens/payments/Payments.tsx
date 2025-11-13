@@ -2,7 +2,9 @@ import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Search, Filter, MoreVertical, Loader2 } from 'lucide-react';
+import { TableSkeleton, CardSkeleton } from '@/components/ui/skeleton';
+import { EmptyState } from '@/components/ui/empty-state';
+import { Search, Filter, MoreVertical, CreditCard } from 'lucide-react';
 import { useGetPaymentsQuery } from '@/services/api.service';
 import { auth } from '@/lib/firebase';
 
@@ -133,26 +135,32 @@ export const PaymentsScreen = () => {
       <div className="max-w-[1400px] mx-auto">
         {/* Loading State */}
         {(!isAuthReady || isLoading) && (
-          <div className="flex items-center justify-center py-24">
-            <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+          <div className="mt-6">
+            <div className="hidden md:block">
+              <TableSkeleton rows={5} />
+            </div>
+            <div className="md:hidden">
+              <CardSkeleton count={3} />
+            </div>
           </div>
         )}
 
         {/* Error State */}
         {error && (
-          <div className="py-24 text-center">
-            <p className="text-sm text-red-600">Failed to load payments. Please try again.</p>
-          </div>
+          <EmptyState
+            icon={CreditCard}
+            title="Failed to load payments"
+            description="There was an error loading your payments. Please try again later."
+          />
         )}
 
         {/* Empty State */}
         {isAuthReady && !isLoading && !error && payments.length === 0 && (
-          <div className="py-24 text-center">
-            <h3 className="text-sm font-medium text-gray-900 mb-1">No payments yet</h3>
-            <p className="text-sm text-gray-500">
-              Payment records will appear here once invoices are paid.
-            </p>
-          </div>
+          <EmptyState
+            icon={CreditCard}
+            title="No payments yet"
+            description="Payment transactions will appear here once your customers pay their invoices."
+          />
         )}
 
         {/* Desktop Table */}

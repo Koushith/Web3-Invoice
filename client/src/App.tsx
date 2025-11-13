@@ -20,6 +20,7 @@ import { ProfileScreen } from './screens/profile/Profile';
 import { SecurityScreen } from './screens/security/Security';
 import { BillingScreen } from './screens/billing/Billing';
 import { BusinessScreen } from './screens/business/Business';
+import { FeedbackScreen } from './screens/feedback/Feedback';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
 import { Toaster } from 'sonner';
 import { CustomersScreen } from './screens/customer/Customer';
@@ -114,6 +115,11 @@ const router = createBrowserRouter([
       {
         path: '/business',
         element: <BusinessScreen />,
+        errorElement: <ErrorScreen />,
+      },
+      {
+        path: '/feedback',
+        element: <FeedbackScreen />,
         errorElement: <ErrorScreen />,
       },
       {
