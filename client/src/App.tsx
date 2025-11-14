@@ -28,6 +28,26 @@ import { useAppDispatch } from '@/store/store';
 import { initializeAuth } from '@/store/slices/auth.slice';
 
 const router = createBrowserRouter([
+  // Fullscreen routes (no sidebar) - must be defined first for specific path matching
+  {
+    path: '/invoices/new',
+    element: (
+      <ProtectedRoute>
+        <NewInvoice />
+      </ProtectedRoute>
+    ),
+    errorElement: <ErrorScreen />,
+  },
+  {
+    path: '/invoices/:id/edit',
+    element: (
+      <ProtectedRoute>
+        <NewInvoice />
+      </ProtectedRoute>
+    ),
+    errorElement: <ErrorScreen />,
+  },
+  // Main app routes with sidebar
   {
     path: '/',
     element: (
@@ -149,16 +169,6 @@ const router = createBrowserRouter([
   {
     path: '/invoice/:publicId',
     element: <PublicInvoiceScreen />,
-    errorElement: <ErrorScreen />,
-  },
-  // Invoice creation - fullscreen without sidebar
-  {
-    path: '/invoices/new',
-    element: (
-      <ProtectedRoute>
-        <NewInvoice />
-      </ProtectedRoute>
-    ),
     errorElement: <ErrorScreen />,
   },
 ]);

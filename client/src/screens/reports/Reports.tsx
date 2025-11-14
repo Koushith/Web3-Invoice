@@ -44,7 +44,7 @@ const topCustomers = [
 
 export const ReportsScreen = () => {
   const [isAuthReady, setIsAuthReady] = useState(false);
-  const [period, setPeriod] = useState<'week' | 'month' | 'year'>('month');
+  const [period] = useState<'week' | 'month' | 'year'>('month');
 
   // Wait for Firebase auth
   useEffect(() => {
@@ -63,7 +63,7 @@ export const ReportsScreen = () => {
   );
 
   // Fetch revenue chart data
-  const { data: revenueChartData, isLoading: revenueLoading } = useGetRevenueChartQuery(
+  const { data: revenueChartData } = useGetRevenueChartQuery(
     { period },
     { skip: !isAuthReady }
   );
@@ -71,7 +71,7 @@ export const ReportsScreen = () => {
   const revenueData = revenueChartData || [];
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-[#FEFFFE]">
       <div className="max-w-[1400px] mx-auto px-4 sm:px-6 md:px-8 py-6 md:py-12">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6 md:mb-8">

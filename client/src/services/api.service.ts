@@ -150,6 +150,7 @@ export const apiService = createApi({
         url: '/invoices',
         params,
       }),
+      transformResponse: (response: PaginatedResponse<Invoice>) => transformPaginatedResponse<Invoice>(response),
       providesTags: (result) =>
         result
           ? [
@@ -161,7 +162,7 @@ export const apiService = createApi({
 
     getInvoice: builder.query<Invoice, string>({
       query: (id) => `/invoices/${id}`,
-      transformResponse: (response: ApiResponse<Invoice>) => response.data!,
+      transformResponse: (response: ApiResponse<any>) => transformMongoDoc<Invoice>(response.data!),
       providesTags: (_result, _error, id) => [{ type: 'Invoice', id }],
     }),
 
@@ -171,7 +172,7 @@ export const apiService = createApi({
         method: 'POST',
         body: data,
       }),
-      transformResponse: (response: ApiResponse<Invoice>) => response.data!,
+      transformResponse: (response: ApiResponse<any>) => transformMongoDoc<Invoice>(response.data!),
       invalidatesTags: [{ type: 'Invoice', id: 'LIST' }, 'Dashboard'],
     }),
 
@@ -181,7 +182,7 @@ export const apiService = createApi({
         method: 'PUT',
         body: data,
       }),
-      transformResponse: (response: ApiResponse<Invoice>) => response.data!,
+      transformResponse: (response: ApiResponse<any>) => transformMongoDoc<Invoice>(response.data!),
       invalidatesTags: (_result, _error, { id }) => [
         { type: 'Invoice', id },
         { type: 'Invoice', id: 'LIST' },
@@ -201,12 +202,18 @@ export const apiService = createApi({
       ],
     }),
 
-    sendInvoice: builder.mutation<{ invoice: Invoice; publicUrl: string; emailSent: boolean }, string>({
+    sendInvoice: builder.mutation<{ invoice: Invoice; publicUrl: string; emailSent: boolean; emailError?: string }, string>({
       query: (id) => ({
         url: `/invoices/${id}/send`,
         method: 'POST',
       }),
-      transformResponse: (response: ApiResponse<{ invoice: Invoice; publicUrl: string; emailSent: boolean }>) => response.data!,
+      transformResponse: (response: ApiResponse<any>) => {
+        const data = response.data!;
+        return {
+          ...data,
+          invoice: transformMongoDoc<Invoice>(data.invoice),
+        };
+      },
       invalidatesTags: (_result, _error, id) => [{ type: 'Invoice', id }, { type: 'Invoice', id: 'LIST' }],
     }),
 
@@ -225,7 +232,7 @@ export const apiService = createApi({
         method: 'POST',
         body: data,
       }),
-      transformResponse: (response: ApiResponse<Invoice>) => response.data!,
+      transformResponse: (response: ApiResponse<any>) => transformMongoDoc<Invoice>(response.data!),
       invalidatesTags: (_result, _error, { id }) => [
         { type: 'Invoice', id },
         { type: 'Invoice', id: 'LIST' },
@@ -240,6 +247,7 @@ export const apiService = createApi({
         url: '/customers',
         params,
       }),
+      transformResponse: (response: PaginatedResponse<Customer>) => transformPaginatedResponse<Customer>(response),
       providesTags: (result) =>
         result
           ? [
@@ -251,7 +259,7 @@ export const apiService = createApi({
 
     getCustomer: builder.query<Customer, string>({
       query: (id) => `/customers/${id}`,
-      transformResponse: (response: ApiResponse<Customer>) => response.data!,
+      transformResponse: (response: ApiResponse<any>) => transformMongoDoc<Customer>(response.data!),
       providesTags: (_result, _error, id) => [{ type: 'Customer', id }],
     }),
 
@@ -261,7 +269,7 @@ export const apiService = createApi({
         method: 'POST',
         body: data,
       }),
-      transformResponse: (response: ApiResponse<Customer>) => response.data!,
+      transformResponse: (response: ApiResponse<any>) => transformMongoDoc<Customer>(response.data!),
       invalidatesTags: [{ type: 'Customer', id: 'LIST' }],
     }),
 
@@ -271,7 +279,7 @@ export const apiService = createApi({
         method: 'PUT',
         body: data,
       }),
-      transformResponse: (response: ApiResponse<Customer>) => response.data!,
+      transformResponse: (response: ApiResponse<any>) => transformMongoDoc<Customer>(response.data!),
       invalidatesTags: (_result, _error, { id }) => [
         { type: 'Customer', id },
         { type: 'Customer', id: 'LIST' },
@@ -296,6 +304,7 @@ export const apiService = createApi({
         url: '/payments',
         params,
       }),
+      transformResponse: (response: PaginatedResponse<Payment>) => transformPaginatedResponse<Payment>(response),
       providesTags: (result) =>
         result
           ? [
@@ -307,7 +316,7 @@ export const apiService = createApi({
 
     getPayment: builder.query<Payment, string>({
       query: (id) => `/payments/${id}`,
-      transformResponse: (response: ApiResponse<Payment>) => response.data!,
+      transformResponse: (response: ApiResponse<any>) => transformMongoDoc<Payment>(response.data!),
       providesTags: (_result, _error, id) => [{ type: 'Payment', id }],
     }),
 
@@ -317,7 +326,7 @@ export const apiService = createApi({
         method: 'POST',
         body: data,
       }),
-      transformResponse: (response: ApiResponse<Payment>) => response.data!,
+      transformResponse: (response: ApiResponse<any>) => transformMongoDoc<Payment>(response.data!),
       invalidatesTags: [{ type: 'Payment', id: 'LIST' }, 'Dashboard', { type: 'Invoice' }],
     }),
 
@@ -538,6 +547,71 @@ export const {
   useGetOrganizationQuery,
   useUpdateOrganizationMutation,
 } = apiService;
+
+// ==================== Helper Functions ====================
+
+/**
+ * Transform MongoDB document by mapping _id to id
+ */
+const transformMongoDoc = <T extends Record<string, any>>(doc: any): T => {
+  if (!doc) return doc;
+
+  const transformed: any = { ...doc };
+
+  // Map _id to id
+  if (doc._id) {
+    transformed.id = doc._id;
+  }
+
+  // Transform nested customer if present
+  if (doc.customerId && typeof doc.customerId === 'object') {
+    transformed.customer = {
+      ...doc.customerId,
+      id: doc.customerId._id || doc.customerId.id,
+    };
+    // Keep customerId as the string ID
+    transformed.customerId = doc.customerId._id || doc.customerId.id;
+  }
+
+  // Transform nested items if present
+  if (Array.isArray(doc.items)) {
+    transformed.items = doc.items.map((item: any) => ({
+      ...item,
+      id: item._id || item.id,
+    }));
+  }
+
+  // Transform nested payments if present
+  if (Array.isArray(doc.payments)) {
+    transformed.payments = doc.payments.map((payment: any) => ({
+      ...payment,
+      id: payment._id || payment.id,
+    }));
+  }
+
+  // Explicitly preserve metadata
+  if (doc.metadata) {
+    transformed.metadata = doc.metadata;
+  }
+
+  console.log('transformMongoDoc:', {
+    input: doc,
+    output: transformed,
+    hasMetadata: !!transformed.metadata,
+  });
+
+  return transformed;
+};
+
+/**
+ * Transform paginated response with MongoDB documents
+ */
+const transformPaginatedResponse = <T extends Record<string, any>>(response: PaginatedResponse<any>): PaginatedResponse<T> => {
+  return {
+    ...response,
+    data: response.data.map((doc: any) => transformMongoDoc<T>(doc)),
+  };
+};
 
 // ==================== Export Utilities ====================
 

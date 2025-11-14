@@ -202,6 +202,7 @@ export interface Customer extends BaseEntity, SoftDeletable {
   taxId?: string;
   address?: Address;
   walletAddress?: string;
+  preferredPaymentMethod?: string;
   notes?: string;
   organizationId: string;
   metadata?: Record<string, any>;
@@ -216,6 +217,7 @@ export interface Address {
   city?: string;
   state?: string;
   postalCode?: string;
+  zipCode?: string; // Alias for postalCode
   country?: string;
 }
 
@@ -229,7 +231,7 @@ export interface Invoice extends BaseEntity, SoftDeletable {
   organizationId: string;
   organization?: Organization;
   issueDate: Date | string;
-  dueDate: Date | string;
+  dueDate?: Date | string;
   paidDate?: Date | string;
   items: InvoiceItem[];
   subtotal: number;
@@ -245,7 +247,9 @@ export interface Invoice extends BaseEntity, SoftDeletable {
   terms?: string;
   paymentMethod?: PaymentMethod;
   requestNetworkId?: string;
+  publicId?: string;
   metadata?: Record<string, any>;
+  templateStyle?: 'standard' | 'modern' | 'minimal' | 'artistic' | 'gradient' | 'glass' | 'elegant' | 'catty' | 'floral' | 'panda' | 'pinkminimal' | 'compactpanda';
 }
 
 export interface InvoiceItem {
@@ -274,6 +278,7 @@ export interface CreateInvoiceDTO {
 
 export interface UpdateInvoiceDTO extends Partial<CreateInvoiceDTO> {
   status?: InvoiceStatus;
+  metadata?: Record<string, any>;
 }
 
 // ==================== Payment ====================
@@ -364,12 +369,18 @@ export interface Notification {
 export interface DashboardMetrics {
   totalRevenue: number;
   totalInvoices: number;
+  paidInvoices: number;
+  pendingInvoices: number;
   pendingPayments: number;
   overdueInvoices: number;
-  revenueChange: number;
-  invoiceChange: number;
-  paymentChange: number;
-  overdueChange: number;
+  averageInvoiceValue: number;
+  outstandingAmount: number;
+  paidAmount: number;
+  customerCount: number;
+  revenueChange?: number;
+  invoiceChange?: number;
+  paymentChange?: number;
+  overdueChange?: number;
 }
 
 export interface RevenueData {

@@ -6,7 +6,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Trash2, Plus, ArrowLeft, Loader2, Printer, Download, ChevronDown, ChevronUp } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import {
   StandardTemplate,
   ModernTemplate,
@@ -15,8 +15,13 @@ import {
   GradientTemplate,
   GlassTemplate,
   ElegantTemplate,
+  CattyTemplate,
+  FloralTemplate,
+  PandaTemplate,
+  PinkMinimalTemplate,
+  CompactPandaTemplate,
 } from '@/components/invoice/InvoiceTemplates';
-import { useGetCustomersQuery, useCreateInvoiceMutation, useGetOrganizationQuery } from '@/services/api.service';
+import { useGetCustomersQuery, useCreateInvoiceMutation, useGetInvoiceQuery, useUpdateInvoiceMutation, useGetOrganizationQuery } from '@/services/api.service';
 import { toast } from 'sonner';
 import { auth } from '@/lib/firebase';
 import { useReactToPrint } from 'react-to-print';
@@ -24,7 +29,7 @@ import { toPng } from 'html-to-image';
 import { jsPDF } from 'jspdf';
 import { Currency } from '@/types/models';
 
-export type InvoiceStyle = 'standard' | 'modern' | 'minimal' | 'artistic' | 'gradient' | 'glass' | 'elegant';
+export type InvoiceStyle = 'standard' | 'modern' | 'minimal' | 'artistic' | 'gradient' | 'glass' | 'elegant' | 'catty' | 'floral' | 'panda' | 'pinkminimal' | 'compactpanda';
 
 export interface InvoiceStyleProps {
   logo: string | null;
@@ -76,11 +81,17 @@ interface PaymentDetails {
 
 export const NewInvoice = () => {
   const navigate = useNavigate();
+  const { id: invoiceId } = useParams<{ id: string }>();
+  const isEditMode = !!invoiceId;
+
+  // Debug logging
+  console.log('NewInvoice Mount:', { invoiceId, isEditMode, path: window.location.pathname });
   const [isAuthReady, setIsAuthReady] = useState(false);
   const [selectedCustomerId, setSelectedCustomerId] = useState<string>('');
   const [logo] = useState<string | null>(null);
   const [invoiceStyle, setInvoiceStyle] = useState<InvoiceStyle>('standard');
   const [previewZoom, setPreviewZoom] = useState(0.8);
+  const [previewTab, setPreviewTab] = useState<'pdf' | 'email' | 'hosted'>('pdf');
   const [currency, setCurrency] = useState('USD');
   const [customCurrency, setCustomCurrency] = useState('');
   const [showCustomCurrency, setShowCustomCurrency] = useState(false);
@@ -188,8 +199,82 @@ export const NewInvoice = () => {
     }
   }, [organization]);
 
-  // Create invoice mutation
+  // Create and update invoice mutations
   const [createInvoice, { isLoading: isCreating }] = useCreateInvoiceMutation();
+  const [updateInvoice, { isLoading: isUpdating }] = useUpdateInvoiceMutation();
+
+  // Fetch invoice data if in edit mode
+  const { data: existingInvoice, isLoading: isLoadingInvoice, error: invoiceError } = useGetInvoiceQuery(
+    invoiceId!,
+    { skip: !isEditMode || !invoiceId }
+  );
+
+  // Debug query state
+  useEffect(() => {
+    console.log('Invoice Query State:', {
+      isEditMode,
+      invoiceId,
+      isLoadingInvoice,
+      hasData: !!existingInvoice,
+      error: invoiceError,
+    });
+  }, [isEditMode, invoiceId, isLoadingInvoice, existingInvoice, invoiceError]);
+
+  // Handle invoice fetch error
+  useEffect(() => {
+    if (isEditMode && invoiceError) {
+      console.error('Failed to load invoice:', invoiceError);
+      toast.error('Failed to load invoice. Redirecting...');
+      setTimeout(() => {
+        navigate('/invoices');
+      }, 2000);
+    }
+  }, [invoiceError, isEditMode, navigate]);
+
+  // Pre-populate form when editing
+  useEffect(() => {
+    if (isEditMode && existingInvoice) {
+      // Extract prefix and number from invoice number (e.g., "INV-0001" -> "INV" and "0001")
+      const parts = existingInvoice.invoiceNumber.split('-');
+      const prefix = parts.length > 1 ? parts[0] : 'INV';
+      const number = parts.length > 1 ? parts.slice(1).join('-') : existingInvoice.invoiceNumber;
+
+      setInvoicePrefix(prefix);
+      setSelectedCustomerId(existingInvoice.customerId || '');
+      setCurrency(existingInvoice.currency);
+      setTaxRate(existingInvoice.taxRate || 0);
+
+      // Load saved template style
+      if (existingInvoice.templateStyle) {
+        setInvoiceStyle(existingInvoice.templateStyle as InvoiceStyle);
+      }
+
+      setInvoiceData({
+        invoiceNumber: number,
+        date: new Date(existingInvoice.issueDate).toISOString().split('T')[0],
+        dueDate: existingInvoice.dueDate ? new Date(existingInvoice.dueDate).toISOString().split('T')[0] : '',
+        fromCompany: invoiceData.fromCompany,
+        fromAddress: invoiceData.fromAddress,
+        fromEmail: invoiceData.fromEmail,
+        fromPhone: invoiceData.fromPhone,
+        fromTaxId: invoiceData.fromTaxId,
+        toCompany: existingInvoice.customer?.company || existingInvoice.customer?.name || '',
+        toEmail: existingInvoice.customer?.email || '',
+        toPhone: existingInvoice.customer?.phone || '',
+        toTaxId: existingInvoice.customer?.taxId || '',
+        toAddress: existingInvoice.customer?.address?.street
+          ? `${existingInvoice.customer.address.street}\n${existingInvoice.customer.address.city}, ${existingInvoice.customer.address.state} ${existingInvoice.customer.address.postalCode}\n${existingInvoice.customer.address.country}`
+          : '',
+        items: existingInvoice.items?.map(item => ({
+          description: item.description,
+          quantity: item.quantity,
+          price: item.unitPrice,
+        })) || [{ description: '', quantity: 1, price: 0 }],
+        notes: existingInvoice.notes || '',
+        terms: existingInvoice.terms || '',
+      });
+    }
+  }, [isEditMode, existingInvoice]);
 
   // Update customer details when customer is selected
   useEffect(() => {
@@ -264,7 +349,7 @@ export const NewInvoice = () => {
     }
   };
 
-  const handleCreateInvoice = async () => {
+  const handleCreateInvoice = async (saveAsDraft = false) => {
     // Validation
     if (!selectedCustomerId) {
       toast.error('Please select a customer');
@@ -320,7 +405,13 @@ export const NewInvoice = () => {
           unitPrice: item.price,
         })),
         taxRate: taxRate,
+        templateStyle: invoiceStyle, // Save the selected template style
       };
+
+      // Add status for draft saves
+      if (saveAsDraft) {
+        invoicePayload.status = 'draft';
+      }
 
       // Only add optional fields if they have values
       if (invoiceData.dueDate?.trim()) {
@@ -333,19 +424,39 @@ export const NewInvoice = () => {
         invoicePayload.terms = invoiceData.terms;
       }
 
-      await createInvoice(invoicePayload).unwrap();
-      toast.success('Invoice created successfully');
-      navigate('/invoices');
+      if (isEditMode && invoiceId) {
+        // Update existing invoice
+        await updateInvoice({ id: invoiceId, data: invoicePayload }).unwrap();
+        toast.success(saveAsDraft ? 'Draft saved successfully' : 'Invoice updated successfully');
+        navigate(`/invoices/${invoiceId}`);
+      } else {
+        // Create new invoice
+        await createInvoice(invoicePayload).unwrap();
+        toast.success(saveAsDraft ? 'Draft saved successfully' : 'Invoice created successfully');
+        navigate('/invoices');
+      }
     } catch (error: any) {
-      console.error('Create invoice error:', error);
-      toast.error(error?.data?.message || 'Failed to create invoice');
+      console.error(`${isEditMode ? 'Update' : 'Create'} invoice error:`, error);
+      toast.error(error?.data?.message || `Failed to ${isEditMode ? 'update' : 'create'} invoice`);
     }
   };
 
   const subtotal = invoiceData.items.reduce((sum, item) => sum + item.quantity * item.price, 0);
 
+  // Show loading screen while fetching invoice in edit mode
+  if (isEditMode && isLoadingInvoice) {
+    return (
+      <div className="min-h-screen bg-[#FEFFFE] flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="w-8 h-8 animate-spin text-[#635BFF] mx-auto mb-4" />
+          <p className="text-sm text-gray-600">Loading invoice...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[#FEFFFE]">
       {/* Header */}
       <div className="bg-white border-b border-gray-200 sticky top-0 z-30">
         <div className="max-w-[1800px] mx-auto px-4 md:px-8">
@@ -357,31 +468,54 @@ export const NewInvoice = () => {
               >
                 <ArrowLeft className="w-4 h-4" />
               </button>
-              <h1 className="text-sm md:text-base font-medium text-gray-900">Create invoice</h1>
+              <h1 className="text-sm md:text-base font-medium text-gray-900">
+                {isEditMode ? 'Edit invoice' : 'Create invoice'}
+              </h1>
             </div>
             <div className="flex items-center gap-2">
               <Button
                 variant="outline"
-                onClick={() => navigate('/invoices')}
+                onClick={() => navigate(isEditMode ? `/invoices/${invoiceId}` : '/invoices')}
                 className="h-9 px-3 md:px-4 text-xs md:text-sm hidden sm:flex"
               >
                 Cancel
               </Button>
+              {selectedCustomerId && (
+                <Button
+                  variant="outline"
+                  onClick={() => handleCreateInvoice(true)}
+                  disabled={isCreating || isUpdating || isLoadingInvoice}
+                  className="h-9 px-3 md:px-4 text-xs md:text-sm border-gray-300"
+                >
+                  {(isCreating || isUpdating) ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      <span className="hidden sm:inline">Saving...</span>
+                      <span className="sm:hidden">...</span>
+                    </>
+                  ) : (
+                    <>
+                      <span className="hidden sm:inline">Save as draft</span>
+                      <span className="sm:hidden">Draft</span>
+                    </>
+                  )}
+                </Button>
+              )}
               <Button
-                onClick={handleCreateInvoice}
-                disabled={isCreating || !selectedCustomerId}
+                onClick={() => handleCreateInvoice(false)}
+                disabled={isCreating || isUpdating || isLoadingInvoice || !selectedCustomerId}
                 className="h-9 px-3 md:px-4 text-xs md:text-sm bg-[#635BFF] hover:bg-[#5046E5] active:scale-95 transition-transform"
               >
-                {isCreating ? (
+                {(isCreating || isUpdating) ? (
                   <>
                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    <span className="hidden sm:inline">Creating...</span>
+                    <span className="hidden sm:inline">{isEditMode ? 'Updating...' : 'Creating...'}</span>
                     <span className="sm:hidden">...</span>
                   </>
                 ) : (
                   <>
-                    <span className="hidden sm:inline">Create invoice</span>
-                    <span className="sm:hidden">Create</span>
+                    <span className="hidden sm:inline">{isEditMode ? 'Update invoice' : 'Create invoice'}</span>
+                    <span className="sm:hidden">{isEditMode ? 'Update' : 'Create'}</span>
                   </>
                 )}
               </Button>
@@ -1026,6 +1160,11 @@ export const NewInvoice = () => {
                           <SelectItem value="gradient">Professional</SelectItem>
                           <SelectItem value="glass">Executive</SelectItem>
                           <SelectItem value="elegant">Classic</SelectItem>
+                          <SelectItem value="catty">Playful</SelectItem>
+                          <SelectItem value="floral">Dark Floral</SelectItem>
+                          <SelectItem value="panda">Panda</SelectItem>
+                          <SelectItem value="pinkminimal">Pink Minimal</SelectItem>
+                          <SelectItem value="compactpanda">Compact</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -1062,29 +1201,58 @@ export const NewInvoice = () => {
                 </div>
 
                 {/* Tabs */}
-                <div className="flex gap-4 border-b border-gray-200">
-                  <button className="pb-2 px-1 text-xs font-medium text-[#635BFF] border-b-2 border-[#635BFF]">
+                <div className="flex gap-6">
+                  <button
+                    onClick={() => setPreviewTab('pdf')}
+                    className={cn(
+                      "pb-2 px-1 text-xs font-medium transition-colors border-b-2",
+                      previewTab === 'pdf'
+                        ? "text-[#635BFF] border-[#635BFF]"
+                        : "text-gray-500 border-transparent hover:text-gray-900"
+                    )}
+                  >
                     Invoice PDF
                   </button>
-                  <button className="pb-2 px-1 text-xs text-gray-500 hover:text-gray-900">Email</button>
-                  <button className="pb-2 px-1 text-xs text-gray-500 hover:text-gray-900">Hosted Invoice Page</button>
+                  <button
+                    onClick={() => setPreviewTab('email')}
+                    className={cn(
+                      "pb-2 px-1 text-xs font-medium transition-colors border-b-2",
+                      previewTab === 'email'
+                        ? "text-[#635BFF] border-[#635BFF]"
+                        : "text-gray-500 border-transparent hover:text-gray-900"
+                    )}
+                  >
+                    Email
+                  </button>
+                  <button
+                    onClick={() => setPreviewTab('hosted')}
+                    className={cn(
+                      "pb-2 px-1 text-xs font-medium transition-colors border-b-2",
+                      previewTab === 'hosted'
+                        ? "text-[#635BFF] border-[#635BFF]"
+                        : "text-gray-500 border-transparent hover:text-gray-900"
+                    )}
+                  >
+                    Hosted Invoice Page
+                  </button>
                 </div>
               </div>
 
               {/* Preview Content */}
               <div className="flex-1 overflow-auto bg-gray-50 p-8">
-                <div className="flex justify-center">
-                  <div
-                    ref={printRef}
-                    className="bg-white invoice-preview shadow-sm"
-                    style={{
-                      width: '210mm',
-                      minHeight: '297mm',
-                      transform: `scale(${previewZoom})`,
-                      transformOrigin: 'top center',
-                      transition: 'transform 0.2s ease',
-                    }}
-                  >
+                {previewTab === 'pdf' && (
+                  <div className="flex justify-center">
+                    <div
+                      ref={printRef}
+                      className="bg-white invoice-preview shadow-sm"
+                      style={{
+                        width: '210mm',
+                        minHeight: '297mm',
+                        transform: `scale(${previewZoom})`,
+                        transformOrigin: 'top center',
+                        transition: 'transform 0.2s ease',
+                      }}
+                    >
                     {invoiceStyle === 'standard' && (
                       <StandardTemplate
                         logo={logo}
@@ -1162,8 +1330,276 @@ export const NewInvoice = () => {
                         paymentDetails={paymentDetails}
                       />
                     )}
+                    {invoiceStyle === 'catty' && (
+                      <CattyTemplate
+                        logo={logo}
+                        invoiceData={{
+                          ...invoiceData,
+                          invoiceNumber: `${invoicePrefix}-${invoiceData.invoiceNumber || '001'}`,
+                          currency: showCustomCurrency && customCurrency ? customCurrency : currency,
+                        }}
+                        paymentDetails={paymentDetails}
+                      />
+                    )}
+                    {invoiceStyle === 'floral' && (
+                      <FloralTemplate
+                        logo={logo}
+                        invoiceData={{
+                          ...invoiceData,
+                          invoiceNumber: `${invoicePrefix}-${invoiceData.invoiceNumber || '001'}`,
+                          currency: showCustomCurrency && customCurrency ? customCurrency : currency,
+                        }}
+                        paymentDetails={paymentDetails}
+                      />
+                    )}
+                    {invoiceStyle === 'panda' && (
+                      <PandaTemplate
+                        logo={logo}
+                        invoiceData={{
+                          ...invoiceData,
+                          invoiceNumber: `${invoicePrefix}-${invoiceData.invoiceNumber || '001'}`,
+                          currency: showCustomCurrency && customCurrency ? customCurrency : currency,
+                        }}
+                        paymentDetails={paymentDetails}
+                      />
+                    )}
+                    {invoiceStyle === 'pinkminimal' && (
+                      <PinkMinimalTemplate
+                        logo={logo}
+                        invoiceData={{
+                          ...invoiceData,
+                          invoiceNumber: `${invoicePrefix}-${invoiceData.invoiceNumber || '001'}`,
+                          currency: showCustomCurrency && customCurrency ? customCurrency : currency,
+                        }}
+                        paymentDetails={paymentDetails}
+                      />
+                    )}
+                    {invoiceStyle === 'compactpanda' && (
+                      <CompactPandaTemplate
+                        logo={logo}
+                        invoiceData={{
+                          ...invoiceData,
+                          invoiceNumber: `${invoicePrefix}-${invoiceData.invoiceNumber || '001'}`,
+                          currency: showCustomCurrency && customCurrency ? customCurrency : currency,
+                        }}
+                        paymentDetails={paymentDetails}
+                      />
+                    )}
+                    </div>
                   </div>
-                </div>
+                )}
+
+                {previewTab === 'email' && (
+                  <div className="flex justify-center items-center h-full">
+                    <div className="max-w-2xl w-full bg-white rounded-lg shadow-lg p-8">
+                      <div className="border-b pb-4 mb-6">
+                        <h3 className="text-lg font-semibold text-gray-900">Email Preview</h3>
+                        <p className="text-sm text-gray-500 mt-1">How your invoice will appear in the customer's email</p>
+                      </div>
+                      <div className="space-y-4">
+                        <div>
+                          <p className="text-xs text-gray-500 uppercase mb-1">Subject</p>
+                          <p className="text-sm text-gray-900 font-medium">Invoice {invoicePrefix}-{invoiceData.invoiceNumber || '001'} from {invoiceData.fromCompany?.split('\n')[0] || 'Your Company'}</p>
+                        </div>
+                        <div className="border-t pt-4">
+                          <p className="text-sm text-gray-900 mb-4">Hi {invoiceData.toCompany || 'Customer'},</p>
+                          <p className="text-sm text-gray-600 mb-4">
+                            Please find attached your invoice {invoicePrefix}-{invoiceData.invoiceNumber || '001'} for {showCustomCurrency && customCurrency ? customCurrency : currency} {invoiceData.items.reduce((sum, item) => sum + item.quantity * item.price, 0).toFixed(2)}.
+                          </p>
+                          <p className="text-sm text-gray-600 mb-4">
+                            {invoiceData.dueDate ? `Payment is due by ${invoiceData.dueDate}.` : 'Please process payment at your earliest convenience.'}
+                          </p>
+                          <div className="my-6 p-4 bg-gray-50 rounded border">
+                            <p className="text-xs text-gray-500 uppercase mb-2">Invoice Attached</p>
+                            <div className="flex items-center gap-2">
+                              <div className="w-8 h-10 bg-red-100 rounded flex items-center justify-center">
+                                <span className="text-xs font-bold text-red-600">PDF</span>
+                              </div>
+                              <div>
+                                <p className="text-sm font-medium text-gray-900">Invoice-{invoicePrefix}-{invoiceData.invoiceNumber || '001'}.pdf</p>
+                                <p className="text-xs text-gray-500">~150KB</p>
+                              </div>
+                            </div>
+                          </div>
+                          <p className="text-sm text-gray-600 mb-2">
+                            You can also view and pay your invoice online:
+                          </p>
+                          <Button className="bg-[#635BFF] hover:bg-[#5045e5] text-white text-sm">
+                            View Invoice
+                          </Button>
+                          <p className="text-sm text-gray-600 mt-6">
+                            Thank you for your business!
+                          </p>
+                          <p className="text-sm text-gray-900 font-medium mt-2">
+                            {invoiceData.fromCompany?.split('\n')[0] || 'Your Company'}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {previewTab === 'hosted' && (
+                  <div className="flex justify-center">
+                    <div
+                      className="bg-white rounded-lg shadow-lg overflow-hidden"
+                      style={{
+                        width: '210mm',
+                        transform: `scale(${previewZoom})`,
+                        transformOrigin: 'top center',
+                        transition: 'transform 0.2s ease',
+                      }}
+                    >
+                      {/* Browser Chrome */}
+                      <div className="bg-gray-100 px-4 py-3 border-b flex items-center gap-3">
+                        <div className="flex gap-1.5">
+                          <div className="w-3 h-3 rounded-full bg-red-500"></div>
+                          <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
+                          <div className="w-3 h-3 rounded-full bg-green-500"></div>
+                        </div>
+                        <div className="flex-1 bg-white rounded px-3 py-1.5 text-xs text-gray-600 font-mono">
+                          https://invoice.app/i/{invoiceData.invoiceNumber || '001'}
+                        </div>
+                      </div>
+
+                      {/* Hosted Page - Full Invoice Template */}
+                      <div>
+                        {invoiceStyle === 'standard' && (
+                          <StandardTemplate
+                            logo={logo}
+                            invoiceData={{
+                              ...invoiceData,
+                              invoiceNumber: `${invoicePrefix}-${invoiceData.invoiceNumber || '001'}`,
+                              currency: showCustomCurrency && customCurrency ? customCurrency : currency,
+                            }}
+                            paymentDetails={paymentDetails}
+                          />
+                        )}
+                        {invoiceStyle === 'modern' && (
+                          <ModernTemplate
+                            logo={logo}
+                            invoiceData={{
+                              ...invoiceData,
+                              invoiceNumber: `${invoicePrefix}-${invoiceData.invoiceNumber || '001'}`,
+                              currency: showCustomCurrency && customCurrency ? customCurrency : currency,
+                            }}
+                            paymentDetails={paymentDetails}
+                          />
+                        )}
+                        {invoiceStyle === 'minimal' && (
+                          <MinimalTemplate
+                            logo={logo}
+                            invoiceData={{
+                              ...invoiceData,
+                              invoiceNumber: `${invoicePrefix}-${invoiceData.invoiceNumber || '001'}`,
+                              currency: showCustomCurrency && customCurrency ? customCurrency : currency,
+                            }}
+                            paymentDetails={paymentDetails}
+                          />
+                        )}
+                        {invoiceStyle === 'artistic' && (
+                          <ArtisticTemplate
+                            logo={logo}
+                            invoiceData={{
+                              ...invoiceData,
+                              invoiceNumber: `${invoicePrefix}-${invoiceData.invoiceNumber || '001'}`,
+                              currency: showCustomCurrency && customCurrency ? customCurrency : currency,
+                            }}
+                            paymentDetails={paymentDetails}
+                          />
+                        )}
+                        {invoiceStyle === 'gradient' && (
+                          <GradientTemplate
+                            logo={logo}
+                            invoiceData={{
+                              ...invoiceData,
+                              invoiceNumber: `${invoicePrefix}-${invoiceData.invoiceNumber || '001'}`,
+                              currency: showCustomCurrency && customCurrency ? customCurrency : currency,
+                            }}
+                            paymentDetails={paymentDetails}
+                          />
+                        )}
+                        {invoiceStyle === 'glass' && (
+                          <GlassTemplate
+                            logo={logo}
+                            invoiceData={{
+                              ...invoiceData,
+                              invoiceNumber: `${invoicePrefix}-${invoiceData.invoiceNumber || '001'}`,
+                              currency: showCustomCurrency && customCurrency ? customCurrency : currency,
+                            }}
+                            paymentDetails={paymentDetails}
+                          />
+                        )}
+                        {invoiceStyle === 'elegant' && (
+                          <ElegantTemplate
+                            logo={logo}
+                            invoiceData={{
+                              ...invoiceData,
+                              invoiceNumber: `${invoicePrefix}-${invoiceData.invoiceNumber || '001'}`,
+                              currency: showCustomCurrency && customCurrency ? customCurrency : currency,
+                            }}
+                            paymentDetails={paymentDetails}
+                          />
+                        )}
+                        {invoiceStyle === 'catty' && (
+                          <CattyTemplate
+                            logo={logo}
+                            invoiceData={{
+                              ...invoiceData,
+                              invoiceNumber: `${invoicePrefix}-${invoiceData.invoiceNumber || '001'}`,
+                              currency: showCustomCurrency && customCurrency ? customCurrency : currency,
+                            }}
+                            paymentDetails={paymentDetails}
+                          />
+                        )}
+                        {invoiceStyle === 'floral' && (
+                          <FloralTemplate
+                            logo={logo}
+                            invoiceData={{
+                              ...invoiceData,
+                              invoiceNumber: `${invoicePrefix}-${invoiceData.invoiceNumber || '001'}`,
+                              currency: showCustomCurrency && customCurrency ? customCurrency : currency,
+                            }}
+                            paymentDetails={paymentDetails}
+                          />
+                        )}
+                        {invoiceStyle === 'panda' && (
+                          <PandaTemplate
+                            logo={logo}
+                            invoiceData={{
+                              ...invoiceData,
+                              invoiceNumber: `${invoicePrefix}-${invoiceData.invoiceNumber || '001'}`,
+                              currency: showCustomCurrency && customCurrency ? customCurrency : currency,
+                            }}
+                            paymentDetails={paymentDetails}
+                          />
+                        )}
+                        {invoiceStyle === 'pinkminimal' && (
+                          <PinkMinimalTemplate
+                            logo={logo}
+                            invoiceData={{
+                              ...invoiceData,
+                              invoiceNumber: `${invoicePrefix}-${invoiceData.invoiceNumber || '001'}`,
+                              currency: showCustomCurrency && customCurrency ? customCurrency : currency,
+                            }}
+                            paymentDetails={paymentDetails}
+                          />
+                        )}
+                        {invoiceStyle === 'compactpanda' && (
+                          <CompactPandaTemplate
+                            logo={logo}
+                            invoiceData={{
+                              ...invoiceData,
+                              invoiceNumber: `${invoicePrefix}-${invoiceData.invoiceNumber || '001'}`,
+                              currency: showCustomCurrency && customCurrency ? customCurrency : currency,
+                            }}
+                            paymentDetails={paymentDetails}
+                          />
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Footer */}

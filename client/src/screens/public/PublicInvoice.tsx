@@ -226,7 +226,7 @@ export const PublicInvoiceScreen = () => {
                 </div>
                 <div>
                   <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Due Date</p>
-                  <p className="text-sm text-gray-900">{format(new Date(invoice.dueDate), 'MMM d, yyyy')}</p>
+                  <p className="text-sm text-gray-900">{invoice.dueDate ? format(new Date(invoice.dueDate), 'MMM d, yyyy') : 'N/A'}</p>
                 </div>
               </div>
             </div>

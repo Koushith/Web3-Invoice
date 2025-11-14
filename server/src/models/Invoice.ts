@@ -19,6 +19,8 @@ export interface IInvoice extends Document {
   notes?: string;
   terms?: string;
   pdfUrl?: string;
+  templateStyle?: string;
+  metadata?: Record<string, any>;
 
   // Payment references
   allowedPaymentMethods: string[];
@@ -79,7 +81,7 @@ const InvoiceSchema: Schema = new Schema(
     },
     dueDate: {
       type: Date,
-      required: true,
+      required: false,
     },
     currency: {
       type: String,
@@ -152,6 +154,14 @@ const InvoiceSchema: Schema = new Schema(
     },
     pdfUrl: {
       type: String,
+    },
+    templateStyle: {
+      type: String,
+      enum: ['standard', 'modern', 'minimal', 'artistic', 'gradient', 'glass', 'elegant', 'catty', 'floral', 'panda', 'pinkminimal', 'compactpanda'],
+    },
+    metadata: {
+      type: Schema.Types.Mixed,
+      default: {},
     },
     allowedPaymentMethods: [{
       type: String,
@@ -235,23 +245,25 @@ InvoiceSchema.pre('save', function(this: IInvoice, next) {
     // Calculate amount due
     this.amountDue = this.total - this.amountPaid;
 
-    // Update status based on payment
-    if (this.amountPaid === 0) {
-      if (this.status === 'paid' || this.status === 'partial') {
-        this.status = 'sent';
+    // Update status based on payment (but preserve 'draft' status)
+    if (this.status !== 'draft') {
+      if (this.amountPaid === 0) {
+        if (this.status === 'paid' || this.status === 'partial') {
+          this.status = 'sent';
+        }
+      } else if (this.amountPaid >= this.total) {
+        this.status = 'paid';
+        if (!this.paidAt) {
+          this.paidAt = new Date();
+        }
+      } else if (this.amountPaid > 0 && this.amountPaid < this.total) {
+        this.status = 'partial';
       }
-    } else if (this.amountPaid >= this.total) {
-      this.status = 'paid';
-      if (!this.paidAt) {
-        this.paidAt = new Date();
-      }
-    } else if (this.amountPaid > 0 && this.amountPaid < this.total) {
-      this.status = 'partial';
-    }
 
-    // Check for overdue
-    if (this.status !== 'paid' && this.status !== 'cancelled' && new Date() > this.dueDate) {
-      this.status = 'overdue';
+      // Check for overdue (only if dueDate exists)
+      if (this.dueDate && this.status !== 'paid' && this.status !== 'cancelled' && new Date() > this.dueDate) {
+        this.status = 'overdue';
+      }
     }
   }
 

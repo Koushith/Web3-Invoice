@@ -190,7 +190,14 @@ export const InvoicesPage = () => {
                       <tr
                         key={invoice._id || invoice.id}
                         className="hover:bg-gray-50 transition-colors cursor-pointer"
-                        onClick={() => navigate(`/invoices/${invoice._id || invoice.id}`)}
+                        onClick={() => {
+                          const invoiceId = invoice._id || invoice.id;
+                          if (invoice.status === 'draft') {
+                            navigate(`/invoices/${invoiceId}/edit`);
+                          } else {
+                            navigate(`/invoices/${invoiceId}`);
+                          }
+                        }}
                       >
                         <td className="px-3 py-4">
                           <div className="text-sm font-medium text-[#635bff] hover:text-[#0a2540]">
@@ -260,7 +267,14 @@ export const InvoicesPage = () => {
               {invoices.map((invoice: any) => (
                 <div
                   key={invoice._id || invoice.id}
-                  onClick={() => navigate(`/invoices/${invoice._id || invoice.id}`)}
+                  onClick={() => {
+                    const invoiceId = invoice._id || invoice.id;
+                    if (invoice.status === 'draft') {
+                      navigate(`/invoices/${invoiceId}/edit`);
+                    } else {
+                      navigate(`/invoices/${invoiceId}`);
+                    }
+                  }}
                   className="bg-white border border-gray-200 rounded-lg p-4 active:scale-98 transition-transform cursor-pointer animate-slide-up"
                 >
                   {/* Header */}

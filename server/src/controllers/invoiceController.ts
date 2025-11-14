@@ -93,6 +93,8 @@ export const createInvoice = asyncHandler(async (req: Request, res: Response) =>
     notes,
     terms,
     allowedPaymentMethods,
+    status,
+    templateStyle,
   } = req.body;
 
   if (!user?.organizationId) {
@@ -137,6 +139,7 @@ export const createInvoice = asyncHandler(async (req: Request, res: Response) =>
     organizationId: user.organizationId,
     customerId,
     invoiceNumber,
+    status: status || 'sent', // Use provided status or default to 'sent'
     issueDate: issueDate || new Date(),
     dueDate,
     currency: currency || organization.currency,
@@ -146,6 +149,7 @@ export const createInvoice = asyncHandler(async (req: Request, res: Response) =>
     terms,
     allowedPaymentMethods: allowedPaymentMethods || ['bank_transfer'],
     createdBy: user._id,
+    templateStyle,
     subtotal: 0, // Will be calculated by pre-save hook
     taxAmount: 0,
     total: 0,
@@ -392,14 +396,57 @@ export const sendInvoice = asyncHandler(async (req: Request, res: Response) => {
   const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
   const publicUrl = `${frontendUrl}/invoice/${invoice.publicId}`;
 
-  // In production, you would send an email here
-  // For now, we'll return the link
+  // Send email to customer
+  let emailSent = false;
+  let emailError = null;
+
+  try {
+    const { sendInvoiceEmail } = await import('../services/emailService');
+    const customer = invoice.customerId as any;
+    const organization = invoice.organizationId as any;
+
+    if (customer?.email) {
+      const dueDate = invoice.dueDate
+        ? new Date(invoice.dueDate).toLocaleDateString('en-US', {
+            month: 'short',
+            day: 'numeric',
+            year: 'numeric',
+          })
+        : undefined;
+
+      await sendInvoiceEmail({
+        to: customer.email,
+        invoiceNumber: invoice.invoiceNumber,
+        invoiceAmount: invoice.total.toFixed(2),
+        currency: invoice.currency,
+        dueDate,
+        customerName: customer.name || 'Customer',
+        customerEmail: customer.email,
+        customerCompany: customer.company,
+        companyName: organization?.name || 'Your Company',
+        companyEmail: organization?.email,
+        companyPhone: organization?.phone,
+        invoiceUrl: publicUrl,
+      });
+
+      emailSent = true;
+    } else {
+      emailError = 'Customer email not found';
+    }
+  } catch (error: any) {
+    console.error('Failed to send invoice email:', error);
+    emailError = error.message;
+  }
+
   res.json({
-    message: 'Invoice sent successfully',
+    message: emailSent
+      ? 'Invoice sent successfully via email'
+      : 'Invoice marked as sent, but email could not be delivered',
     data: {
       invoice,
       publicUrl,
-      emailSent: false, // Set to true when email service is configured
+      emailSent,
+      emailError,
     },
   });
 });

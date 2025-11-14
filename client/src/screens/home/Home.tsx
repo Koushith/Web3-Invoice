@@ -25,8 +25,8 @@ export const HomePage = () => {
   const { data: recentInvoices, isLoading: invoicesLoading } = useGetInvoicesQuery({
     page: 1,
     limit: 5,
-    sortBy: 'updatedAt',
-    sortOrder: 'desc'
+    sort: 'updatedAt',
+    order: 'desc'
   });
 
   // Calculate pie chart data from metrics
@@ -71,7 +71,7 @@ export const HomePage = () => {
   };
 
   // Get relative time
-  const getRelativeTime = (dateString: string) => {
+  const getRelativeTime = (dateString: string | Date) => {
     const date = new Date(dateString);
     const now = new Date();
     const diffInHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60));
@@ -102,7 +102,7 @@ export const HomePage = () => {
   };
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
+      <div className="min-h-screen bg-[#FEFFFE] flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-gray-600" />
       </div>
     );
@@ -111,7 +111,7 @@ export const HomePage = () => {
   const userName = profile?.displayName || profile?.email?.split('@')[0] || 'there';
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-[#FEFFFE]">
       <div className="w-full px-8 py-10">
         {/* Header with time range selector */}
         <div className="flex justify-between items-center mb-8">

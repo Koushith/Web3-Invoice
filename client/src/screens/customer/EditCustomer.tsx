@@ -4,7 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ArrowLeft, Building2, MapPin, CreditCard, Settings2, Loader2 } from 'lucide-react';
+import { ArrowLeft, Loader2 } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useGetCustomerQuery, useUpdateCustomerMutation } from '@/services/api.service';
 import { toast } from 'sonner';
@@ -135,32 +135,27 @@ export const EditCustomerScreen = () => {
   }
 
   return (
-    <div className="min-h-screen">
-      <div className="max-w-[900px] mx-auto px-8 py-12">
+    <div className="min-h-screen bg-[#FEFFFE]">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 md:px-8 py-6 md:py-8">
         {/* Header */}
-        <div className="mb-8">
+        <div className="mb-6 md:mb-8">
           <button
             onClick={() => navigate(`/customers/${id}`)}
-            className="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900 mb-4 group"
+            className="flex items-center gap-1 text-sm text-[#635BFF] hover:text-[#5045e5] mb-4 md:mb-6 font-medium active:scale-95"
           >
-            <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
+            <ArrowLeft className="w-4 h-4" />
             Back to Customer
           </button>
-          <h1 className="text-[28px] font-bold text-gray-900 tracking-tight">Edit Customer</h1>
-          <p className="text-sm text-gray-500 mt-2">Update customer profile information</p>
+          <h1 className="text-2xl md:text-3xl font-semibold text-gray-900">Edit Customer</h1>
+          <p className="text-sm md:text-base text-gray-600 mt-1">Update customer profile information</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Basic Information Card */}
-          <div className="bg-white/80 backdrop-blur-sm border border-gray-200/60 rounded-xl p-6 shadow-sm">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-50 to-indigo-50 flex items-center justify-center">
-                <Building2 className="w-5 h-5 text-blue-600" />
-              </div>
-              <div>
-                <h2 className="text-lg font-semibold text-gray-900">Basic Information</h2>
-                <p className="text-sm text-gray-500">Company details and contact information</p>
-              </div>
+          <div className="border border-gray-200 rounded-lg p-4 md:p-6">
+            <div className="mb-5">
+              <h2 className="text-base font-semibold text-gray-900">Basic Information</h2>
+              <p className="text-sm text-gray-600 mt-1">Company details and contact information</p>
             </div>
 
             <div className="grid grid-cols-2 gap-5">
@@ -236,15 +231,10 @@ export const EditCustomerScreen = () => {
           </div>
 
           {/* Billing Address Card */}
-          <div className="bg-white/80 backdrop-blur-sm border border-gray-200/60 rounded-xl p-6 shadow-sm">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-emerald-50 to-green-50 flex items-center justify-center">
-                <MapPin className="w-5 h-5 text-emerald-600" />
-              </div>
-              <div>
-                <h2 className="text-lg font-semibold text-gray-900">Billing Address</h2>
-                <p className="text-sm text-gray-500">Where invoices should be sent</p>
-              </div>
+          <div className="border border-gray-200 rounded-lg p-4 md:p-6">
+            <div className="mb-5">
+              <h2 className="text-base font-semibold text-gray-900">Billing Address</h2>
+              <p className="text-sm text-gray-600 mt-1">Where invoices should be sent</p>
             </div>
 
             <div className="grid grid-cols-2 gap-5">
@@ -321,15 +311,10 @@ export const EditCustomerScreen = () => {
           </div>
 
           {/* Payment Preferences Card */}
-          <div className="bg-white/80 backdrop-blur-sm border border-gray-200/60 rounded-xl p-6 shadow-sm">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-50 to-violet-50 flex items-center justify-center">
-                <CreditCard className="w-5 h-5 text-purple-600" />
-              </div>
-              <div>
-                <h2 className="text-lg font-semibold text-gray-900">Payment Preferences</h2>
-                <p className="text-sm text-gray-500">Configure payment settings for this customer</p>
-              </div>
+          <div className="border border-gray-200 rounded-lg p-4 md:p-6">
+            <div className="mb-5">
+              <h2 className="text-base font-semibold text-gray-900">Payment Preferences</h2>
+              <p className="text-sm text-gray-600 mt-1">Configure payment settings for this customer</p>
             </div>
 
             <div className="grid grid-cols-2 gap-5">
@@ -376,15 +361,10 @@ export const EditCustomerScreen = () => {
           </div>
 
           {/* Additional Information Card */}
-          <div className="bg-white/80 backdrop-blur-sm border border-gray-200/60 rounded-xl p-6 shadow-sm">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-orange-50 to-amber-50 flex items-center justify-center">
-                <Settings2 className="w-5 h-5 text-orange-600" />
-              </div>
-              <div>
-                <h2 className="text-lg font-semibold text-gray-900">Additional Information</h2>
-                <p className="text-sm text-gray-500">Notes and custom settings</p>
-              </div>
+          <div className="border border-gray-200 rounded-lg p-4 md:p-6">
+            <div className="mb-5">
+              <h2 className="text-base font-semibold text-gray-900">Additional Information</h2>
+              <p className="text-sm text-gray-600 mt-1">Notes and custom settings</p>
             </div>
 
             <div className="space-y-5">
@@ -405,20 +385,20 @@ export const EditCustomerScreen = () => {
           </div>
 
           {/* Action Buttons */}
-          <div className="flex items-center justify-between pt-4">
+          <div className="flex items-center justify-end gap-3 pt-4">
             <Button
               type="button"
               variant="outline"
               onClick={() => navigate(`/customers/${id}`)}
               disabled={isUpdating}
-              className="h-11 px-6 border-gray-300 hover:bg-gray-50 rounded-lg font-medium"
+              className="h-9 px-4 text-sm font-medium border-gray-300"
             >
               Cancel
             </Button>
             <Button
               type="submit"
               disabled={isUpdating}
-              className="h-11 px-8 bg-gradient-to-r from-[#635bff] to-[#5045e5] hover:from-[#5045e5] hover:to-[#3d38d1] text-white rounded-lg font-semibold shadow-lg shadow-[#635bff]/20"
+              className="h-9 px-4 text-sm font-medium bg-[#635BFF] hover:bg-[#5045e5] text-white"
             >
               {isUpdating ? (
                 <>

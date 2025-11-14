@@ -1,5 +1,5 @@
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Download, Send, MoreVertical, Copy, Edit2, User, CreditCard, FileText, Info, Link2, Check, AlertCircle } from 'lucide-react';
+import { ArrowLeft, Download, Send, MoreVertical, Copy, Edit2, User, CreditCard, Info, Link2, AlertCircle } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useState } from 'react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
@@ -7,14 +7,26 @@ import { DetailSkeleton } from '@/components/ui/skeleton';
 import { EmptyState } from '@/components/ui/empty-state';
 import { useGetInvoiceQuery, useSendInvoiceMutation } from '@/services/api.service';
 import { toast } from 'sonner';
+import { RecordPaymentDialog } from '@/components/invoice/RecordPaymentDialog';
+import { EditDetailsDialog } from '@/components/invoice/EditDetailsDialog';
+import { EditMetadataDialog } from '@/components/invoice/EditMetadataDialog';
+import { DownloadInvoiceDialog } from '@/components/invoice/DownloadInvoiceDialog';
 
 export const InvoiceDetailScreen = () => {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
-  const [linkCopied, setLinkCopied] = useState(false);
+  const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false);
+  const [isDetailsDialogOpen, setIsDetailsDialogOpen] = useState(false);
+  const [isMetadataDialogOpen, setIsMetadataDialogOpen] = useState(false);
+  const [isDownloadDialogOpen, setIsDownloadDialogOpen] = useState(false);
 
-  const { data: invoice, isLoading, error } = useGetInvoiceQuery(id!);
+  const { data: invoice, isLoading, error, refetch } = useGetInvoiceQuery(id!, {
+    refetchOnMountOrArgChange: true,
+  });
   const [sendInvoice, { isLoading: isSending }] = useSendInvoiceMutation();
+
+  // Log invoice data for debugging
+  console.log('Invoice data:', invoice);
 
   const handleSendInvoice = async () => {
     if (!id) return;
@@ -22,18 +34,32 @@ export const InvoiceDetailScreen = () => {
     try {
       const result = await sendInvoice(id).unwrap();
 
-      toast.success('Invoice sent!', {
-        description: 'The invoice link is now available.',
-      });
-
       // Auto-copy the link to clipboard
+      let linkCopied = false;
       if (result.publicUrl) {
         try {
           await navigator.clipboard.writeText(result.publicUrl);
-          toast.info('Invoice link copied to clipboard!');
+          linkCopied = true;
         } catch (err) {
           console.error('Failed to copy link:', err);
         }
+      }
+
+      // Show success message with email status and clipboard info
+      if (result.emailSent) {
+        toast.success('Invoice sent via email!', {
+          description: linkCopied
+            ? 'Email sent to customer and invoice link copied to clipboard.'
+            : 'The invoice has been emailed to the customer.',
+        });
+      } else {
+        toast.success('Invoice marked as sent!', {
+          description: result.emailError
+            ? `Email delivery failed: ${result.emailError}. ${linkCopied ? 'Invoice link copied to clipboard.' : 'The invoice link is available.'}`
+            : linkCopied
+              ? 'Invoice link copied to clipboard.'
+              : 'The invoice link is now available.',
+        });
       }
     } catch (err: any) {
       console.error('Failed to send invoice:', err);
@@ -51,12 +77,7 @@ export const InvoiceDetailScreen = () => {
 
     try {
       await navigator.clipboard.writeText(publicUrl);
-      setLinkCopied(true);
       toast.success('Invoice link copied to clipboard!');
-
-      setTimeout(() => {
-        setLinkCopied(false);
-      }, 2000);
     } catch (err) {
       console.error('Failed to copy:', err);
       toast.error('Failed to copy link');
@@ -87,23 +108,27 @@ export const InvoiceDetailScreen = () => {
     );
   }
 
-  const getStatusBadge = (status: string) => {
+  const getStatusBadge = (status: string, large = false) => {
+    const sizeClasses = large ? 'px-3 py-1.5 text-sm' : 'px-2 py-1 text-xs';
+
     switch (status) {
       case 'paid':
-        return <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-green-50 text-green-700 border border-green-200">Paid</span>;
+        return <span className={`inline-flex items-center rounded font-semibold bg-green-50 text-green-700 border border-green-200 ${sizeClasses}`}>Paid</span>;
       case 'pending':
-        return <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200">Pending</span>;
+        return <span className={`inline-flex items-center rounded font-semibold bg-blue-50 text-blue-700 border border-blue-200 ${sizeClasses}`}>Pending</span>;
       case 'overdue':
-        return <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-red-50 text-red-700 border border-red-200">Overdue</span>;
+        return <span className={`inline-flex items-center rounded font-semibold bg-red-50 text-red-700 border border-red-200 ${sizeClasses}`}>Overdue</span>;
       case 'draft':
-        return <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-gray-50 text-gray-700 border border-gray-200">Draft</span>;
+        return <span className={`inline-flex items-center rounded font-semibold bg-gray-50 text-gray-700 border border-gray-200 ${sizeClasses}`}>Draft</span>;
+      case 'sent':
+        return <span className={`inline-flex items-center rounded font-semibold bg-purple-50 text-purple-700 border border-purple-200 ${sizeClasses}`}>Sent</span>;
       default:
         return null;
     }
   };
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-[#FEFFFE]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 py-6 md:py-8">
         {/* Header */}
         <div className="mb-6 md:mb-8">
@@ -117,9 +142,9 @@ export const InvoiceDetailScreen = () => {
 
           <div className="flex flex-col sm:flex-row items-start justify-between gap-4">
             <div>
-              <div className="flex flex-wrap items-center gap-2 md:gap-3 mb-2">
+              <div className="flex flex-wrap items-center gap-3 mb-3">
                 <h1 className="text-2xl md:text-3xl font-semibold text-gray-900">{invoice.invoiceNumber}</h1>
-                {getStatusBadge(invoice.status)}
+                {getStatusBadge(invoice.status, true)}
               </div>
               <p className="text-sm md:text-base text-gray-600">
                 Billed to {invoice.customer?.name || 'Customer'} · ${invoice.total.toLocaleString()}
@@ -128,29 +153,20 @@ export const InvoiceDetailScreen = () => {
 
             <div className="flex flex-wrap items-center gap-2">
               <Button
+                onClick={() => {
+                  if (invoice.status === 'paid') {
+                    toast.error('Cannot edit a paid invoice');
+                    return;
+                  }
+                  navigate(`/invoices/${invoice.id}/edit`);
+                }}
                 variant="outline"
                 size="sm"
-                className="h-9 px-3 md:px-4 text-xs md:text-sm font-medium border-gray-300 hidden sm:flex"
-              >
-                Edit draft
-              </Button>
-              <Button
-                onClick={copyInvoiceLink}
-                variant="outline"
-                size="sm"
+                disabled={invoice.status === 'paid'}
                 className="h-9 px-3 md:px-4 text-xs md:text-sm font-medium border-gray-300"
               >
-                {linkCopied ? (
-                  <>
-                    <Check className="w-4 h-4 md:mr-1.5 text-green-600" />
-                    <span className="hidden md:inline text-green-600">Copied!</span>
-                  </>
-                ) : (
-                  <>
-                    <Link2 className="w-4 h-4 md:mr-1.5" />
-                    <span className="hidden md:inline">Copy link</span>
-                  </>
-                )}
+                <Edit2 className="w-4 h-4 md:mr-1.5" />
+                <span className="hidden md:inline">Edit invoice</span>
               </Button>
               <Button
                 onClick={handleSendInvoice}
@@ -161,13 +177,17 @@ export const InvoiceDetailScreen = () => {
                 <Send className="w-4 h-4 md:mr-1.5" />
                 <span className="hidden md:inline">{isSending ? 'Sending...' : 'Send invoice'}</span>
               </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-9 px-3 md:px-4 text-xs md:text-sm font-medium border-gray-300 hidden lg:flex"
-              >
-                Charge customer
-              </Button>
+              {invoice.status !== 'paid' && invoice.amountDue > 0 && (
+                <Button
+                  onClick={() => setIsPaymentDialogOpen(true)}
+                  variant="outline"
+                  size="sm"
+                  className="h-9 px-3 md:px-4 text-xs md:text-sm font-medium border-gray-300"
+                >
+                  <CreditCard className="w-4 h-4 md:mr-1.5" />
+                  <span className="hidden md:inline">Record Payment</span>
+                </Button>
+              )}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="outline" size="sm" className="h-9 w-9 p-0 border-gray-300 active:scale-95">
@@ -175,11 +195,15 @@ export const InvoiceDetailScreen = () => {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-48">
+                  <DropdownMenuItem onClick={copyInvoiceLink}>
+                    <Link2 className="w-4 h-4 mr-2" />
+                    Copy invoice link
+                  </DropdownMenuItem>
                   <DropdownMenuItem>
                     <Copy className="w-4 h-4 mr-2" />
                     Copy invoice ID
                   </DropdownMenuItem>
-                  <DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setIsDownloadDialogOpen(true)}>
                     <Download className="w-4 h-4 mr-2" />
                     Download PDF
                   </DropdownMenuItem>
@@ -189,17 +213,100 @@ export const InvoiceDetailScreen = () => {
           </div>
         </div>
 
+        {/* Status Banner - Always visible */}
+        <div className="mb-6">
+          {(() => {
+            console.log('Status Banner Check:', invoice.status);
+
+            switch (invoice.status?.toLowerCase()) {
+              case 'paid':
+                return (
+                  <div className="border border-green-200 bg-green-50 rounded-lg p-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center shrink-0">
+                        <svg className="w-5 h-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                      </div>
+                      <div>
+                        <h3 className="text-sm font-semibold text-green-900">Payment Received</h3>
+                        <p className="text-sm text-green-700">This invoice has been fully paid{invoice.paidDate ? ` on ${new Date(invoice.paidDate).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })}` : ''}.</p>
+                      </div>
+                    </div>
+                  </div>
+                );
+              case 'overdue':
+                return (
+                  <div className="border border-red-200 bg-red-50 rounded-lg p-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center shrink-0">
+                        <AlertCircle className="w-5 h-5 text-red-600" />
+                      </div>
+                      <div>
+                        <h3 className="text-sm font-semibold text-red-900">Payment Overdue</h3>
+                        <p className="text-sm text-red-700">
+                          {invoice.dueDate
+                            ? `This invoice was due on ${new Date(invoice.dueDate).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })}.`
+                            : 'This invoice is overdue.'
+                          } Outstanding amount: ${invoice.amountDue?.toLocaleString()}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                );
+              case 'draft':
+                return (
+                  <div className="border border-gray-200 bg-gray-50 rounded-lg p-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center shrink-0">
+                        <Edit2 className="w-5 h-5 text-gray-600" />
+                      </div>
+                      <div>
+                        <h3 className="text-sm font-semibold text-gray-900">Draft Invoice</h3>
+                        <p className="text-sm text-gray-700">This invoice is still in draft mode. Send it to the customer when ready.</p>
+                      </div>
+                    </div>
+                  </div>
+                );
+              case 'sent':
+              case 'pending':
+                return (
+                  <div className="border border-blue-200 bg-blue-50 rounded-lg p-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center shrink-0">
+                        <Send className="w-5 h-5 text-blue-600" />
+                      </div>
+                      <div>
+                        <h3 className="text-sm font-semibold text-blue-900">Invoice Sent</h3>
+                        <p className="text-sm text-blue-700">This invoice has been sent to the customer and is awaiting payment.</p>
+                      </div>
+                    </div>
+                  </div>
+                );
+              default:
+                return (
+                  <div className="border border-gray-200 bg-gray-50 rounded-lg p-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center shrink-0">
+                        <Info className="w-5 h-5 text-gray-600" />
+                      </div>
+                      <div>
+                        <h3 className="text-sm font-semibold text-gray-900">Invoice Status: {invoice.status}</h3>
+                        <p className="text-sm text-gray-700">Current status of this invoice.</p>
+                      </div>
+                    </div>
+                  </div>
+                );
+            }
+          })()}
+        </div>
+
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-6">
             {/* Recent Activity */}
             <div className="border border-gray-200 rounded-lg p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-base font-semibold text-gray-900">Recent activity</h3>
-                <Button variant="outline" size="sm" className="h-8 px-3 text-xs border-gray-300">
-                  + Add note
-                </Button>
-              </div>
+              <h3 className="text-base font-semibold text-gray-900 mb-4">Recent activity</h3>
               <div className="text-center py-12">
                 <p className="text-sm text-gray-500">No recent activity</p>
               </div>
@@ -213,7 +320,14 @@ export const InvoiceDetailScreen = () => {
                 {/* Billed to */}
                 <div>
                   <h4 className="text-xs font-semibold text-gray-700 mb-3">Billed to</h4>
-                  <button className="flex items-center gap-2 text-sm text-blue-600 hover:text-blue-700 mb-2">
+                  <button
+                    onClick={() => {
+                      if (invoice.customer?.id) {
+                        navigate(`/customers/${invoice.customer.id}`);
+                      }
+                    }}
+                    className="flex items-center gap-2 text-sm text-[#635BFF] hover:text-[#5045e5] mb-2 transition-colors active:scale-95"
+                  >
                     <User className="w-4 h-4" />
                     {invoice.customer?.name || 'Customer'}
                   </button>
@@ -229,7 +343,19 @@ export const InvoiceDetailScreen = () => {
                 {/* Billing details */}
                 <div>
                   <h4 className="text-xs font-semibold text-gray-700 mb-3">Billing details</h4>
-                  <p className="text-sm text-gray-600">{invoice.customer?.address || 'No address'}</p>
+                  <p className="text-sm text-gray-600">
+                    {invoice.customer?.address
+                      ? typeof invoice.customer.address === 'string'
+                        ? invoice.customer.address
+                        : [
+                            invoice.customer.address.street,
+                            invoice.customer.address.city,
+                            invoice.customer.address.state,
+                            invoice.customer.address.postalCode,
+                            invoice.customer.address.country
+                          ].filter(Boolean).join(', ')
+                      : 'No address'}
+                  </p>
                   {invoice.customer?.phone && <p className="text-sm text-gray-600 mt-1">{invoice.customer.phone}</p>}
                 </div>
 
@@ -321,8 +447,7 @@ export const InvoiceDetailScreen = () => {
                 <p className="text-sm text-gray-500 mb-4">No tax rate applied.</p>
                 <div className="flex items-center justify-center gap-1 text-sm text-gray-600">
                   <Info className="w-4 h-4" />
-                  <span>Calculate tax automatically on future invoices using Stripe Tax.</span>
-                  <button className="text-[#635BFF] hover:text-[#5045e5] ml-1">Start now</button>
+                  <span>Calculate tax automatically on future invoices using definvoice.</span>
                 </div>
               </div>
             </div>
@@ -334,20 +459,32 @@ export const InvoiceDetailScreen = () => {
             <div className="border border-gray-200 rounded-lg p-5">
               <div className="flex items-center justify-between mb-5">
                 <h3 className="text-base font-semibold text-gray-900">Details</h3>
-                <Button variant="ghost" size="sm" className="h-6 w-6 p-0 hover:bg-gray-100">
-                  <Edit2 className="w-3.5 h-3.5 text-gray-600" />
-                </Button>
+                {invoice.status !== 'paid' && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 w-6 p-0 hover:bg-gray-100"
+                    onClick={() => setIsDetailsDialogOpen(true)}
+                  >
+                    <Edit2 className="w-3.5 h-3.5 text-gray-600" />
+                  </Button>
+                )}
               </div>
 
               <div className="space-y-5">
                 <div>
+                  <p className="text-xs text-gray-500 mb-2">Status</p>
+                  {getStatusBadge(invoice.status)}
+                </div>
+
+                <div>
                   <p className="text-xs text-gray-500 mb-2">ID</p>
                   <div className="flex items-center gap-2">
-                    <code className="text-xs font-mono text-gray-900">{invoice.id}</code>
+                    <code className="text-xs font-mono text-gray-900 break-all">{invoice.id}</code>
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="h-5 w-5 p-0 hover:bg-gray-100"
+                      className="h-5 w-5 p-0 hover:bg-gray-100 shrink-0"
                       onClick={() => {
                         navigator.clipboard.writeText(invoice.id);
                         toast.success('Invoice ID copied to clipboard');
@@ -393,6 +530,13 @@ export const InvoiceDetailScreen = () => {
                     })}
                   </p>
                 </div>
+
+                {invoice.templateStyle && (
+                  <div>
+                    <p className="text-xs text-gray-500 mb-2">Template Style</p>
+                    <p className="text-sm text-gray-900 capitalize">{invoice.templateStyle}</p>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -400,15 +544,92 @@ export const InvoiceDetailScreen = () => {
             <div className="border border-gray-200 rounded-lg p-5">
               <div className="flex items-center justify-between mb-5">
                 <h3 className="text-base font-semibold text-gray-900">Metadata</h3>
-                <Button variant="ghost" size="sm" className="h-6 w-6 p-0 hover:bg-gray-100">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-6 w-6 p-0 hover:bg-gray-100"
+                  onClick={() => {
+                    if (invoice.status === 'paid') {
+                      toast.error('Cannot edit metadata for paid invoices');
+                      return;
+                    }
+                    setIsMetadataDialogOpen(true);
+                  }}
+                  disabled={invoice.status === 'paid'}
+                >
                   <Edit2 className="w-3.5 h-3.5 text-gray-600" />
                 </Button>
               </div>
-              <p className="text-sm text-gray-500">No metadata</p>
+              {(() => {
+                console.log('Metadata check:', {
+                  metadata: invoice.metadata,
+                  hasMetadata: invoice.metadata && typeof invoice.metadata === 'object',
+                  keys: invoice.metadata ? Object.keys(invoice.metadata) : [],
+                  length: invoice.metadata ? Object.keys(invoice.metadata).length : 0
+                });
+
+                if (invoice.metadata && typeof invoice.metadata === 'object' && Object.keys(invoice.metadata).length > 0) {
+                  return (
+                    <div className="space-y-3">
+                      {Object.entries(invoice.metadata).map(([key, value]) => (
+                        <div key={key} className="bg-gray-50 rounded-md p-3">
+                          <p className="text-xs font-semibold text-gray-500 mb-1 uppercase">{key}</p>
+                          <p className="text-sm text-gray-900 break-all">{String(value)}</p>
+                        </div>
+                      ))}
+                    </div>
+                  );
+                }
+                return <p className="text-sm text-gray-500">No metadata</p>;
+              })()}
             </div>
           </div>
         </div>
       </div>
+
+      {/* Record Payment Dialog */}
+      <RecordPaymentDialog
+        open={isPaymentDialogOpen}
+        onClose={() => setIsPaymentDialogOpen(false)}
+        invoiceId={invoice.id}
+        invoiceTotal={invoice.total}
+        amountDue={invoice.amountDue}
+        currency={invoice.currency}
+        onSuccess={() => {
+          refetch();
+          setIsPaymentDialogOpen(false);
+        }}
+      />
+
+      {/* Edit Details Dialog */}
+      <EditDetailsDialog
+        open={isDetailsDialogOpen}
+        onClose={() => setIsDetailsDialogOpen(false)}
+        invoiceId={invoice.id}
+        currentDueDate={invoice.dueDate}
+        onSuccess={() => {
+          refetch();
+        }}
+      />
+
+      {/* Edit Metadata Dialog */}
+      <EditMetadataDialog
+        open={isMetadataDialogOpen}
+        onClose={() => setIsMetadataDialogOpen(false)}
+        invoiceId={invoice.id}
+        currentMetadata={invoice.metadata}
+        onSuccess={() => {
+          refetch();
+        }}
+      />
+
+      {/* Download Invoice Dialog */}
+      <DownloadInvoiceDialog
+        open={isDownloadDialogOpen}
+        onClose={() => setIsDownloadDialogOpen(false)}
+        invoice={invoice}
+        logo={invoice.organization?.logo}
+      />
     </div>
   );
 };

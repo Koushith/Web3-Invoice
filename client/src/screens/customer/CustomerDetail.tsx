@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Edit, Trash2, Plus, ExternalLink, AlertCircle } from 'lucide-react';
+import { ArrowLeft, Edit, Trash2, Plus, ExternalLink, AlertCircle, Loader2 } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { DetailSkeleton } from '@/components/ui/skeleton';
 import { EmptyState } from '@/components/ui/empty-state';
@@ -113,86 +113,85 @@ export const CustomerDetailScreen = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="border-b border-gray-200">
-        <div className="max-w-[1400px] mx-auto px-6 sm:px-8 lg:px-12">
-          {/* Header */}
-          <div className="py-8">
-            <button
-              onClick={() => navigate('/customers')}
-              className="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900 mb-6 group"
-            >
-              <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
-              Customers
-            </button>
+    <div className="min-h-screen bg-[#FEFFFE]">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 py-6 md:py-8">
+        {/* Header */}
+        <div className="mb-6 md:mb-8">
+          <button
+            onClick={() => navigate('/customers')}
+            className="flex items-center gap-1 text-sm text-[#635BFF] hover:text-[#5045e5] mb-4 md:mb-6 font-medium active:scale-95"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Customers
+          </button>
 
-            <div className="flex items-start justify-between">
-              <div className="flex-1">
-                <h1 className="text-2xl font-semibold text-gray-900">{customer.name}</h1>
-                <p className="text-sm text-gray-500 mt-1">
-                  {customer.email}
-                </p>
+          <div className="flex flex-col sm:flex-row items-start justify-between gap-4">
+            <div>
+              <div className="flex items-center gap-3 mb-2">
+                <h1 className="text-2xl md:text-3xl font-semibold text-gray-900">{customer.name}</h1>
               </div>
+              <p className="text-sm md:text-base text-gray-600">
+                {customer.email}
+              </p>
+            </div>
 
-              <div className="flex items-center gap-3">
-                <Button
-                  variant="outline"
-                  onClick={() => navigate(`/customers/${id}/edit`)}
-                  className="h-9 px-4 text-sm font-medium border-gray-300 rounded-md hover:bg-gray-50"
-                >
-                  <Edit className="w-4 h-4 mr-1.5" />
-                  Edit
-                </Button>
-                <Button
-                  onClick={() => navigate('/invoices/new')}
-                  className="bg-[#635bff] hover:bg-[#0a2540] text-white text-sm font-medium px-4 h-9 rounded-md transition-colors"
-                >
-                  <Plus className="w-4 h-4 mr-1.5" />
-                  New invoice
-                </Button>
-              </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <Button
+                onClick={() => navigate(`/customers/${id}/edit`)}
+                variant="outline"
+                size="sm"
+                className="h-9 px-3 md:px-4 text-xs md:text-sm font-medium border-gray-300"
+              >
+                <Edit className="w-4 h-4 md:mr-1.5" />
+                <span className="hidden md:inline">Edit</span>
+              </Button>
+              <Button
+                onClick={() => navigate('/invoices/new')}
+                size="sm"
+                className="h-9 px-3 md:px-4 text-xs md:text-sm font-medium bg-[#635BFF] hover:bg-[#5045e5] text-white active:scale-95 disabled:opacity-50"
+              >
+                <Plus className="w-4 h-4 md:mr-1.5" />
+                <span className="hidden md:inline">New invoice</span>
+              </Button>
             </div>
           </div>
         </div>
-      </div>
 
-      {/* Content */}
-      <div className="max-w-[1400px] mx-auto px-6 sm:px-8 lg:px-12 py-8">
+        {/* Content */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-6">
             {/* Overview Section */}
             <div>
-              <h2 className="text-sm font-medium text-gray-900 mb-4">Overview</h2>
-              <div className="grid grid-cols-3 gap-4">
-                <div className="bg-white border border-gray-200 rounded-lg p-5">
-                  <p className="text-sm text-gray-500">Total invoiced</p>
-                  <p className="text-2xl font-semibold text-gray-900 mt-1">
-                    ${(customer.totalRevenue || 0).toLocaleString('en-US', {
+              <h2 className="text-base font-semibold text-gray-900 mb-4">Overview</h2>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="border border-gray-200 rounded-lg p-4 md:p-5">
+                  <p className="text-sm text-gray-600 mb-2">Total invoiced</p>
+                  <p className="text-2xl font-semibold text-gray-900">
+                    ${(customer.totalInvoiced || 0).toLocaleString('en-US', {
                       minimumFractionDigits: 2,
                       maximumFractionDigits: 2,
                     })}
                   </p>
                 </div>
 
-                <div className="bg-white border border-gray-200 rounded-lg p-5">
-                  <p className="text-sm text-gray-500">Outstanding balance</p>
-                  <p className="text-2xl font-semibold text-gray-900 mt-1">
-                    ${(customer.outstandingBalance || 0).toLocaleString('en-US', {
+                <div className="border border-gray-200 rounded-lg p-4 md:p-5">
+                  <p className="text-sm text-gray-600 mb-2">Total paid</p>
+                  <p className="text-2xl font-semibold text-green-600">
+                    ${(customer.totalPaid || 0).toLocaleString('en-US', {
                       minimumFractionDigits: 2,
                       maximumFractionDigits: 2,
                     })}
                   </p>
                 </div>
 
-                <div className="bg-white border border-gray-200 rounded-lg p-5">
-                  <p className="text-sm text-gray-500">Invoices</p>
-                  <p className="text-2xl font-semibold text-gray-900 mt-1">
-                    {invoicesLoading ? (
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                    ) : (
-                      invoicesData?.pagination?.total || 0
-                    )}
+                <div className="border border-gray-200 rounded-lg p-4 md:p-5">
+                  <p className="text-sm text-gray-600 mb-2">Outstanding</p>
+                  <p className="text-2xl font-semibold text-orange-600">
+                    ${((customer.totalInvoiced || 0) - (customer.totalPaid || 0)).toLocaleString('en-US', {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    })}
                   </p>
                 </div>
               </div>
@@ -201,17 +200,17 @@ export const CustomerDetailScreen = () => {
             {/* Invoices Section */}
             <div>
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-sm font-medium text-gray-900">Invoices</h2>
+                <h2 className="text-base font-semibold text-gray-900">Invoices</h2>
                 <Button
                   onClick={() => navigate('/invoices/new')}
-                  className="bg-[#635bff] hover:bg-[#0a2540] text-white text-sm font-medium px-3 h-8 rounded-md"
                   size="sm"
+                  className="h-8 px-3 text-xs font-medium bg-[#635BFF] hover:bg-[#5045e5] text-white"
                 >
                   <Plus className="w-4 h-4 mr-1.5" />
                   New
                 </Button>
               </div>
-              <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+              <div className="border border-gray-200 rounded-lg overflow-hidden">
                 {invoicesLoading ? (
                   <div className="px-6 py-12 text-center">
                     <Loader2 className="w-6 h-6 animate-spin text-gray-400 mx-auto" />
@@ -282,8 +281,8 @@ export const CustomerDetailScreen = () => {
 
             {/* Payments Section */}
             <div>
-              <h2 className="text-sm font-medium text-gray-900 mb-4">Payment History</h2>
-              <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+              <h2 className="text-base font-semibold text-gray-900 mb-4">Payment History</h2>
+              <div className="border border-gray-200 rounded-lg overflow-hidden">
                 {paymentsLoading ? (
                   <div className="px-6 py-12 text-center">
                     <Loader2 className="w-6 h-6 animate-spin text-gray-400 mx-auto" />
@@ -344,8 +343,8 @@ export const CustomerDetailScreen = () => {
           <div className="space-y-6">
             {/* Details Section */}
             <div>
-              <h2 className="text-sm font-medium text-gray-900 mb-4">Details</h2>
-              <div className="bg-white border border-gray-200 rounded-lg p-5 space-y-4">
+              <h2 className="text-base font-semibold text-gray-900 mb-4">Details</h2>
+              <div className="border border-gray-200 rounded-lg p-5 space-y-4">
                 {customer.company && (
                   <div>
                     <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">Company</p>
@@ -409,19 +408,11 @@ export const CustomerDetailScreen = () => {
 
             {/* Actions Section */}
             <div>
-              <h2 className="text-sm font-medium text-gray-900 mb-4">Actions</h2>
+              <h2 className="text-base font-semibold text-gray-900 mb-4">Actions</h2>
               <div className="space-y-2">
                 <Button
                   variant="outline"
-                  className="w-full h-9 justify-start text-sm font-medium border-gray-300 rounded-md hover:bg-gray-50"
-                  onClick={() => navigate(`/customers/${id}/edit`)}
-                >
-                  <Edit className="w-4 h-4 mr-2" />
-                  Edit customer
-                </Button>
-                <Button
-                  variant="outline"
-                  className="w-full h-9 justify-start text-sm font-medium border-red-200 text-red-600 hover:bg-red-50 rounded-md"
+                  className="w-full h-9 justify-start text-sm font-medium border-red-200 text-red-600 hover:bg-red-50"
                   onClick={handleDelete}
                   disabled={isDeleting}
                 >
