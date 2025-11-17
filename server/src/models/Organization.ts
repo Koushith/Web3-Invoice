@@ -57,7 +57,7 @@ const OrganizationSchema: Schema = new Schema(
       city: String,
       state: String,
       zipCode: String,
-      country: { type: String, required: true },
+      country: String,
     },
     taxId: {
       type: String,

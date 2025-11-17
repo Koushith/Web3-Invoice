@@ -1,4 +1,5 @@
 import { Request, Response } from 'express';
+import mongoose from 'mongoose';
 import { Invoice, Payment, Customer } from '../models';
 import { asyncHandler, AppError } from '../middleware';
 
@@ -13,26 +14,36 @@ export const getDashboardStats = asyncHandler(async (req: Request, res: Response
   }
 
   const organizationId = user.organizationId;
+  // Convert to ObjectId for aggregation queries
+  const orgObjectId = new mongoose.Types.ObjectId(organizationId);
 
-  // Get all invoices for calculations
-  const allInvoices = await Invoice.find({ organizationId });
+  // Get all active invoices (excluding drafts and cancelled)
+  const allInvoices = await Invoice.find({
+    organizationId,
+    status: { $nin: ['draft', 'cancelled'] }
+  });
 
   // Calculate total revenue (all paid invoices)
   const totalRevenue = allInvoices
     .filter(inv => inv.status === 'paid')
     .reduce((sum, inv) => sum + inv.total, 0);
 
-  // Calculate outstanding (unpaid + partial + overdue)
+  // Calculate outstanding (sent, viewed, partial, overdue - but use amountDue which is total - amountPaid)
   const outstanding = allInvoices
     .filter(inv => ['sent', 'viewed', 'partial', 'overdue'].includes(inv.status))
-    .reduce((sum, inv) => sum + inv.amountDue, 0);
+    .reduce((sum, inv) => sum + (inv.total - inv.amountPaid), 0);
 
-  // Calculate paid amount
+  // Calculate paid amount (total of all amountPaid across all invoices)
   const totalPaid = allInvoices.reduce((sum, inv) => sum + inv.amountPaid, 0);
 
-  // Get invoice counts by status
+  // Get invoice counts by status (excluding drafts and cancelled)
   const statusCounts = await Invoice.aggregate([
-    { $match: { organizationId } },
+    {
+      $match: {
+        organizationId: orgObjectId,
+        status: { $nin: ['draft', 'cancelled'] }
+      }
+    },
     {
       $group: {
         _id: '$status',
@@ -42,8 +53,11 @@ export const getDashboardStats = asyncHandler(async (req: Request, res: Response
     },
   ]);
 
-  // Get recent invoices
-  const recentInvoices = await Invoice.find({ organizationId })
+  // Get recent invoices (excluding drafts)
+  const recentInvoices = await Invoice.find({
+    organizationId,
+    status: { $nin: ['draft', 'cancelled'] }
+  })
     .populate('customerId', 'name email')
     .sort({ createdAt: -1 })
     .limit(5);
@@ -55,9 +69,10 @@ export const getDashboardStats = asyncHandler(async (req: Request, res: Response
     .sort({ createdAt: -1 })
     .limit(5);
 
-  // Calculate average invoice value
-  const averageInvoice = allInvoices.length > 0
-    ? totalRevenue / allInvoices.filter(inv => inv.status === 'paid').length
+  // Calculate average invoice value (only from paid invoices)
+  const paidInvoicesList = allInvoices.filter(inv => inv.status === 'paid');
+  const averageInvoice = paidInvoicesList.length > 0
+    ? totalRevenue / paidInvoicesList.length
     : 0;
 
   // Get overdue invoices count
@@ -68,7 +83,68 @@ export const getDashboardStats = asyncHandler(async (req: Request, res: Response
 
   // Calculate counts for different statuses
   const paidInvoices = allInvoices.filter(inv => inv.status === 'paid').length;
-  const pendingInvoices = allInvoices.filter(inv => ['sent', 'viewed', 'partial'].includes(inv.status)).length;
+  // Pending invoices are those that are sent/viewed but not yet paid or overdue
+  const pendingInvoices = allInvoices.filter(inv => ['sent', 'viewed'].includes(inv.status)).length;
+  // Partial invoices (invoices with some payment but not fully paid)
+  const partialInvoices = allInvoices.filter(inv => inv.status === 'partial').length;
+
+  // Get customer growth data (last 6 months)
+  const sixMonthsAgo = new Date();
+  sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+
+  const customerGrowth = await Customer.aggregate([
+    {
+      $match: {
+        organizationId: orgObjectId,
+        createdAt: { $gte: sixMonthsAgo },
+      },
+    },
+    {
+      $group: {
+        _id: {
+          $dateToString: { format: '%Y-%m', date: '$createdAt' },
+        },
+        count: { $sum: 1 },
+      },
+    },
+    { $sort: { _id: 1 } },
+  ]);
+
+  // Get top customers by revenue
+  const topCustomers = await Invoice.aggregate([
+    {
+      $match: {
+        organizationId: orgObjectId,
+        status: 'paid',
+      },
+    },
+    {
+      $group: {
+        _id: '$customerId',
+        totalRevenue: { $sum: '$total' },
+        invoiceCount: { $sum: 1 },
+      },
+    },
+    { $sort: { totalRevenue: -1 } },
+    { $limit: 5 },
+    {
+      $lookup: {
+        from: 'customers',
+        localField: '_id',
+        foreignField: '_id',
+        as: 'customer',
+      },
+    },
+    { $unwind: '$customer' },
+    {
+      $project: {
+        name: '$customer.name',
+        email: '$customer.email',
+        totalRevenue: 1,
+        invoiceCount: 1,
+      },
+    },
+  ]);
 
   res.json({
     data: {
@@ -76,6 +152,7 @@ export const getDashboardStats = asyncHandler(async (req: Request, res: Response
       totalInvoices: allInvoices.length,
       paidInvoices,
       pendingInvoices,
+      partialInvoices,
       overdueInvoices: overdueCount,
       averageInvoiceValue: averageInvoice || 0,
       outstandingAmount: outstanding,
@@ -84,6 +161,8 @@ export const getDashboardStats = asyncHandler(async (req: Request, res: Response
       statusBreakdown: statusCounts,
       recentInvoices,
       recentPayments,
+      customerGrowth,
+      topCustomers,
     },
   });
 });
@@ -99,6 +178,9 @@ export const getRevenueData = asyncHandler(async (req: Request, res: Response) =
     throw new AppError('Organization not found', 404, 'ORG_NOT_FOUND');
   }
 
+  const organizationId = user.organizationId;
+  const orgObjectId = new mongoose.Types.ObjectId(organizationId);
+
   // Calculate days based on period
   let daysNum = 7;
   if (period === 'month') daysNum = 30;
@@ -110,7 +192,7 @@ export const getRevenueData = asyncHandler(async (req: Request, res: Response) =
   const revenueData = await Invoice.aggregate([
     {
       $match: {
-        organizationId: user.organizationId,
+        organizationId: orgObjectId,
         status: 'paid',
         paidAt: { $gte: startDate },
       },

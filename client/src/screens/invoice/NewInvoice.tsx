@@ -188,16 +188,25 @@ export const NewInvoice = () => {
       }));
 
       // Set invoice prefix from organization settings
-      if (organization.settings?.invoicePrefix) {
-        setInvoicePrefix(organization.settings.invoicePrefix);
+      if (organization.invoicePrefix) {
+        setInvoicePrefix(organization.invoicePrefix);
+      }
+
+      // Auto-generate invoice number for new invoices only
+      if (!isEditMode && organization.invoiceNumberSequence) {
+        const nextNumber = String(organization.invoiceNumberSequence).padStart(3, '0');
+        setInvoiceData((prev) => ({
+          ...prev,
+          invoiceNumber: nextNumber,
+        }));
       }
 
       // Set default currency from organization settings
-      if (organization.settings?.defaultCurrency) {
-        setCurrency(organization.settings.defaultCurrency);
+      if (organization.currency) {
+        setCurrency(organization.currency);
       }
     }
-  }, [organization]);
+  }, [organization, isEditMode]);
 
   // Create and update invoice mutations
   const [createInvoice, { isLoading: isCreating }] = useCreateInvoiceMutation();
@@ -328,7 +337,7 @@ export const NewInvoice = () => {
 
     try {
       const imgData = await toPng(printRef.current, {
-        quality: 1.0,
+        quality: 1,
         pixelRatio: 2,
       });
 
@@ -338,10 +347,11 @@ export const NewInvoice = () => {
         format: 'a4',
       });
 
-      const imgWidth = 210;
-      const imgHeight = (printRef.current.offsetHeight * imgWidth) / printRef.current.offsetWidth;
+      const imgProps = pdf.getImageProperties(imgData);
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
 
-      pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
+      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
       pdf.save(`invoice-${invoiceData.invoiceNumber || 'draft'}.pdf`);
     } catch (error) {
       console.error('Error generating PDF:', error);
@@ -442,6 +452,8 @@ export const NewInvoice = () => {
   };
 
   const subtotal = invoiceData.items.reduce((sum, item) => sum + item.quantity * item.price, 0);
+  const taxAmount = (subtotal * taxRate) / 100;
+  const total = subtotal + taxAmount;
 
   // Show loading screen while fetching invoice in edit mode
   if (isEditMode && isLoadingInvoice) {
@@ -564,14 +576,14 @@ export const NewInvoice = () => {
                         placeholder="INV"
                         value={invoicePrefix}
                         onChange={(e) => setInvoicePrefix(e.target.value.toUpperCase())}
-                        className="h-9 w-20 text-sm"
+                        className="h-9 w-20 text-sm font-semibold text-gray-900"
                       />
                       <span className="flex items-center text-gray-300">-</span>
                       <Input
                         placeholder="001"
                         value={invoiceData.invoiceNumber}
                         onChange={(e) => setInvoiceData({ ...invoiceData, invoiceNumber: e.target.value })}
-                        className="h-9 flex-1 text-sm"
+                        className="h-9 flex-1 text-sm font-semibold text-gray-900"
                       />
                     </div>
                   </div>
@@ -896,9 +908,15 @@ export const NewInvoice = () => {
                         <span className="text-gray-600">Subtotal</span>
                         <span className="text-gray-900">${subtotal.toFixed(2)}</span>
                       </div>
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-gray-600">Total</span>
-                        <span className="text-gray-900">${subtotal.toFixed(2)}</span>
+                      {taxRate > 0 && (
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-gray-600">Tax ({taxRate}%)</span>
+                          <span className="text-gray-900">${taxAmount.toFixed(2)}</span>
+                        </div>
+                      )}
+                      <div className="flex items-center justify-between text-sm font-semibold pt-2 border-t border-gray-200">
+                        <span className="text-gray-900">Total</span>
+                        <span className="text-gray-900">${total.toFixed(2)}</span>
                       </div>
                     </div>
                   </div>
@@ -1243,8 +1261,6 @@ export const NewInvoice = () => {
                 {previewTab === 'pdf' && (
                   <div className="flex justify-center">
                     <div
-                      ref={printRef}
-                      className="bg-white invoice-preview shadow-sm"
                       style={{
                         width: '210mm',
                         minHeight: '297mm',
@@ -1253,6 +1269,11 @@ export const NewInvoice = () => {
                         transition: 'transform 0.2s ease',
                       }}
                     >
+                      <div
+                        ref={printRef}
+                        className="bg-white invoice-preview shadow-sm"
+                        style={{ width: '210mm', minHeight: '297mm' }}
+                      >
                     {invoiceStyle === 'standard' && (
                       <StandardTemplate
                         logo={logo}
@@ -1260,6 +1281,7 @@ export const NewInvoice = () => {
                           ...invoiceData,
                           invoiceNumber: `${invoicePrefix}-${invoiceData.invoiceNumber || '001'}`,
                           currency: showCustomCurrency && customCurrency ? customCurrency : currency,
+                          taxRate: taxRate,
                         }}
                         paymentDetails={paymentDetails}
                       />
@@ -1271,6 +1293,7 @@ export const NewInvoice = () => {
                           ...invoiceData,
                           invoiceNumber: `${invoicePrefix}-${invoiceData.invoiceNumber || '001'}`,
                           currency: showCustomCurrency && customCurrency ? customCurrency : currency,
+                          taxRate: taxRate,
                         }}
                         paymentDetails={paymentDetails}
                       />
@@ -1282,6 +1305,7 @@ export const NewInvoice = () => {
                           ...invoiceData,
                           invoiceNumber: `${invoicePrefix}-${invoiceData.invoiceNumber || '001'}`,
                           currency: showCustomCurrency && customCurrency ? customCurrency : currency,
+                          taxRate: taxRate,
                         }}
                         paymentDetails={paymentDetails}
                       />
@@ -1293,6 +1317,7 @@ export const NewInvoice = () => {
                           ...invoiceData,
                           invoiceNumber: `${invoicePrefix}-${invoiceData.invoiceNumber || '001'}`,
                           currency: showCustomCurrency && customCurrency ? customCurrency : currency,
+                          taxRate: taxRate,
                         }}
                         paymentDetails={paymentDetails}
                       />
@@ -1304,6 +1329,7 @@ export const NewInvoice = () => {
                           ...invoiceData,
                           invoiceNumber: `${invoicePrefix}-${invoiceData.invoiceNumber || '001'}`,
                           currency: showCustomCurrency && customCurrency ? customCurrency : currency,
+                          taxRate: taxRate,
                         }}
                         paymentDetails={paymentDetails}
                       />
@@ -1315,6 +1341,7 @@ export const NewInvoice = () => {
                           ...invoiceData,
                           invoiceNumber: `${invoicePrefix}-${invoiceData.invoiceNumber || '001'}`,
                           currency: showCustomCurrency && customCurrency ? customCurrency : currency,
+                          taxRate: taxRate,
                         }}
                         paymentDetails={paymentDetails}
                       />
@@ -1326,6 +1353,7 @@ export const NewInvoice = () => {
                           ...invoiceData,
                           invoiceNumber: `${invoicePrefix}-${invoiceData.invoiceNumber || '001'}`,
                           currency: showCustomCurrency && customCurrency ? customCurrency : currency,
+                          taxRate: taxRate,
                         }}
                         paymentDetails={paymentDetails}
                       />
@@ -1337,6 +1365,7 @@ export const NewInvoice = () => {
                           ...invoiceData,
                           invoiceNumber: `${invoicePrefix}-${invoiceData.invoiceNumber || '001'}`,
                           currency: showCustomCurrency && customCurrency ? customCurrency : currency,
+                          taxRate: taxRate,
                         }}
                         paymentDetails={paymentDetails}
                       />
@@ -1348,6 +1377,7 @@ export const NewInvoice = () => {
                           ...invoiceData,
                           invoiceNumber: `${invoicePrefix}-${invoiceData.invoiceNumber || '001'}`,
                           currency: showCustomCurrency && customCurrency ? customCurrency : currency,
+                          taxRate: taxRate,
                         }}
                         paymentDetails={paymentDetails}
                       />
@@ -1359,6 +1389,7 @@ export const NewInvoice = () => {
                           ...invoiceData,
                           invoiceNumber: `${invoicePrefix}-${invoiceData.invoiceNumber || '001'}`,
                           currency: showCustomCurrency && customCurrency ? customCurrency : currency,
+                          taxRate: taxRate,
                         }}
                         paymentDetails={paymentDetails}
                       />
@@ -1370,6 +1401,7 @@ export const NewInvoice = () => {
                           ...invoiceData,
                           invoiceNumber: `${invoicePrefix}-${invoiceData.invoiceNumber || '001'}`,
                           currency: showCustomCurrency && customCurrency ? customCurrency : currency,
+                          taxRate: taxRate,
                         }}
                         paymentDetails={paymentDetails}
                       />
@@ -1381,10 +1413,12 @@ export const NewInvoice = () => {
                           ...invoiceData,
                           invoiceNumber: `${invoicePrefix}-${invoiceData.invoiceNumber || '001'}`,
                           currency: showCustomCurrency && customCurrency ? customCurrency : currency,
+                          taxRate: taxRate,
                         }}
                         paymentDetails={paymentDetails}
                       />
                     )}
+                      </div>
                     </div>
                   </div>
                 )}

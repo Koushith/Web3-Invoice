@@ -35,6 +35,7 @@ export const getCustomers = asyncHandler(async (req: Request, res: Response) => 
     .limit(Number(limit));
 
   const total = await Customer.countDocuments(query);
+  const totalPages = Math.ceil(total / Number(limit));
 
   res.json({
     data: customers,
@@ -42,7 +43,9 @@ export const getCustomers = asyncHandler(async (req: Request, res: Response) => 
       total,
       page: Number(page),
       limit: Number(limit),
-      pages: Math.ceil(total / Number(limit)),
+      totalPages,
+      hasNext: Number(page) < totalPages,
+      hasPrev: Number(page) > 1,
     },
   });
 });

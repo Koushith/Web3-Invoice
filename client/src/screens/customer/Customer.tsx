@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Plus, Search, MoreVertical, Filter, Users } from 'lucide-react';
+import { Plus, Search, MoreVertical, Filter, Users, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { TableSkeleton, CardSkeleton } from '@/components/ui/skeleton';
@@ -11,6 +11,7 @@ import { auth } from '@/lib/firebase';
 
 export const CustomersScreen = () => {
   const [searchQuery, setSearchQuery] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
   const [isAuthReady, setIsAuthReady] = useState(false);
   const navigate = useNavigate();
 
@@ -24,12 +25,17 @@ export const CustomersScreen = () => {
     return () => unsubscribe();
   }, []);
 
+  // Reset page when search changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery]);
+
   // Fetch customers from API only when auth is ready
   const { data, isLoading, error } = useGetCustomersQuery(
     {
       search: searchQuery,
-      page: 1,
-      limit: 100,
+      page: currentPage,
+      limit: 15,
     },
     {
       skip: !isAuthReady,
@@ -37,6 +43,7 @@ export const CustomersScreen = () => {
   );
 
   const customers = data?.data || [];
+  const pagination = data?.pagination;
 
   return (
     <div className="min-h-screen bg-[#FEFFFE]">
@@ -214,10 +221,67 @@ export const CustomersScreen = () => {
                 </table>
               </div>
 
-              {/* Results count */}
-              <div className="mt-6 pb-8 text-sm text-gray-500">
-                Showing {customers.length} {customers.length === 1 ? 'result' : 'results'}
-              </div>
+              {/* Pagination */}
+              {pagination && pagination.totalPages > 1 && (
+                <div className="mt-6 pb-8 flex items-center justify-between">
+                  <div className="text-sm text-gray-500">
+                    Showing {((pagination.page - 1) * pagination.limit) + 1} to{' '}
+                    {Math.min(pagination.page * pagination.limit, pagination.total)} of {pagination.total} customers
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCurrentPage(currentPage - 1)}
+                      disabled={!pagination.hasPrev}
+                      className="h-8 px-3"
+                    >
+                      <ChevronLeft className="w-4 h-4 mr-1" />
+                      Previous
+                    </Button>
+                    <div className="flex items-center gap-1">
+                      {Array.from({ length: pagination.totalPages }, (_, i) => i + 1)
+                        .filter((page) => {
+                          return (
+                            page === 1 ||
+                            page === pagination.totalPages ||
+                            (page >= currentPage - 1 && page <= currentPage + 1)
+                          );
+                        })
+                        .map((page, index, array) => {
+                          const prevPage = array[index - 1];
+                          const showEllipsis = prevPage && page - prevPage > 1;
+
+                          return (
+                            <div key={page} className="flex items-center gap-1">
+                              {showEllipsis && <span className="px-2 text-gray-400">...</span>}
+                              <Button
+                                variant={currentPage === page ? 'default' : 'outline'}
+                                size="sm"
+                                onClick={() => setCurrentPage(page)}
+                                className={`h-8 w-8 p-0 ${
+                                  currentPage === page ? 'bg-[#635bff] hover:bg-[#0a2540]' : ''
+                                }`}
+                              >
+                                {page}
+                              </Button>
+                            </div>
+                          );
+                        })}
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCurrentPage(currentPage + 1)}
+                      disabled={!pagination.hasNext}
+                      className="h-8 px-3"
+                    >
+                      Next
+                      <ChevronRight className="w-4 h-4 ml-1" />
+                    </Button>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Mobile Card View */}
@@ -268,10 +332,38 @@ export const CustomersScreen = () => {
                 </div>
               ))}
 
-              {/* Results count */}
-              <div className="py-4 text-xs text-center text-gray-500">
-                Showing {customers.length} {customers.length === 1 ? 'result' : 'results'}
-              </div>
+              {/* Mobile Pagination */}
+              {pagination && pagination.totalPages > 1 && (
+                <div className="py-4 space-y-3">
+                  <div className="text-xs text-center text-gray-500">
+                    Showing {((pagination.page - 1) * pagination.limit) + 1} to{' '}
+                    {Math.min(pagination.page * pagination.limit, pagination.total)} of {pagination.total} customers
+                  </div>
+                  <div className="flex items-center justify-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCurrentPage(currentPage - 1)}
+                      disabled={!pagination.hasPrev}
+                      className="h-8 px-3"
+                    >
+                      <ChevronLeft className="w-4 h-4" />
+                    </Button>
+                    <span className="text-sm text-gray-600">
+                      Page {currentPage} of {pagination.totalPages}
+                    </span>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCurrentPage(currentPage + 1)}
+                      disabled={!pagination.hasNext}
+                      className="h-8 px-3"
+                    >
+                      <ChevronRight className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </div>
+              )}
             </div>
           </>
         )}

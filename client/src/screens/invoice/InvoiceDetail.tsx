@@ -45,25 +45,31 @@ export const InvoiceDetailScreen = () => {
         }
       }
 
+      // Determine if we're sending a receipt or invoice
+      const isPaid = invoice.status === 'paid';
+      const documentType = isPaid ? 'Receipt' : 'Invoice';
+      const documentTypeLower = isPaid ? 'receipt' : 'invoice';
+
       // Show success message with email status and clipboard info
       if (result.emailSent) {
-        toast.success('Invoice sent via email!', {
+        toast.success(`${documentType} sent via email!`, {
           description: linkCopied
-            ? 'Email sent to customer and invoice link copied to clipboard.'
-            : 'The invoice has been emailed to the customer.',
+            ? `Email sent to customer and ${documentTypeLower} link copied to clipboard.`
+            : `The ${documentTypeLower} has been emailed to the customer.`,
         });
       } else {
-        toast.success('Invoice marked as sent!', {
+        toast.success(`${documentType} marked as sent!`, {
           description: result.emailError
-            ? `Email delivery failed: ${result.emailError}. ${linkCopied ? 'Invoice link copied to clipboard.' : 'The invoice link is available.'}`
+            ? `Email delivery failed: ${result.emailError}. ${linkCopied ? `${documentType} link copied to clipboard.` : `The ${documentTypeLower} link is available.`}`
             : linkCopied
-              ? 'Invoice link copied to clipboard.'
-              : 'The invoice link is now available.',
+              ? `${documentType} link copied to clipboard.`
+              : `The ${documentTypeLower} link is now available.`,
         });
       }
     } catch (err: any) {
       console.error('Failed to send invoice:', err);
-      toast.error(err?.data?.message || 'Failed to send invoice');
+      const isPaid = invoice.status === 'paid';
+      toast.error(err?.data?.message || `Failed to send ${isPaid ? 'receipt' : 'invoice'}`);
     }
   };
 
@@ -175,7 +181,13 @@ export const InvoiceDetailScreen = () => {
                 className="h-9 px-3 md:px-4 text-xs md:text-sm font-medium bg-[#635BFF] hover:bg-[#5045e5] text-white active:scale-95 disabled:opacity-50"
               >
                 <Send className="w-4 h-4 md:mr-1.5" />
-                <span className="hidden md:inline">{isSending ? 'Sending...' : 'Send invoice'}</span>
+                <span className="hidden md:inline">
+                  {isSending
+                    ? 'Sending...'
+                    : invoice.status === 'paid'
+                      ? 'Send receipt'
+                      : 'Send invoice'}
+                </span>
               </Button>
               {invoice.status !== 'paid' && invoice.amountDue > 0 && (
                 <Button
@@ -198,10 +210,6 @@ export const InvoiceDetailScreen = () => {
                   <DropdownMenuItem onClick={copyInvoiceLink}>
                     <Link2 className="w-4 h-4 mr-2" />
                     Copy invoice link
-                  </DropdownMenuItem>
-                  <DropdownMenuItem>
-                    <Copy className="w-4 h-4 mr-2" />
-                    Copy invoice ID
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => setIsDownloadDialogOpen(true)}>
                     <Download className="w-4 h-4 mr-2" />
@@ -304,14 +312,6 @@ export const InvoiceDetailScreen = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-6">
-            {/* Recent Activity */}
-            <div className="border border-gray-200 rounded-lg p-6">
-              <h3 className="text-base font-semibold text-gray-900 mb-4">Recent activity</h3>
-              <div className="text-center py-12">
-                <p className="text-sm text-gray-500">No recent activity</p>
-              </div>
-            </div>
-
             {/* Summary */}
             <div className="border border-gray-200 rounded-lg p-4 md:p-6">
               <h3 className="text-sm md:text-base font-semibold text-gray-900 mb-4 md:mb-6">Summary</h3>
@@ -472,11 +472,6 @@ export const InvoiceDetailScreen = () => {
               </div>
 
               <div className="space-y-5">
-                <div>
-                  <p className="text-xs text-gray-500 mb-2">Status</p>
-                  {getStatusBadge(invoice.status)}
-                </div>
-
                 <div>
                   <p className="text-xs text-gray-500 mb-2">ID</p>
                   <div className="flex items-center gap-2">

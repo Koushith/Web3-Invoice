@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import { Webhook, Plus, MoreVertical, CheckCircle, XCircle, Clock, ExternalLink, ArrowLeft } from 'lucide-react';
+import { Webhook, Plus, MoreVertical, CheckCircle, XCircle, Clock, ExternalLink, ArrowLeft, Rocket } from 'lucide-react';
 
 interface WebhookEndpoint {
   id: string;
@@ -120,19 +120,38 @@ export const WebhooksScreen = () => {
           <p className="text-sm text-gray-500 mt-2">Configure webhooks to receive real-time notifications</p>
         </div>
 
-        {/* Create New Webhook Button */}
+        {/* Coming Soon Banner */}
+        <div className="bg-gradient-to-r from-[#635BFF]/10 to-[#7C75FF]/10 border border-[#635BFF]/30 rounded-xl p-6 mb-6">
+          <div className="flex items-start gap-4">
+            <div className="w-12 h-12 bg-gradient-to-br from-[#635BFF] to-[#7C75FF] rounded-xl flex items-center justify-center flex-shrink-0">
+              <Rocket className="w-6 h-6 text-white" />
+            </div>
+            <div className="flex-1">
+              <h3 className="text-base font-semibold text-gray-900 mb-2">Coming Soon!</h3>
+              <p className="text-sm text-gray-700 leading-relaxed mb-3">
+                Webhooks functionality is currently under development. This feature will allow you to receive real-time
+                notifications for invoice, payment, and customer events.
+              </p>
+              <p className="text-xs text-gray-600">
+                We're rolling out features in batches to ensure quality and stability. Stay tuned for updates!
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Create New Webhook Button - Disabled */}
         <div className="flex justify-end mb-6">
           <Button
-            onClick={() => setShowNewWebhookModal(true)}
-            className="bg-gradient-to-r from-[#635bff] to-[#5045e5] hover:from-[#5045e5] hover:to-[#3d38d1] text-white rounded-lg h-10 px-5 text-[13px] font-semibold shadow-lg shadow-[#635bff]/20"
+            disabled
+            className="bg-gradient-to-r from-[#635bff] to-[#5045e5] text-white rounded-lg h-10 px-5 text-[13px] font-semibold opacity-50 cursor-not-allowed"
           >
             <Plus className="w-4 h-4 mr-2" />
             Add Endpoint
           </Button>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Webhook Endpoints */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 opacity-50 pointer-events-none">
+          {/* Webhook Endpoints - Disabled Preview */}
           <div className="lg:col-span-2 space-y-4">
             <h2 className="text-lg font-semibold text-gray-900 mb-4">Endpoints</h2>
             {webhooks.map((webhook) => (

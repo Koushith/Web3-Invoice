@@ -37,6 +37,7 @@ interface InvoiceData {
   notes: string;
   terms: string;
   currency?: string;
+  taxRate?: number;
 }
 
 interface PaymentDetails {
@@ -63,30 +64,32 @@ interface TemplateProps {
 
 export function StandardTemplate({ logo, invoiceData, paymentDetails }: TemplateProps) {
   const currencySymbol = getCurrencySymbol(invoiceData.currency);
+  const subtotal = invoiceData.items.reduce((sum, item) => sum + item.quantity * item.price, 0);
+  const taxRate = invoiceData.taxRate || 0;
+  const taxAmount = (subtotal * taxRate) / 100;
+  const total = subtotal + taxAmount;
 
   return (
-    <div className="p-[25mm] space-y-8">
-      {/* Header Section */}
-      <div className="flex justify-between items-start">
-        <div className="space-y-4">
+    <div className="p-[25mm]">
+      {/* Clean Header */}
+      <div className="flex justify-between items-start mb-12">
+        <div>
           {logo && (
-            <div className="w-32 h-16">
+            <div className="w-32 h-16 mb-4">
               <img src={logo} alt="Company Logo" className="w-full h-full object-contain" />
             </div>
           )}
-          <div>
-            <h1 className="text-3xl font-semibold text-gray-900">INVOICE</h1>
-            <p className="text-sm text-muted-foreground mt-1">#{invoiceData.invoiceNumber}</p>
-          </div>
+          <h1 className="text-4xl font-bold text-gray-900">INVOICE</h1>
+          <p className="text-sm text-gray-600 mt-2">#{invoiceData.invoiceNumber}</p>
         </div>
 
-        <div className="text-right space-y-1">
-          <div className="space-y-1">
-            <p className="text-sm text-muted-foreground">Issue Date</p>
-            <p className="font-medium">
+        <div className="text-right">
+          <div className="mb-3">
+            <p className="text-xs text-gray-500 font-semibold mb-1">Issue Date</p>
+            <p className="text-sm text-gray-900">
               {invoiceData.date
                 ? new Date(invoiceData.date).toLocaleDateString('en-US', {
-                    month: 'long',
+                    month: 'short',
                     day: 'numeric',
                     year: 'numeric',
                   })
@@ -94,11 +97,11 @@ export function StandardTemplate({ logo, invoiceData, paymentDetails }: Template
             </p>
           </div>
           {invoiceData.dueDate && (
-            <div className="space-y-1 mt-4">
-              <p className="text-sm text-muted-foreground">Due Date</p>
-              <p className="font-medium">
+            <div>
+              <p className="text-xs text-gray-500 font-semibold mb-1">Due Date</p>
+              <p className="text-sm text-gray-900">
                 {new Date(invoiceData.dueDate).toLocaleDateString('en-US', {
-                  month: 'long',
+                  month: 'short',
                   day: 'numeric',
                   year: 'numeric',
                 })}
@@ -109,116 +112,137 @@ export function StandardTemplate({ logo, invoiceData, paymentDetails }: Template
       </div>
 
       {/* Addresses */}
-      <div className="grid grid-cols-2 gap-12">
-        <div className="space-y-3">
-          <p className="text-sm font-medium text-muted-foreground">From</p>
-          <div className="space-y-1">
-            <p className="font-semibold text-gray-900">{invoiceData.fromCompany}</p>
-            <p className="text-sm text-gray-600 whitespace-pre-line">{invoiceData.fromAddress}</p>
-          </div>
+      <div className="grid grid-cols-2 gap-12 mb-12">
+        <div>
+          <p className="text-xs text-gray-500 font-semibold mb-2">FROM</p>
+          <p className="font-semibold text-gray-900 mb-1">{invoiceData.fromCompany}</p>
+          <p className="text-sm text-gray-600 whitespace-pre-line">{invoiceData.fromAddress}</p>
         </div>
 
-        <div className="space-y-3">
-          <p className="text-sm font-medium text-muted-foreground">Bill To</p>
-          <div className="space-y-1">
-            <p className="font-semibold text-gray-900">{invoiceData.toCompany}</p>
-            <p className="text-sm text-gray-600 whitespace-pre-line">{invoiceData.toAddress}</p>
-          </div>
+        <div>
+          <p className="text-xs text-gray-500 font-semibold mb-2">BILL TO</p>
+          <p className="font-semibold text-gray-900 mb-1">{invoiceData.toCompany}</p>
+          <p className="text-sm text-gray-600 whitespace-pre-line">{invoiceData.toAddress}</p>
         </div>
       </div>
 
       {/* Items Table */}
-      <div className="mt-8">
+      <div className="mb-8">
         <table className="w-full">
           <thead>
-            <tr className="border-b border-border/50">
-              <th className="py-3 text-left text-sm font-medium text-muted-foreground">Description</th>
-              <th className="py-3 text-right text-sm font-medium text-muted-foreground w-24">Qty</th>
-              <th className="py-3 text-right text-sm font-medium text-muted-foreground w-32">Price</th>
-              <th className="py-3 text-right text-sm font-medium text-muted-foreground w-32">Amount</th>
+            <tr className="border-b-2 border-gray-900">
+              <th className="py-3 text-left text-xs font-bold text-gray-900 uppercase">Description</th>
+              <th className="py-3 text-center text-xs font-bold text-gray-900 uppercase w-20">Qty</th>
+              <th className="py-3 text-right text-xs font-bold text-gray-900 uppercase w-28">Rate</th>
+              <th className="py-3 text-right text-xs font-bold text-gray-900 uppercase w-32">Amount</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-border/50">
+          <tbody>
             {invoiceData.items.map((item, index) => (
-              <tr key={index}>
-                <td className="py-4 text-sm">{item.description}</td>
-                <td className="py-4 text-sm text-right">{item.quantity}</td>
-                <td className="py-4 text-sm text-right">
+              <tr key={index} className="border-b border-gray-200">
+                <td className="py-4 text-sm text-gray-900">{item.description}</td>
+                <td className="py-4 text-sm text-center text-gray-700">{item.quantity}</td>
+                <td className="py-4 text-sm text-right text-gray-700">
                   {currencySymbol}
                   {item.price.toFixed(2)}
                 </td>
-                <td className="py-4 text-sm text-right">
+                <td className="py-4 text-sm text-right text-gray-900">
                   {currencySymbol}
                   {(item.quantity * item.price).toFixed(2)}
                 </td>
               </tr>
             ))}
           </tbody>
-          <tfoot>
-            <tr className="border-t border-border">
-              <td colSpan={3} className="py-4 text-right font-medium">
-                Total
-              </td>
-              <td className="py-4 text-right font-semibold text-lg">
-                {currencySymbol}
-                {invoiceData.items.reduce((sum, item) => sum + item.quantity * item.price, 0).toFixed(2)}
-              </td>
-            </tr>
-          </tfoot>
         </table>
+
+        {/* Total */}
+        <div className="flex justify-end mt-4">
+          <div className="w-64">
+            <div className="space-y-2 pb-3">
+              <div className="flex justify-between items-center text-sm">
+                <span className="text-gray-700">Subtotal</span>
+                <span className="text-gray-900">
+                  {currencySymbol}
+                  {subtotal.toFixed(2)}
+                </span>
+              </div>
+              {taxRate > 0 && (
+                <div className="flex justify-between items-center text-sm">
+                  <span className="text-gray-700">Tax ({taxRate}%)</span>
+                  <span className="text-gray-900">
+                    {currencySymbol}
+                    {taxAmount.toFixed(2)}
+                  </span>
+                </div>
+              )}
+            </div>
+            <div className="border-t-2 border-gray-900 pt-3">
+              <div className="flex justify-between items-center">
+                <span className="text-sm font-bold text-gray-900">TOTAL</span>
+                <span className="text-xl font-bold text-gray-900">
+                  {currencySymbol}
+                  {total.toFixed(2)}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Payment Details */}
-      <div className="space-y-4 pt-8 border-t border-border/50">
-        <p className="text-sm font-medium text-muted-foreground">Payment Details</p>
-        {paymentDetails.method === 'bank' && paymentDetails.bankDetails && (
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-1">
-              <p className="text-sm text-muted-foreground">Bank Name</p>
-              <p className="font-medium">{paymentDetails.bankDetails.bankName}</p>
+      {paymentDetails.method === 'bank' && paymentDetails.bankDetails && (
+        <div className="mb-8 mt-12">
+          <p className="text-xs text-gray-500 font-semibold mb-3">PAYMENT INFORMATION</p>
+          <div className="grid grid-cols-2 gap-x-8 gap-y-3">
+            <div>
+              <p className="text-xs text-gray-500 mb-1">Bank Name</p>
+              <p className="text-sm text-gray-900">{paymentDetails.bankDetails.bankName}</p>
             </div>
-            <div className="space-y-1">
-              <p className="text-sm text-muted-foreground">Account Name</p>
-              <p className="font-medium">{paymentDetails.bankDetails.accountName}</p>
+            <div>
+              <p className="text-xs text-gray-500 mb-1">Account Name</p>
+              <p className="text-sm text-gray-900">{paymentDetails.bankDetails.accountName}</p>
             </div>
-            <div className="space-y-1">
-              <p className="text-sm text-muted-foreground">Account Number</p>
-              <p className="font-medium">{paymentDetails.bankDetails.accountNumber}</p>
+            <div>
+              <p className="text-xs text-gray-500 mb-1">Account Number</p>
+              <p className="text-sm text-gray-900">{paymentDetails.bankDetails.accountNumber}</p>
             </div>
             {paymentDetails.bankDetails.swiftCode && (
-              <div className="space-y-1">
-                <p className="text-sm text-muted-foreground">SWIFT/BIC</p>
-                <p className="font-medium">{paymentDetails.bankDetails.swiftCode}</p>
+              <div>
+                <p className="text-xs text-gray-500 mb-1">SWIFT/BIC</p>
+                <p className="text-sm text-gray-900">{paymentDetails.bankDetails.swiftCode}</p>
               </div>
             )}
           </div>
-        )}
-        {paymentDetails.method === 'crypto' &&
-          paymentDetails.cryptoDetails &&
-          paymentDetails.cryptoDetails.walletAddress && (
+        </div>
+      )}
+      {paymentDetails.method === 'crypto' &&
+        paymentDetails.cryptoDetails &&
+        paymentDetails.cryptoDetails.walletAddress && (
+          <div className="mb-8 mt-12">
+            <p className="text-xs text-gray-500 font-semibold mb-3">PAYMENT INFORMATION</p>
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 {paymentDetails.cryptoDetails.currency && (
-                  <div className="space-y-1">
-                    <p className="text-sm text-muted-foreground">Currency</p>
-                    <p className="font-medium">{paymentDetails.cryptoDetails.currency}</p>
+                  <div>
+                    <p className="text-xs text-gray-500 mb-1">Currency</p>
+                    <p className="text-sm text-gray-900">{paymentDetails.cryptoDetails.currency}</p>
                   </div>
                 )}
                 {paymentDetails.cryptoDetails.network && (
-                  <div className="space-y-1">
-                    <p className="text-sm text-muted-foreground">Chain</p>
-                    <p className="font-medium">{paymentDetails.cryptoDetails.network}</p>
+                  <div>
+                    <p className="text-xs text-gray-500 mb-1">Chain</p>
+                    <p className="text-sm text-gray-900">{paymentDetails.cryptoDetails.network}</p>
                   </div>
                 )}
               </div>
               <div className="flex gap-6 items-start">
-                <div className="flex-1 space-y-2">
-                  <p className="text-sm text-muted-foreground">Payment Address</p>
-                  <p className="font-medium font-mono text-sm break-all">
+                <div className="flex-1">
+                  <p className="text-xs text-gray-500 mb-2">Payment Address</p>
+                  <p className="font-mono text-xs break-all text-gray-900">
                     {paymentDetails.cryptoDetails.walletAddress}
                   </p>
                 </div>
-                <div className="bg-white p-3 rounded-lg border-2 border-gray-200 relative">
+                <div className="bg-white p-3 rounded border border-gray-300 relative">
                   <QRCode
                     value={paymentDetails.cryptoDetails.walletAddress}
                     size={120}
@@ -236,171 +260,189 @@ export function StandardTemplate({ logo, invoiceData, paymentDetails }: Template
                 </div>
               </div>
             </div>
-          )}
-        {paymentDetails.method === 'other' && paymentDetails.otherDetails && (
-          <p className="text-sm whitespace-pre-line">{paymentDetails.otherDetails}</p>
+          </div>
         )}
-      </div>
+      {paymentDetails.method === 'other' && paymentDetails.otherDetails && (
+        <div className="mb-8 mt-12">
+          <p className="text-xs text-gray-500 font-semibold mb-3">PAYMENT INFORMATION</p>
+          <p className="text-sm text-gray-700 whitespace-pre-line">{paymentDetails.otherDetails}</p>
+        </div>
+      )}
 
       {/* Notes & Terms */}
-      <div className="grid grid-cols-2 gap-12 pt-8 border-t border-border/50">
-        {invoiceData.notes && (
-          <div className="space-y-2">
-            <p className="text-sm font-medium text-muted-foreground">Notes</p>
-            <p className="text-sm text-gray-600 whitespace-pre-line">{invoiceData.notes}</p>
-          </div>
-        )}
-        {invoiceData.terms && (
-          <div className="space-y-2">
-            <p className="text-sm font-medium text-muted-foreground">Terms & Conditions</p>
-            <p className="text-sm text-gray-600 whitespace-pre-line">{invoiceData.terms}</p>
-          </div>
-        )}
-      </div>
+      {(invoiceData.notes || invoiceData.terms) && (
+        <div className="grid grid-cols-2 gap-12 mt-12 pt-8 border-t border-gray-300">
+          {invoiceData.notes && (
+            <div>
+              <p className="text-xs text-gray-500 font-semibold mb-2">NOTES</p>
+              <p className="text-sm text-gray-700 whitespace-pre-line">{invoiceData.notes}</p>
+            </div>
+          )}
+          {invoiceData.terms && (
+            <div>
+              <p className="text-xs text-gray-500 font-semibold mb-2">TERMS & CONDITIONS</p>
+              <p className="text-sm text-gray-700 whitespace-pre-line">{invoiceData.terms}</p>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
 
 export function ModernTemplate({ logo, invoiceData, paymentDetails }: TemplateProps) {
   const currencySymbol = getCurrencySymbol(invoiceData.currency);
+  const subtotal = invoiceData.items.reduce((sum, item) => sum + item.quantity * item.price, 0);
+  const taxRate = invoiceData.taxRate || 0;
+  const taxAmount = (subtotal * taxRate) / 100;
+  const total = subtotal + taxAmount;
 
   return (
-    <div className="p-[25mm] space-y-8">
-      {/* Header with gradient */}
-      <div className="bg-gradient-to-r from-[#635bff] to-[#5045e5] -mx-[25mm] -mt-[25mm] px-[25mm] pt-[25mm] pb-12 text-white">
-        <div className="flex justify-between items-start">
-          <div className="space-y-4">
-            {logo && (
-              <div className="w-32 h-16 bg-white rounded-lg p-2">
-                <img src={logo} alt="Company Logo" className="w-full h-full object-contain" />
-              </div>
-            )}
-            <div>
-              <h1 className="text-4xl font-bold">INVOICE</h1>
-              <p className="text-lg opacity-90 mt-2">#{invoiceData.invoiceNumber}</p>
+    <div className="p-[25mm]">
+      {/* Clean Header */}
+      <div className="flex justify-between items-start mb-12">
+        <div className="space-y-4">
+          {logo && (
+            <div className="w-32 h-16">
+              <img src={logo} alt="Company Logo" className="w-full h-full object-contain" />
             </div>
+          )}
+          <div>
+            <h1 className="text-5xl font-light tracking-tight text-gray-900">INVOICE</h1>
+            <p className="text-lg text-gray-500 mt-1">#{invoiceData.invoiceNumber}</p>
           </div>
+        </div>
 
-          <div className="text-right space-y-3 bg-white/10 backdrop-blur-sm rounded-xl p-4">
-            <div className="space-y-1">
-              <p className="text-sm opacity-80">Issue Date</p>
-              <p className="font-semibold">
-                {invoiceData.date
-                  ? new Date(invoiceData.date).toLocaleDateString('en-US', {
-                      month: 'short',
-                      day: 'numeric',
-                      year: 'numeric',
-                    })
-                  : 'Not specified'}
-              </p>
-            </div>
-            {invoiceData.dueDate && (
-              <div className="space-y-1 pt-2 border-t border-white/20">
-                <p className="text-sm opacity-80">Due Date</p>
-                <p className="font-semibold">
-                  {new Date(invoiceData.dueDate).toLocaleDateString('en-US', {
+        <div className="text-right space-y-3">
+          <div className="space-y-1">
+            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Issue Date</p>
+            <p className="text-sm font-medium text-gray-900">
+              {invoiceData.date
+                ? new Date(invoiceData.date).toLocaleDateString('en-US', {
                     month: 'short',
                     day: 'numeric',
                     year: 'numeric',
-                  })}
-                </p>
-              </div>
-            )}
+                  })
+                : 'Not specified'}
+            </p>
           </div>
+          {invoiceData.dueDate && (
+            <div className="space-y-1">
+              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Due Date</p>
+              <p className="text-sm font-medium text-gray-900">
+                {new Date(invoiceData.dueDate).toLocaleDateString('en-US', {
+                  month: 'short',
+                  day: 'numeric',
+                  year: 'numeric',
+                })}
+              </p>
+            </div>
+          )}
         </div>
       </div>
 
       {/* Addresses */}
-      <div className="grid grid-cols-2 gap-12">
-        <div className="space-y-3">
-          <div className="inline-block bg-gray-100 rounded-full px-3 py-1">
-            <p className="text-xs font-bold text-gray-600 uppercase tracking-wider">From</p>
-          </div>
+      <div className="grid grid-cols-2 gap-16 mb-12 pb-12 border-b border-gray-200">
+        <div className="space-y-2">
+          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">From</p>
           <div className="space-y-1">
-            <p className="font-bold text-gray-900 text-lg">{invoiceData.fromCompany}</p>
-            <p className="text-sm text-gray-600 whitespace-pre-line">{invoiceData.fromAddress}</p>
+            <p className="font-semibold text-gray-900">{invoiceData.fromCompany}</p>
+            <p className="text-sm text-gray-600 whitespace-pre-line leading-relaxed">{invoiceData.fromAddress}</p>
           </div>
         </div>
 
-        <div className="space-y-3">
-          <div className="inline-block bg-[#635bff]/10 rounded-full px-3 py-1">
-            <p className="text-xs font-bold text-[#635bff] uppercase tracking-wider">Bill To</p>
-          </div>
+        <div className="space-y-2">
+          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Bill To</p>
           <div className="space-y-1">
-            <p className="font-bold text-gray-900 text-lg">{invoiceData.toCompany}</p>
-            <p className="text-sm text-gray-600 whitespace-pre-line">{invoiceData.toAddress}</p>
+            <p className="font-semibold text-gray-900">{invoiceData.toCompany}</p>
+            <p className="text-sm text-gray-600 whitespace-pre-line leading-relaxed">{invoiceData.toAddress}</p>
           </div>
         </div>
       </div>
 
       {/* Items Table */}
-      <div className="mt-8">
+      <div className="mb-12">
         <table className="w-full">
           <thead>
-            <tr className="bg-gray-50 border-y border-gray-200">
-              <th className="py-4 px-4 text-left text-sm font-bold text-gray-700">Description</th>
-              <th className="py-4 px-4 text-right text-sm font-bold text-gray-700 w-24">Qty</th>
-              <th className="py-4 px-4 text-right text-sm font-bold text-gray-700 w-32">Price</th>
-              <th className="py-4 px-4 text-right text-sm font-bold text-gray-700 w-32">Amount</th>
+            <tr className="border-b-2 border-gray-900">
+              <th className="py-3 px-0 text-left text-xs font-semibold text-gray-900 uppercase tracking-wider">Description</th>
+              <th className="py-3 px-4 text-right text-xs font-semibold text-gray-900 uppercase tracking-wider w-20">Qty</th>
+              <th className="py-3 px-4 text-right text-xs font-semibold text-gray-900 uppercase tracking-wider w-28">Price</th>
+              <th className="py-3 px-4 text-right text-xs font-semibold text-gray-900 uppercase tracking-wider w-32">Amount</th>
             </tr>
           </thead>
           <tbody>
             {invoiceData.items.map((item, index) => (
-              <tr key={index} className="border-b border-gray-100">
-                <td className="py-4 px-4 text-sm font-medium">{item.description}</td>
-                <td className="py-4 px-4 text-sm text-right">{item.quantity}</td>
-                <td className="py-4 px-4 text-sm text-right">
-                  {currencySymbol}
-                  {item.price.toFixed(2)}
+              <tr key={index} className="border-b border-gray-200">
+                <td className="py-4 px-0 text-sm text-gray-900">{item.description}</td>
+                <td className="py-4 px-4 text-sm text-right text-gray-600">{item.quantity}</td>
+                <td className="py-4 px-4 text-sm text-right text-gray-600">
+                  {currencySymbol}{item.price.toFixed(2)}
                 </td>
-                <td className="py-4 px-4 text-sm text-right font-semibold">
-                  {currencySymbol}
-                  {(item.quantity * item.price).toFixed(2)}
+                <td className="py-4 px-4 text-sm text-right font-medium text-gray-900">
+                  {currencySymbol}{(item.quantity * item.price).toFixed(2)}
                 </td>
               </tr>
             ))}
           </tbody>
-          <tfoot>
-            <tr className="bg-gradient-to-r from-[#635bff] to-[#5045e5] text-white">
-              <td colSpan={3} className="py-4 px-4 text-right font-bold text-lg">
-                Total
-              </td>
-              <td className="py-4 px-4 text-right font-bold text-2xl">
-                {currencySymbol}
-                {invoiceData.items.reduce((sum, item) => sum + item.quantity * item.price, 0).toFixed(2)}
-              </td>
-            </tr>
-          </tfoot>
         </table>
+
+        {/* Total */}
+        <div className="flex justify-end mt-8">
+          <div className="w-80">
+            <div className="space-y-3 mb-4">
+              <div className="flex justify-between items-center text-sm">
+                <span className="text-gray-600">Subtotal</span>
+                <span className="text-gray-900">
+                  {currencySymbol}{subtotal.toFixed(2)}
+                </span>
+              </div>
+              {taxRate > 0 && (
+                <div className="flex justify-between items-center text-sm">
+                  <span className="text-gray-600">Tax ({taxRate}%)</span>
+                  <span className="text-gray-900">
+                    {currencySymbol}{taxAmount.toFixed(2)}
+                  </span>
+                </div>
+              )}
+            </div>
+            <div className="flex justify-between items-center py-4 px-6 bg-gray-900 text-white rounded-lg">
+              <span className="text-base font-semibold">Total</span>
+              <span className="text-2xl font-bold">
+                {currencySymbol}{total.toFixed(2)}
+              </span>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Payment Details */}
-      <div className="space-y-4 pt-6 border-t-2 border-gray-200">
-        <p className="text-sm font-bold text-gray-700 uppercase tracking-wider">Payment Details</p>
+      <div className="space-y-4">
+        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Payment Details</p>
         {paymentDetails.method === 'bank' && paymentDetails.bankDetails && (
-          <div className="grid grid-cols-2 gap-4 bg-gray-50 rounded-xl p-6">
+          <div className="grid grid-cols-2 gap-6">
             {paymentDetails.bankDetails.bankName && (
               <div className="space-y-1">
-                <p className="text-xs text-gray-500 font-semibold uppercase">Bank Name</p>
-                <p className="font-bold text-gray-900">{paymentDetails.bankDetails.bankName}</p>
+                <p className="text-xs text-gray-500">Bank Name</p>
+                <p className="text-sm font-medium text-gray-900">{paymentDetails.bankDetails.bankName}</p>
               </div>
             )}
             {paymentDetails.bankDetails.accountName && (
               <div className="space-y-1">
-                <p className="text-xs text-gray-500 font-semibold uppercase">Account Name</p>
-                <p className="font-bold text-gray-900">{paymentDetails.bankDetails.accountName}</p>
+                <p className="text-xs text-gray-500">Account Name</p>
+                <p className="text-sm font-medium text-gray-900">{paymentDetails.bankDetails.accountName}</p>
               </div>
             )}
             {paymentDetails.bankDetails.accountNumber && (
               <div className="space-y-1">
-                <p className="text-xs text-gray-500 font-semibold uppercase">Account Number</p>
-                <p className="font-bold text-gray-900">{paymentDetails.bankDetails.accountNumber}</p>
+                <p className="text-xs text-gray-500">Account Number</p>
+                <p className="text-sm font-medium text-gray-900">{paymentDetails.bankDetails.accountNumber}</p>
               </div>
             )}
             {paymentDetails.bankDetails.swiftCode && (
               <div className="space-y-1">
-                <p className="text-xs text-gray-500 font-semibold uppercase">SWIFT/BIC</p>
-                <p className="font-bold text-gray-900">{paymentDetails.bankDetails.swiftCode}</p>
+                <p className="text-xs text-gray-500">SWIFT/BIC</p>
+                <p className="text-sm font-medium text-gray-900">{paymentDetails.bankDetails.swiftCode}</p>
               </div>
             )}
           </div>
@@ -899,7 +941,9 @@ export function ArtisticTemplate({ logo, invoiceData, paymentDetails }: Template
 export function GradientTemplate({ logo, invoiceData, paymentDetails }: TemplateProps) {
   const currencySymbol = getCurrencySymbol(invoiceData.currency);
   const subtotal = invoiceData.items.reduce((sum, item) => sum + item.quantity * item.price, 0);
-  const total = subtotal;
+  const taxRate = invoiceData.taxRate || 0;
+  const taxAmount = (subtotal * taxRate) / 100;
+  const total = subtotal + taxAmount;
 
   return (
     <div className="bg-white p-[25mm] min-h-[297mm]">
@@ -998,6 +1042,15 @@ export function GradientTemplate({ logo, invoiceData, paymentDetails }: Template
               {subtotal.toFixed(2)}
             </span>
           </div>
+          {taxRate > 0 && (
+            <div className="flex justify-between py-2 border-b border-gray-200">
+              <span className="text-gray-600">Tax ({taxRate}%)</span>
+              <span className="text-gray-900 font-semibold">
+                {currencySymbol}
+                {taxAmount.toFixed(2)}
+              </span>
+            </div>
+          )}
           <div className="flex justify-between py-3 bg-gray-900 px-4 mt-2">
             <span className="text-white font-bold">Total Due</span>
             <span className="text-white font-bold text-xl">

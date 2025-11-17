@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Plus, Search, MoreVertical, Filter, FileText } from 'lucide-react';
+import { Plus, Search, MoreVertical, Filter, FileText, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -13,6 +13,7 @@ import { auth } from '@/lib/firebase';
 export const InvoicesPage = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [currentPage, setCurrentPage] = useState(1);
   const [isAuthReady, setIsAuthReady] = useState(false);
   const navigate = useNavigate();
 
@@ -26,13 +27,18 @@ export const InvoicesPage = () => {
     return () => unsubscribe();
   }, []);
 
+  // Reset page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, statusFilter]);
+
   // Fetch invoices
   const { data, isLoading, error } = useGetInvoicesQuery(
     {
       search: searchQuery,
       status: statusFilter === 'all' ? undefined : statusFilter,
-      page: 1,
-      limit: 100,
+      page: currentPage,
+      limit: 15,
     },
     {
       skip: !isAuthReady,
@@ -40,6 +46,7 @@ export const InvoicesPage = () => {
   );
 
   const invoices = data?.data || [];
+  const pagination = data?.pagination;
 
   const getStatusBadge = (status: string) => {
     const badges = {
@@ -256,10 +263,69 @@ export const InvoicesPage = () => {
                 </table>
               </div>
 
-              {/* Results count */}
-              <div className="mt-6 pb-8 text-sm text-gray-500">
-                Showing {invoices.length} {invoices.length === 1 ? 'result' : 'results'}
-              </div>
+              {/* Pagination */}
+              {pagination && pagination.totalPages > 1 && (
+                <div className="mt-6 pb-8 flex items-center justify-between">
+                  <div className="text-sm text-gray-500">
+                    Showing {((pagination.page - 1) * pagination.limit) + 1} to{' '}
+                    {Math.min(pagination.page * pagination.limit, pagination.total)} of {pagination.total} invoices
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCurrentPage(currentPage - 1)}
+                      disabled={!pagination.hasPrev}
+                      className="h-8 px-3"
+                    >
+                      <ChevronLeft className="w-4 h-4 mr-1" />
+                      Previous
+                    </Button>
+                    <div className="flex items-center gap-1">
+                      {Array.from({ length: pagination.totalPages }, (_, i) => i + 1)
+                        .filter((page) => {
+                          // Show first page, last page, current page, and pages around current
+                          return (
+                            page === 1 ||
+                            page === pagination.totalPages ||
+                            (page >= currentPage - 1 && page <= currentPage + 1)
+                          );
+                        })
+                        .map((page, index, array) => {
+                          // Add ellipsis if there's a gap
+                          const prevPage = array[index - 1];
+                          const showEllipsis = prevPage && page - prevPage > 1;
+
+                          return (
+                            <div key={page} className="flex items-center gap-1">
+                              {showEllipsis && <span className="px-2 text-gray-400">...</span>}
+                              <Button
+                                variant={currentPage === page ? 'default' : 'outline'}
+                                size="sm"
+                                onClick={() => setCurrentPage(page)}
+                                className={`h-8 w-8 p-0 ${
+                                  currentPage === page ? 'bg-[#635bff] hover:bg-[#0a2540]' : ''
+                                }`}
+                              >
+                                {page}
+                              </Button>
+                            </div>
+                          );
+                        })}
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCurrentPage(currentPage + 1)}
+                      disabled={!pagination.hasNext}
+                      className="h-8 px-3"
+                    >
+                      Next
+                      <ChevronRight className="w-4 h-4 ml-1" />
+                    </Button>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Mobile Card View */}
@@ -329,10 +395,38 @@ export const InvoicesPage = () => {
                 </div>
               ))}
 
-              {/* Results count */}
-              <div className="py-4 text-xs text-center text-gray-500">
-                Showing {invoices.length} {invoices.length === 1 ? 'result' : 'results'}
-              </div>
+              {/* Mobile Pagination */}
+              {pagination && pagination.totalPages > 1 && (
+                <div className="py-4 space-y-3">
+                  <div className="text-xs text-center text-gray-500">
+                    Showing {((pagination.page - 1) * pagination.limit) + 1} to{' '}
+                    {Math.min(pagination.page * pagination.limit, pagination.total)} of {pagination.total} invoices
+                  </div>
+                  <div className="flex items-center justify-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCurrentPage(currentPage - 1)}
+                      disabled={!pagination.hasPrev}
+                      className="h-8 px-3"
+                    >
+                      <ChevronLeft className="w-4 h-4" />
+                    </Button>
+                    <span className="text-sm text-gray-600">
+                      Page {currentPage} of {pagination.totalPages}
+                    </span>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCurrentPage(currentPage + 1)}
+                      disabled={!pagination.hasNext}
+                      className="h-8 px-3"
+                    >
+                      <ChevronRight className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </div>
+              )}
             </div>
           </>
         )}

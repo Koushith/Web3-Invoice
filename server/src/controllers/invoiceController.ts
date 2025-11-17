@@ -41,6 +41,7 @@ export const getInvoices = asyncHandler(async (req: Request, res: Response) => {
     .limit(Number(limit));
 
   const total = await Invoice.countDocuments(query);
+  const totalPages = Math.ceil(total / Number(limit));
 
   res.json({
     data: invoices,
@@ -48,7 +49,9 @@ export const getInvoices = asyncHandler(async (req: Request, res: Response) => {
       total,
       page: Number(page),
       limit: Number(limit),
-      pages: Math.ceil(total / Number(limit)),
+      totalPages,
+      hasNext: Number(page) < totalPages,
+      hasPrev: Number(page) > 1,
     },
   });
 });

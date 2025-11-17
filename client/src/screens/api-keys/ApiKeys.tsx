@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Key, Plus, Copy, Trash2, Eye, EyeOff, AlertCircle, ArrowLeft } from 'lucide-react';
+import { Key, Plus, Copy, Trash2, Eye, EyeOff, AlertCircle, ArrowLeft, Rocket } from 'lucide-react';
 
 interface ApiKey {
   id: string;
@@ -74,8 +74,27 @@ export const ApiKeysScreen = () => {
           <p className="text-sm text-gray-500 mt-2">Manage your API keys for programmatic access</p>
         </div>
 
+        {/* Coming Soon Banner */}
+        <div className="bg-gradient-to-r from-[#635BFF]/10 to-[#7C75FF]/10 border border-[#635BFF]/30 rounded-xl p-6 mb-6">
+          <div className="flex items-start gap-4">
+            <div className="w-12 h-12 bg-gradient-to-br from-[#635BFF] to-[#7C75FF] rounded-xl flex items-center justify-center flex-shrink-0">
+              <Rocket className="w-6 h-6 text-white" />
+            </div>
+            <div className="flex-1">
+              <h3 className="text-base font-semibold text-gray-900 mb-2">Coming Soon!</h3>
+              <p className="text-sm text-gray-700 leading-relaxed mb-3">
+                API Keys functionality is currently under development. This feature will allow you to programmatically
+                access your invoices, customers, and payments data.
+              </p>
+              <p className="text-xs text-gray-600">
+                We're rolling out features in batches to ensure quality and stability. Stay tuned for updates!
+              </p>
+            </div>
+          </div>
+        </div>
+
         {/* Warning Banner */}
-        <div className="bg-amber-50 border border-amber-200/60 rounded-xl p-4 mb-6 flex items-start gap-3">
+        <div className="bg-amber-50 border border-amber-200/60 rounded-xl p-4 mb-6 flex items-start gap-3 opacity-50">
           <AlertCircle className="w-5 h-5 text-amber-600 mt-0.5 flex-shrink-0" />
           <div>
             <h3 className="text-sm font-semibold text-amber-900">Keep your API keys secure</h3>
@@ -85,19 +104,19 @@ export const ApiKeysScreen = () => {
           </div>
         </div>
 
-        {/* Create New Key Button */}
+        {/* Create New Key Button - Disabled */}
         <div className="flex justify-end mb-6">
           <Button
-            onClick={() => setShowNewKeyModal(true)}
-            className="bg-gradient-to-r from-[#635bff] to-[#5045e5] hover:from-[#5045e5] hover:to-[#3d38d1] text-white rounded-lg h-10 px-5 text-[13px] font-semibold shadow-lg shadow-[#635bff]/20"
+            disabled
+            className="bg-gradient-to-r from-[#635bff] to-[#5045e5] text-white rounded-lg h-10 px-5 text-[13px] font-semibold opacity-50 cursor-not-allowed"
           >
             <Plus className="w-4 h-4 mr-2" />
             Create New Key
           </Button>
         </div>
 
-        {/* API Keys List */}
-        <div className="space-y-4">
+        {/* API Keys List - Disabled Preview */}
+        <div className="space-y-4 opacity-50 pointer-events-none">
           {apiKeys.map((apiKey) => (
             <div
               key={apiKey.id}

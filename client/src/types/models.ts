@@ -371,6 +371,7 @@ export interface DashboardMetrics {
   totalInvoices: number;
   paidInvoices: number;
   pendingInvoices: number;
+  partialInvoices?: number;
   pendingPayments: number;
   overdueInvoices: number;
   averageInvoiceValue: number;
@@ -381,6 +382,17 @@ export interface DashboardMetrics {
   invoiceChange?: number;
   paymentChange?: number;
   overdueChange?: number;
+  customerGrowth?: Array<{
+    _id: string;
+    count: number;
+  }>;
+  topCustomers?: Array<{
+    _id: string;
+    name: string;
+    email: string;
+    totalRevenue: number;
+    invoiceCount: number;
+  }>;
 }
 
 export interface RevenueData {

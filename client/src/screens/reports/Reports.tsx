@@ -25,22 +25,12 @@ const invoiceStatusData = [
   { name: 'Overdue', value: 10, color: '#ef4444' },
 ];
 
-const customerGrowthData = [
-  { month: 'Jan', customers: 45 },
-  { month: 'Feb', customers: 52 },
-  { month: 'Mar', customers: 61 },
-  { month: 'Apr', customers: 70 },
-  { month: 'May', customers: 78 },
-  { month: 'Jun', customers: 89 },
-];
-
-const topCustomers = [
-  { name: 'Acme Corporation', amount: 45000, invoices: 12 },
-  { name: 'Tech Solutions Inc', amount: 38000, invoices: 9 },
-  { name: 'Global Industries', amount: 32000, invoices: 8 },
-  { name: 'Innovate LLC', amount: 28000, invoices: 7 },
-  { name: 'Future Tech', amount: 22000, invoices: 6 },
-];
+// Helper function to format month
+const formatMonth = (yearMonth: string) => {
+  const [year, month] = yearMonth.split('-');
+  const date = new Date(parseInt(year), parseInt(month) - 1);
+  return date.toLocaleDateString('en-US', { month: 'short' });
+};
 
 export const ReportsScreen = () => {
   const [isAuthReady, setIsAuthReady] = useState(false);
@@ -69,6 +59,19 @@ export const ReportsScreen = () => {
   );
 
   const revenueData = revenueChartData || [];
+
+  // Process customer growth data from API
+  const customerGrowthData = metrics?.customerGrowth?.map((item: any) => ({
+    month: formatMonth(item._id),
+    customers: item.count,
+  })) || [];
+
+  // Process top customers data from API
+  const topCustomers = metrics?.topCustomers?.map((item: any) => ({
+    name: item.name,
+    amount: item.totalRevenue,
+    invoices: item.invoiceCount,
+  })) || [];
 
   return (
     <div className="min-h-screen bg-[#FEFFFE]">
@@ -278,28 +281,41 @@ export const ReportsScreen = () => {
               <h3 className="text-lg font-semibold text-gray-900">Customer Growth</h3>
               <p className="text-sm text-gray-500 mt-1">Monthly new customers</p>
             </div>
-            <div className="h-[250px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={customerGrowthData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-                  <XAxis dataKey="month" axisLine={false} tickLine={false} />
-                  <YAxis axisLine={false} tickLine={false} />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: 'white',
-                      border: '1px solid #e5e7eb',
-                      borderRadius: '8px',
-                    }}
-                  />
-                  <Line
-                    type="monotone"
-                    dataKey="customers"
-                    stroke="#635bff"
-                    strokeWidth={3}
-                    dot={{ fill: '#635bff', r: 4 }}
-                  />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
+            {metricsLoading ? (
+              <div className="h-[250px] flex items-center justify-center">
+                <div className="animate-pulse text-gray-400">Loading...</div>
+              </div>
+            ) : customerGrowthData.length === 0 ? (
+              <div className="h-[250px] flex items-center justify-center">
+                <div className="text-center">
+                  <Users className="w-12 h-12 text-gray-300 mx-auto mb-2" />
+                  <p className="text-sm text-gray-500">No customer data yet</p>
+                </div>
+              </div>
+            ) : (
+              <div className="h-[250px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={customerGrowthData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                    <XAxis dataKey="month" axisLine={false} tickLine={false} />
+                    <YAxis axisLine={false} tickLine={false} />
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: 'white',
+                        border: '1px solid #e5e7eb',
+                        borderRadius: '8px',
+                      }}
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="customers"
+                      stroke="#635bff"
+                      strokeWidth={3}
+                      dot={{ fill: '#635bff', r: 4 }}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            )}
           </div>
 
           {/* Top Customers */}
@@ -308,22 +324,47 @@ export const ReportsScreen = () => {
               <h3 className="text-lg font-semibold text-gray-900">Top Customers</h3>
               <p className="text-sm text-gray-500 mt-1">By revenue generated</p>
             </div>
-            <div className="space-y-4">
-              {topCustomers.map((customer, index) => (
-                <div key={index} className="flex items-center justify-between pb-4 border-b border-gray-100 last:border-0">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-50 to-indigo-50 flex items-center justify-center">
-                      <span className="text-sm font-semibold text-blue-600">#{index + 1}</span>
+            {metricsLoading ? (
+              <div className="space-y-4">
+                {[1, 2, 3, 4, 5].map((i) => (
+                  <div key={i} className="flex items-center justify-between pb-4 border-b border-gray-100 last:border-0">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-lg bg-gray-200 animate-pulse"></div>
+                      <div>
+                        <div className="h-4 w-24 bg-gray-200 rounded animate-pulse mb-1"></div>
+                        <div className="h-3 w-16 bg-gray-200 rounded animate-pulse"></div>
+                      </div>
                     </div>
-                    <div>
-                      <p className="text-sm font-semibold text-gray-900">{customer.name}</p>
-                      <p className="text-xs text-gray-500">{customer.invoices} invoices</p>
-                    </div>
+                    <div className="h-4 w-16 bg-gray-200 rounded animate-pulse"></div>
                   </div>
-                  <p className="text-sm font-bold text-gray-900">${customer.amount.toLocaleString()}</p>
+                ))}
+              </div>
+            ) : topCustomers.length === 0 ? (
+              <div className="h-[250px] flex items-center justify-center">
+                <div className="text-center">
+                  <Users className="w-12 h-12 text-gray-300 mx-auto mb-2" />
+                  <p className="text-sm text-gray-500">No customer data yet</p>
+                  <p className="text-xs text-gray-400 mt-1">Create invoices to see top customers</p>
                 </div>
-              ))}
-            </div>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {topCustomers.map((customer, index) => (
+                  <div key={index} className="flex items-center justify-between pb-4 border-b border-gray-100 last:border-0">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-50 to-indigo-50 flex items-center justify-center">
+                        <span className="text-sm font-semibold text-blue-600">#{index + 1}</span>
+                      </div>
+                      <div>
+                        <p className="text-sm font-semibold text-gray-900">{customer.name}</p>
+                        <p className="text-xs text-gray-500">{customer.invoices} invoices</p>
+                      </div>
+                    </div>
+                    <p className="text-sm font-bold text-gray-900">${customer.amount.toLocaleString()}</p>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </div>

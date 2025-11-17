@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus, MoreVertical, Mail, Shield, ArrowLeft } from 'lucide-react';
+import { Plus, MoreVertical, Mail, Shield, ArrowLeft, Rocket } from 'lucide-react';
 
 interface TeamMember {
   id: string;
@@ -95,8 +95,27 @@ export const TeamScreen = () => {
           <h1 className="text-xl md:text-2xl font-semibold text-gray-900">Team and security</h1>
         </div>
 
-        {/* Tabs */}
-        <div className="border-b border-gray-200 mb-4 md:mb-6 overflow-x-auto scrollbar-hide">
+        {/* Coming Soon Banner */}
+        <div className="bg-gradient-to-r from-[#635BFF]/10 to-[#7C75FF]/10 border border-[#635BFF]/30 rounded-xl p-6 mb-6">
+          <div className="flex items-start gap-4">
+            <div className="w-12 h-12 bg-gradient-to-br from-[#635BFF] to-[#7C75FF] rounded-xl flex items-center justify-center flex-shrink-0">
+              <Rocket className="w-6 h-6 text-white" />
+            </div>
+            <div className="flex-1">
+              <h3 className="text-base font-semibold text-gray-900 mb-2">Coming Soon!</h3>
+              <p className="text-sm text-gray-700 leading-relaxed mb-3">
+                Team management functionality is currently under development. This feature will allow you to invite team members,
+                manage roles and permissions, and collaborate on invoicing.
+              </p>
+              <p className="text-xs text-gray-600">
+                We're rolling out features in batches to ensure quality and stability. Stay tuned for updates!
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Tabs - Disabled */}
+        <div className="border-b border-gray-200 mb-4 md:mb-6 overflow-x-auto scrollbar-hide opacity-50 pointer-events-none">
           <div className="flex gap-4 md:gap-6 min-w-max px-1">
             <button
               onClick={() => setActiveTab('team')}
@@ -142,7 +161,7 @@ export const TeamScreen = () => {
         </div>
 
         {/* Info banner */}
-        <div className="bg-gray-50 rounded-md p-3 mb-5 flex items-center justify-between">
+        <div className="bg-gray-50 rounded-md p-3 mb-5 flex items-center justify-between opacity-50 pointer-events-none">
           <p className="text-sm text-gray-700">
             Additional team members of CryptoTally also have access to this account.
           </p>
@@ -151,8 +170,8 @@ export const TeamScreen = () => {
           </button>
         </div>
 
-        {/* Filter tabs */}
-        <div className="overflow-x-auto scrollbar-hide mb-5">
+        {/* Filter tabs - Disabled */}
+        <div className="overflow-x-auto scrollbar-hide mb-5 opacity-50 pointer-events-none">
           <div className="flex items-center gap-0 bg-white w-fit rounded-md overflow-hidden min-w-max">
             <button className="px-3 md:px-4 py-2 text-xs md:text-sm font-medium text-primary bg-blue-50 whitespace-nowrap">
               All members
@@ -173,8 +192,8 @@ export const TeamScreen = () => {
           </div>
         </div>
 
-        {/* Table header with actions */}
-        <div className="bg-white">
+        {/* Table header with actions - Disabled */}
+        <div className="bg-white opacity-50 pointer-events-none">
           <div className="px-0 py-3 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
             <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide hidden md:flex">
               <button className="flex items-center gap-1.5 text-xs text-gray-500 hover:text-gray-900 px-2.5 py-1.5 rounded-md hover:bg-gray-50">

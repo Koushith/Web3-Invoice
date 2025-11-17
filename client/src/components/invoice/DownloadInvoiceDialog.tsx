@@ -36,9 +36,9 @@ const templateNames: Record<TemplateStyle, string> = {
   modern: 'Modern',
   minimal: 'Minimal',
   artistic: 'Artistic',
-  gradient: 'Gradient',
-  glass: 'Glass',
-  elegant: 'Elegant',
+  gradient: 'Professional',
+  glass: 'Executive',
+  elegant: 'Classic',
   catty: 'Playful',
   floral: 'Dark Floral',
   panda: 'Panda',
@@ -51,6 +51,7 @@ export const DownloadInvoiceDialog = ({ open, onClose, invoice, logo }: Download
     (invoice.templateStyle as TemplateStyle) || 'standard'
   );
   const [isDownloading, setIsDownloading] = useState(false);
+  const [previewZoom, setPreviewZoom] = useState(0.4);
   const previewRef = useRef<HTMLDivElement>(null);
 
   const invoiceData = {
@@ -173,9 +174,9 @@ export const DownloadInvoiceDialog = ({ open, onClose, invoice, logo }: Download
                 <SelectItem value="modern">Modern</SelectItem>
                 <SelectItem value="minimal">Minimal</SelectItem>
                 <SelectItem value="artistic">Artistic</SelectItem>
-                <SelectItem value="gradient">Gradient</SelectItem>
-                <SelectItem value="glass">Glass</SelectItem>
-                <SelectItem value="elegant">Elegant</SelectItem>
+                <SelectItem value="gradient">Professional</SelectItem>
+                <SelectItem value="glass">Executive</SelectItem>
+                <SelectItem value="elegant">Classic</SelectItem>
                 <SelectItem value="catty">Playful</SelectItem>
                 <SelectItem value="floral">Dark Floral</SelectItem>
                 <SelectItem value="panda">Panda</SelectItem>
@@ -189,11 +190,46 @@ export const DownloadInvoiceDialog = ({ open, onClose, invoice, logo }: Download
           </div>
 
           {/* Preview */}
-          <div className="border border-gray-200 rounded-lg p-4 bg-gray-50">
-            <p className="text-sm font-medium text-gray-700 mb-3">Preview</p>
-            <div className="bg-white rounded shadow-sm overflow-hidden" style={{ transform: 'scale(0.5)', transformOrigin: 'top left', width: '200%', height: '400px' }}>
-              <div ref={previewRef}>
-                {renderTemplate()}
+          <div className="border border-gray-200 rounded-lg overflow-hidden">
+            <div className="p-4 border-b border-gray-200 bg-white flex items-center justify-between">
+              <p className="text-sm font-medium text-gray-700">Preview</p>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setPreviewZoom(Math.max(0.3, previewZoom - 0.1))}
+                  className="h-7 w-7 p-0 text-xs"
+                  disabled={previewZoom <= 0.3}
+                >
+                  <span className="text-lg">−</span>
+                </Button>
+                <span className="text-xs text-gray-600 w-12 text-center">{Math.round(previewZoom * 100)}%</span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setPreviewZoom(Math.min(1.0, previewZoom + 0.1))}
+                  className="h-7 w-7 p-0 text-xs"
+                  disabled={previewZoom >= 1.0}
+                >
+                  <span className="text-lg">+</span>
+                </Button>
+              </div>
+            </div>
+            <div className="bg-gray-50 p-4 overflow-auto" style={{ maxHeight: '500px' }}>
+              <div className="flex justify-center">
+                <div
+                  style={{
+                    width: '210mm',
+                    minHeight: '297mm',
+                    transform: `scale(${previewZoom})`,
+                    transformOrigin: 'top center',
+                    transition: 'transform 0.2s ease',
+                  }}
+                >
+                  <div ref={previewRef} className="bg-white shadow-sm">
+                    {renderTemplate()}
+                  </div>
+                </div>
               </div>
             </div>
           </div>

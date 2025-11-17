@@ -4,7 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { TableSkeleton, CardSkeleton } from '@/components/ui/skeleton';
 import { EmptyState } from '@/components/ui/empty-state';
-import { Search, Filter, MoreVertical, CreditCard } from 'lucide-react';
+import { Search, Filter, MoreVertical, CreditCard, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useGetPaymentsQuery } from '@/services/api.service';
 import { auth } from '@/lib/firebase';
 
@@ -12,6 +12,7 @@ export const PaymentsScreen = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [methodFilter, setMethodFilter] = useState('all');
+  const [currentPage, setCurrentPage] = useState(1);
   const [isAuthReady, setIsAuthReady] = useState(false);
 
   // Wait for Firebase auth to be ready
@@ -24,13 +25,18 @@ export const PaymentsScreen = () => {
     return () => unsubscribe();
   }, []);
 
+  // Reset page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, statusFilter, methodFilter]);
+
   // Fetch payments from API
   const { data, isLoading, error } = useGetPaymentsQuery(
     {
       search: searchQuery,
       status: statusFilter !== 'all' ? statusFilter : undefined,
-      page: 1,
-      limit: 100,
+      page: currentPage,
+      limit: 15,
     },
     {
       skip: !isAuthReady,
@@ -38,11 +44,10 @@ export const PaymentsScreen = () => {
   );
 
   const payments = data?.data || [];
+  const pagination = data?.pagination;
 
-  const filteredPayments = payments.filter((payment: any) => {
-    const matchesMethod = methodFilter === 'all' || payment.paymentMethod === methodFilter;
-    return matchesMethod;
-  });
+  // No client-side filtering - all filtering should be done on backend
+  const filteredPayments = payments;
 
   const getStatusBadge = (status: string) => {
     const badges = {
@@ -257,10 +262,67 @@ export const PaymentsScreen = () => {
             </table>
           </div>
 
-          {/* Results count */}
-          <div className="mt-6 pb-8 text-sm text-gray-500">
-            Showing {filteredPayments.length} {filteredPayments.length === 1 ? 'transaction' : 'transactions'}
-          </div>
+          {/* Pagination */}
+          {pagination && pagination.totalPages > 1 && (
+            <div className="mt-6 pb-8 flex items-center justify-between">
+              <div className="text-sm text-gray-500">
+                Showing {((pagination.page - 1) * pagination.limit) + 1} to{' '}
+                {Math.min(pagination.page * pagination.limit, pagination.total)} of {pagination.total} transactions
+              </div>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(currentPage - 1)}
+                  disabled={!pagination.hasPrev}
+                  className="h-8 px-3"
+                >
+                  <ChevronLeft className="w-4 h-4 mr-1" />
+                  Previous
+                </Button>
+                <div className="flex items-center gap-1">
+                  {Array.from({ length: pagination.totalPages }, (_, i) => i + 1)
+                    .filter((page) => {
+                      return (
+                        page === 1 ||
+                        page === pagination.totalPages ||
+                        (page >= currentPage - 1 && page <= currentPage + 1)
+                      );
+                    })
+                    .map((page, index, array) => {
+                      const prevPage = array[index - 1];
+                      const showEllipsis = prevPage && page - prevPage > 1;
+
+                      return (
+                        <div key={page} className="flex items-center gap-1">
+                          {showEllipsis && <span className="px-2 text-gray-400">...</span>}
+                          <Button
+                            variant={currentPage === page ? 'default' : 'outline'}
+                            size="sm"
+                            onClick={() => setCurrentPage(page)}
+                            className={`h-8 w-8 p-0 ${
+                              currentPage === page ? 'bg-[#635bff] hover:bg-[#0a2540]' : ''
+                            }`}
+                          >
+                            {page}
+                          </Button>
+                        </div>
+                      );
+                    })}
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(currentPage + 1)}
+                  disabled={!pagination.hasNext}
+                  className="h-8 px-3"
+                >
+                  Next
+                  <ChevronRight className="w-4 h-4 ml-1" />
+                </Button>
+              </div>
+            </div>
+          )}
         </div>
         )}
 
@@ -326,10 +388,38 @@ export const PaymentsScreen = () => {
               </div>
             ))}
 
-            {/* Results count */}
-            <div className="py-4 text-xs text-center text-gray-500">
-              Showing {filteredPayments.length} {filteredPayments.length === 1 ? 'transaction' : 'transactions'}
-            </div>
+            {/* Mobile Pagination */}
+            {pagination && pagination.totalPages > 1 && (
+              <div className="py-4 space-y-3">
+                <div className="text-xs text-center text-gray-500">
+                  Showing {((pagination.page - 1) * pagination.limit) + 1} to{' '}
+                  {Math.min(pagination.page * pagination.limit, pagination.total)} of {pagination.total} transactions
+                </div>
+                <div className="flex items-center justify-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(currentPage - 1)}
+                    disabled={!pagination.hasPrev}
+                    className="h-8 px-3"
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                  </Button>
+                  <span className="text-sm text-gray-600">
+                    Page {currentPage} of {pagination.totalPages}
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(currentPage + 1)}
+                    disabled={!pagination.hasNext}
+                    className="h-8 px-3"
+                  >
+                    <ChevronRight className="w-4 h-4" />
+                  </Button>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>

@@ -1,5 +1,5 @@
 import { Button } from '@/components/ui/button';
-import { LayoutDashboard, FileText, Users, Settings, LogOut, Key, Webhook, Wallet, MessageSquare } from 'lucide-react';
+import { LayoutDashboard, FileText, Users, Settings, LogOut, Key, Webhook, Wallet, MessageSquare, Info } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import { useState } from 'react';
@@ -14,6 +14,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 import { MobileBottomNav } from './MobileBottomNav';
 import { Sheet, SheetContent } from '@/components/ui/sheet';
+import { AnnouncementBanner } from './AnnouncementBanner';
 
 function Logo() {
   return (
@@ -34,6 +35,11 @@ export function AppShell() {
 
   return (
     <div className="min-h-screen bg-[#FEFFFE]">
+      {/* Announcement Banner - Desktop */}
+      <div className="hidden md:block">
+        <AnnouncementBanner />
+      </div>
+
       <div className="flex flex-col md:flex-row">
         {/* Mobile Header */}
         <header className="md:hidden fixed top-0 left-0 right-0 h-14 bg-white z-50 flex items-center justify-between px-5 shadow-sm">
@@ -73,6 +79,11 @@ export function AppShell() {
           </div>
         </header>
 
+        {/* Announcement Banner - Mobile */}
+        <div className="md:hidden fixed top-14 left-0 right-0 z-40">
+          <AnnouncementBanner />
+        </div>
+
         {/* Desktop Sidebar */}
         <div className="hidden md:block">
           <AppSidebar isMobileMenuOpen={false} />
@@ -86,7 +97,7 @@ export function AppShell() {
         </Sheet>
 
         {/* Main Content */}
-        <main className="md:ml-[280px] flex-1 min-h-screen bg-[#FEFFFE] pt-14 pb-20 md:pt-0 md:pb-0">
+        <main className="md:ml-[280px] flex-1 min-h-screen bg-[#FEFFFE] pt-[116px] pb-20 md:pt-0 md:pb-0">
           <div className="px-4 py-6 sm:px-6 sm:py-8 md:p-8 max-w-[1500px] mx-auto">
             <Outlet />
           </div>
@@ -136,6 +147,7 @@ function AppSidebar({ isMobileMenuOpen }: { isMobileMenuOpen: boolean }) {
           <div className="mt-8 mb-3 px-3">
             <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Community</div>
           </div>
+          <NavItem icon={<Info size={20} />} label="About" to="/about" />
           <NavItem icon={<MessageSquare size={20} />} label="Feedback" to="/feedback" />
 
           <div className="mt-8 mb-3 px-3">
@@ -228,6 +240,7 @@ function MobileSidebarContent({ onNavigate }: { onNavigate: () => void }) {
         <div className="mt-8 mb-3 px-3">
           <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Community</div>
         </div>
+        <NavItem icon={<Info size={20} />} label="About" to="/about" onClick={onNavigate} />
         <NavItem icon={<MessageSquare size={20} />} label="Feedback" to="/feedback" onClick={onNavigate} />
 
         <div className="mt-8 mb-3 px-3">
