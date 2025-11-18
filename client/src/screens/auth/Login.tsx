@@ -22,7 +22,7 @@ export const LoginScreen = () => {
       setLoading(true);
       await loginWithGoogle();
       toast.success('Welcome back!');
-      navigate('/');
+      navigate('/reports');
     } catch (error: any) {
       console.error('Google login error:', error);
       toast.error(error.message || 'Failed to sign in with Google.');
@@ -90,7 +90,7 @@ export const LoginScreen = () => {
       dispatch(setUser(syncResult.data));
 
       toast.success('Welcome back!');
-      navigate('/');
+      navigate('/reports');
     } catch (error: any) {
       console.error('Passkey login error:', error);
       if (error.name === 'NotAllowedError') {

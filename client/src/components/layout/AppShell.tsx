@@ -138,7 +138,7 @@ function AppSidebar({ isMobileMenuOpen }: { isMobileMenuOpen: boolean }) {
           <Logo />
         </div>
         <div className="flex flex-col gap-1 p-4 flex-1 overflow-y-auto">
-          <NavItem icon={<LayoutDashboard size={20} />} label="Home" to="/" />
+          <NavItem icon={<LayoutDashboard size={20} />} label="Home" to="/reports" />
           <NavItem icon={<FileText size={20} />} label="Invoices" to="/invoices" />
           <NavItem icon={<Users size={20} />} label="Customers" to="/customers" />
           <NavItem icon={<Building2 size={20} />} label="Business" to="/business" />
@@ -233,7 +233,7 @@ function MobileSidebarContent({ onNavigate }: { onNavigate: () => void }) {
         <Logo />
       </div>
       <div className="flex flex-col gap-1 p-4 flex-1 overflow-y-auto">
-        <NavItem icon={<LayoutDashboard size={20} />} label="Home" to="/" onClick={onNavigate} />
+        <NavItem icon={<LayoutDashboard size={20} />} label="Home" to="/reports" onClick={onNavigate} />
         <NavItem icon={<FileText size={20} />} label="Invoices" to="/invoices" onClick={onNavigate} />
         <NavItem icon={<Users size={20} />} label="Customers" to="/customers" onClick={onNavigate} />
         <NavItem icon={<Building2 size={20} />} label="Business" to="/business" onClick={onNavigate} />

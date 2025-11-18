@@ -23,6 +23,7 @@ import { BusinessScreen } from './screens/business/Business';
 import { FeedbackScreen } from './screens/feedback/Feedback';
 import { AboutScreen } from './screens/about/About';
 import { IntegrationsScreen } from './screens/integrations/Integrations';
+import { LandingPage } from './screens/landing/Landing';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
 import { Toaster } from 'sonner';
 import { CustomersScreen } from './screens/customer/Customer';
@@ -30,6 +31,12 @@ import { useAppDispatch } from '@/store/store';
 import { initializeAuth } from '@/store/slices/auth.slice';
 
 const router = createBrowserRouter([
+  // Landing page - public route at root
+  {
+    path: '/',
+    element: <LandingPage />,
+    errorElement: <ErrorScreen />,
+  },
   // Fullscreen routes (no sidebar) - must be defined first for specific path matching
   {
     path: '/invoices/new',
@@ -51,7 +58,6 @@ const router = createBrowserRouter([
   },
   // Main app routes with sidebar
   {
-    path: '/',
     element: (
       <ProtectedRoute>
         <AppShell />
@@ -60,104 +66,84 @@ const router = createBrowserRouter([
     errorElement: <ErrorScreen />,
     children: [
       {
-        path: '/',
+        path: '/reports',
         element: <ReportsScreen />,
       },
       {
         path: '/invoices',
         element: <InvoicesPage />,
-        errorElement: <ErrorScreen />,
       },
       {
         path: '/invoices/:id',
         element: <InvoiceDetailScreen />,
-        errorElement: <ErrorScreen />,
       },
       {
         path: '/customers',
         element: <CustomersScreen />,
-        errorElement: <ErrorScreen />,
       },
       {
         path: '/customers/new',
         element: <NewCustomerScreen />,
-        errorElement: <ErrorScreen />,
       },
       {
         path: '/customers/:id',
         element: <CustomerDetailScreen />,
-        errorElement: <ErrorScreen />,
       },
       {
         path: '/customers/:id/edit',
         element: <EditCustomerScreen />,
-        errorElement: <ErrorScreen />,
       },
       {
         path: '/transactions',
         element: <PaymentsScreen />,
-        errorElement: <ErrorScreen />,
       },
-
       {
         path: '/team',
         element: <TeamScreen />,
-        errorElement: <ErrorScreen />,
       },
       {
         path: '/settings',
         element: <SettingsScreen />,
-        errorElement: <ErrorScreen />,
       },
       {
         path: '/api-keys',
         element: <ApiKeysScreen />,
-        errorElement: <ErrorScreen />,
       },
       {
         path: '/webhooks',
         element: <WebhooksScreen />,
-        errorElement: <ErrorScreen />,
       },
       {
         path: '/integrations',
         element: <IntegrationsScreen />,
-        errorElement: <ErrorScreen />,
       },
       {
         path: '/profile',
         element: <ProfileScreen />,
-        errorElement: <ErrorScreen />,
       },
       {
         path: '/security',
         element: <SecurityScreen />,
-        errorElement: <ErrorScreen />,
       },
       {
         path: '/billing',
         element: <BillingScreen />,
-        errorElement: <ErrorScreen />,
       },
       {
         path: '/business',
         element: <BusinessScreen />,
-        errorElement: <ErrorScreen />,
       },
       {
         path: '/feedback',
         element: <FeedbackScreen />,
-        errorElement: <ErrorScreen />,
       },
       {
         path: '/about',
         element: <AboutScreen />,
-        errorElement: <ErrorScreen />,
       },
       {
         path: '/auth',
         element: <Auth />,
-        errorElement: <ErrorScreen />,
       },
     ],
   },
