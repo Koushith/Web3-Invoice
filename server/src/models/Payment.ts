@@ -38,7 +38,6 @@ const PaymentSchema: Schema = new Schema(
       type: Schema.Types.ObjectId,
       ref: 'Customer',
       required: true,
-      index: true,
     },
     amount: {
       type: Number,

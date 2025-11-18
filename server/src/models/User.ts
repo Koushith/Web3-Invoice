@@ -140,8 +140,7 @@ const UserSchema: Schema = new Schema(
   }
 );
 
-// Indexes
-UserSchema.index({ email: 1 });
+// Indexes (email already indexed via unique: true)
 UserSchema.index({ organizationId: 1 });
 UserSchema.index({ 'passkeys.credentialID': 1 });
 

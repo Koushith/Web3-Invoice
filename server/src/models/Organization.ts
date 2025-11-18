@@ -122,8 +122,7 @@ const OrganizationSchema: Schema = new Schema(
   }
 );
 
-// Indexes
-OrganizationSchema.index({ ownerId: 1 });
+// Indexes (ownerId already indexed via index: true)
 OrganizationSchema.index({ email: 1 });
 
 export default mongoose.model<IOrganization>('Organization', OrganizationSchema);

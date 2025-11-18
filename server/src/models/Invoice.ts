@@ -60,7 +60,6 @@ const InvoiceSchema: Schema = new Schema(
       type: Schema.Types.ObjectId,
       ref: 'Customer',
       required: true,
-      index: true,
     },
     invoiceNumber: {
       type: String,
@@ -169,11 +168,9 @@ const InvoiceSchema: Schema = new Schema(
     }],
     stripePaymentIntentId: {
       type: String,
-      sparse: true,
     },
     requestNetworkId: {
       type: String,
-      sparse: true,
     },
     sentAt: {
       type: Date,
