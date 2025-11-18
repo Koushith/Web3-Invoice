@@ -46,10 +46,11 @@ export const InvoiceDetailScreen = () => {
         }
       }
 
-      // Determine if we're sending a receipt or invoice
+      // Determine if we're sending a receipt, invoice, or reminder
       const isPaid = invoice?.status === 'paid';
-      const documentType = isPaid ? 'Receipt' : 'Invoice';
-      const documentTypeLower = isPaid ? 'receipt' : 'invoice';
+      const isDraft = invoice?.status === 'draft';
+      const documentType = isPaid ? 'Receipt' : isDraft ? 'Invoice' : 'Reminder';
+      const documentTypeLower = isPaid ? 'receipt' : isDraft ? 'invoice' : 'reminder';
 
       // Show success message with email status and clipboard info
       if (result.emailSent) {
@@ -70,7 +71,9 @@ export const InvoiceDetailScreen = () => {
     } catch (err: any) {
       console.error('Failed to send invoice:', err);
       const isPaid = invoice?.status === 'paid';
-      toast.error(err?.data?.message || `Failed to send ${isPaid ? 'receipt' : 'invoice'}`);
+      const isDraft = invoice?.status === 'draft';
+      const docType = isPaid ? 'receipt' : isDraft ? 'invoice' : 'reminder';
+      toast.error(err?.data?.message || `Failed to send ${docType}`);
     }
   };
 
@@ -207,7 +210,9 @@ export const InvoiceDetailScreen = () => {
                     ? 'Sending...'
                     : invoice.status === 'paid'
                       ? 'Send receipt'
-                      : 'Send invoice'}
+                      : invoice.status === 'draft'
+                        ? 'Send invoice'
+                        : 'Send reminder'}
                 </span>
               </Button>
               {invoice.status !== 'paid' && invoice.amountDue > 0 && (

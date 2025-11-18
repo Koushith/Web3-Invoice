@@ -1,5 +1,5 @@
 import { Button } from '@/components/ui/button';
-import { LayoutDashboard, FileText, Users, Settings, LogOut, Key, Webhook, Wallet, MessageSquare, Info, Building2 } from 'lucide-react';
+import { LayoutDashboard, FileText, Users, Settings, LogOut, Key, Webhook, Wallet, MessageSquare, Info, Building2, Plug2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import { useState } from 'react';
@@ -156,6 +156,7 @@ function AppSidebar({ isMobileMenuOpen }: { isMobileMenuOpen: boolean }) {
           </div>
           <NavItem icon={<Key size={20} />} label="API Keys" to="/api-keys" />
           <NavItem icon={<Webhook size={20} />} label="Webhooks" to="/webhooks" />
+          <NavItem icon={<Plug2 size={20} />} label="Integrations" to="/integrations" />
         </div>
 
         {/* User Profile Section with Dropdown */}
@@ -250,6 +251,7 @@ function MobileSidebarContent({ onNavigate }: { onNavigate: () => void }) {
         </div>
         <NavItem icon={<Key size={20} />} label="API Keys" to="/api-keys" onClick={onNavigate} />
         <NavItem icon={<Webhook size={20} />} label="Webhooks" to="/webhooks" onClick={onNavigate} />
+        <NavItem icon={<Plug2 size={20} />} label="Integrations" to="/integrations" onClick={onNavigate} />
       </div>
 
       {/* User Profile Section */}

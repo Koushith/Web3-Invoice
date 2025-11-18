@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Plus, Search, MoreVertical, Filter, Users, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Plus, Search, Filter, Users, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { TableSkeleton, CardSkeleton } from '@/components/ui/skeleton';
@@ -148,18 +148,11 @@ export const CustomersScreen = () => {
                         Email
                       </th>
                       <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Company
-                      </th>
-                      <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Default payment method
-                      </th>
-                      <th className="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Total invoiced
                       </th>
                       <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Created
                       </th>
-                      <th className="px-3 py-3"></th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-200">
@@ -179,41 +172,18 @@ export const CustomersScreen = () => {
                         </td>
                         <td className="px-3 py-4">
                           <div className="text-sm text-gray-900">
-                            {customer.company || '—'}
-                          </div>
-                        </td>
-                        <td className="px-3 py-4">
-                          <div className="text-sm text-gray-600">
                             {customer.preferredPaymentMethod && customer.preferredPaymentMethod !== 'none'
                               ? customer.preferredPaymentMethod
-                                  .replace(/_/g, ' ')
-                                  .replace(/\b\w/g, (l: string) => l.toUpperCase())
+                                  .split('_')
+                                  .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1))
+                                  .join(' ')
                               : '—'}
-                          </div>
-                        </td>
-                        <td className="px-3 py-4 text-right">
-                          <div className="text-sm font-medium text-gray-900">
-                            ${(customer.totalInvoiced || 0).toLocaleString('en-US', {
-                              minimumFractionDigits: 2,
-                              maximumFractionDigits: 2,
-                            })}
                           </div>
                         </td>
                         <td className="px-3 py-4">
                           <div className="text-sm text-gray-600">
                             {customer.createdAt ? format(new Date(customer.createdAt), 'MMM d, yyyy') : '—'}
                           </div>
-                        </td>
-                        <td className="px-3 py-4">
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              // Add menu logic here
-                            }}
-                            className="text-gray-400 hover:text-gray-600 p-1 rounded hover:bg-gray-100"
-                          >
-                            <MoreVertical className="w-4 h-4" />
-                          </button>
                         </td>
                       </tr>
                     ))}
@@ -306,21 +276,17 @@ export const CustomersScreen = () => {
 
                   {/* Details Grid */}
                   <div className="space-y-2">
-                    {customer.company && (
+                    {customer.preferredPaymentMethod && customer.preferredPaymentMethod !== 'none' && (
                       <div className="flex items-center justify-between">
-                        <span className="text-xs text-gray-500">Company</span>
-                        <span className="text-sm text-gray-900">{customer.company}</span>
+                        <span className="text-xs text-gray-500">Payment Method</span>
+                        <span className="text-sm text-gray-900">
+                          {customer.preferredPaymentMethod
+                            .split('_')
+                            .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1))
+                            .join(' ')}
+                        </span>
                       </div>
                     )}
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs text-gray-500">Total Invoiced</span>
-                      <span className="text-sm font-semibold text-gray-900">
-                        ${(customer.totalInvoiced || 0).toLocaleString('en-US', {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2,
-                        })}
-                      </span>
-                    </div>
                   </div>
 
                   {/* Footer */}

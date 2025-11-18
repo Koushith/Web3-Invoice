@@ -22,6 +22,7 @@ import { BillingScreen } from './screens/billing/Billing';
 import { BusinessScreen } from './screens/business/Business';
 import { FeedbackScreen } from './screens/feedback/Feedback';
 import { AboutScreen } from './screens/about/About';
+import { IntegrationsScreen } from './screens/integrations/Integrations';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
 import { Toaster } from 'sonner';
 import { CustomersScreen } from './screens/customer/Customer';
@@ -116,6 +117,11 @@ const router = createBrowserRouter([
       {
         path: '/webhooks',
         element: <WebhooksScreen />,
+        errorElement: <ErrorScreen />,
+      },
+      {
+        path: '/integrations',
+        element: <IntegrationsScreen />,
         errorElement: <ErrorScreen />,
       },
       {
