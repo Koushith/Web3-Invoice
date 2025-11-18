@@ -168,7 +168,7 @@ export const CustomerDetailScreen = () => {
                 <div className="border border-gray-200 rounded-lg p-4 md:p-5">
                   <p className="text-sm text-gray-600 mb-2">Total invoiced</p>
                   <p className="text-2xl font-semibold text-gray-900">
-                    ${(customer.totalInvoiced || 0).toLocaleString('en-US', {
+                    ${(customer.totalRevenue || 0).toLocaleString('en-US', {
                       minimumFractionDigits: 2,
                       maximumFractionDigits: 2,
                     })}
@@ -178,7 +178,7 @@ export const CustomerDetailScreen = () => {
                 <div className="border border-gray-200 rounded-lg p-4 md:p-5">
                   <p className="text-sm text-gray-600 mb-2">Total paid</p>
                   <p className="text-2xl font-semibold text-green-600">
-                    ${(customer.totalPaid || 0).toLocaleString('en-US', {
+                    ${((customer.totalRevenue || 0) - (customer.outstandingBalance || 0)).toLocaleString('en-US', {
                       minimumFractionDigits: 2,
                       maximumFractionDigits: 2,
                     })}
@@ -188,7 +188,7 @@ export const CustomerDetailScreen = () => {
                 <div className="border border-gray-200 rounded-lg p-4 md:p-5">
                   <p className="text-sm text-gray-600 mb-2">Outstanding</p>
                   <p className="text-2xl font-semibold text-orange-600">
-                    ${((customer.totalInvoiced || 0) - (customer.totalPaid || 0)).toLocaleString('en-US', {
+                    ${(customer.outstandingBalance || 0).toLocaleString('en-US', {
                       minimumFractionDigits: 2,
                       maximumFractionDigits: 2,
                     })}

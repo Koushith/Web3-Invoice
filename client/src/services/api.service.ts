@@ -240,6 +240,20 @@ export const apiService = createApi({
       ],
     }),
 
+    cancelInvoice: builder.mutation<Invoice, string>({
+      query: (id) => ({
+        url: `/invoices/${id}/status`,
+        method: 'PATCH',
+        body: { status: 'cancelled' },
+      }),
+      transformResponse: (response: ApiResponse<any>) => transformMongoDoc<Invoice>(response.data!),
+      invalidatesTags: (_result, _error, id) => [
+        { type: 'Invoice', id },
+        { type: 'Invoice', id: 'LIST' },
+        'Dashboard',
+      ],
+    }),
+
     // ==================== Customer Endpoints ====================
 
     getCustomers: builder.query<PaginatedResponse<Customer>, QueryParams>({
@@ -505,6 +519,7 @@ export const {
   useDeleteInvoiceMutation,
   useSendInvoiceMutation,
   useMarkInvoiceAsPaidMutation,
+  useCancelInvoiceMutation,
 
   // Customers
   useGetCustomersQuery,

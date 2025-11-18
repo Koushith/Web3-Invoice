@@ -162,7 +162,8 @@ export interface Organization extends BaseEntity, SoftDeletable {
   email?: string;
   phone?: string;
   website?: string;
-  logo?: string;
+  logo?: string; // Full logo (can be rectangular)
+  icon?: string; // Square icon (1:1 aspect ratio)
   address?: Address;
   taxId?: string;
   settings?: OrganizationSettings;
@@ -249,7 +250,7 @@ export interface Invoice extends BaseEntity, SoftDeletable {
   requestNetworkId?: string;
   publicId?: string;
   metadata?: Record<string, any>;
-  templateStyle?: 'standard' | 'modern' | 'minimal' | 'artistic' | 'gradient' | 'glass' | 'elegant' | 'catty' | 'floral' | 'panda' | 'pinkminimal' | 'compactpanda';
+  templateStyle?: 'standard' | 'modern' | 'minimal' | 'artistic' | 'gradient' | 'glass' | 'elegant' | 'catty' | 'floral' | 'floraldark' | 'panda' | 'pinkminimal' | 'compactpanda';
 }
 
 export interface InvoiceItem {

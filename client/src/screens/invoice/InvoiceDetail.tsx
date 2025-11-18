@@ -1,11 +1,11 @@
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Download, Send, MoreVertical, Copy, Edit2, User, CreditCard, Info, Link2, AlertCircle } from 'lucide-react';
+import { ArrowLeft, Download, Send, MoreVertical, Copy, Edit2, User, CreditCard, Info, Link2, AlertCircle, XCircle } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useState } from 'react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { DetailSkeleton } from '@/components/ui/skeleton';
 import { EmptyState } from '@/components/ui/empty-state';
-import { useGetInvoiceQuery, useSendInvoiceMutation } from '@/services/api.service';
+import { useGetInvoiceQuery, useSendInvoiceMutation, useCancelInvoiceMutation } from '@/services/api.service';
 import { toast } from 'sonner';
 import { RecordPaymentDialog } from '@/components/invoice/RecordPaymentDialog';
 import { EditDetailsDialog } from '@/components/invoice/EditDetailsDialog';
@@ -24,6 +24,7 @@ export const InvoiceDetailScreen = () => {
     refetchOnMountOrArgChange: true,
   });
   const [sendInvoice, { isLoading: isSending }] = useSendInvoiceMutation();
+  const [cancelInvoice, { isLoading: isCancelling }] = useCancelInvoiceMutation();
 
   // Log invoice data for debugging
   console.log('Invoice data:', invoice);
@@ -46,7 +47,7 @@ export const InvoiceDetailScreen = () => {
       }
 
       // Determine if we're sending a receipt or invoice
-      const isPaid = invoice.status === 'paid';
+      const isPaid = invoice?.status === 'paid';
       const documentType = isPaid ? 'Receipt' : 'Invoice';
       const documentTypeLower = isPaid ? 'receipt' : 'invoice';
 
@@ -68,7 +69,7 @@ export const InvoiceDetailScreen = () => {
       }
     } catch (err: any) {
       console.error('Failed to send invoice:', err);
-      const isPaid = invoice.status === 'paid';
+      const isPaid = invoice?.status === 'paid';
       toast.error(err?.data?.message || `Failed to send ${isPaid ? 'receipt' : 'invoice'}`);
     }
   };
@@ -87,6 +88,24 @@ export const InvoiceDetailScreen = () => {
     } catch (err) {
       console.error('Failed to copy:', err);
       toast.error('Failed to copy link');
+    }
+  };
+
+  const handleCancelInvoice = async () => {
+    if (!id) return;
+
+    // Confirm cancellation
+    if (!confirm('Are you sure you want to cancel this invoice? This action cannot be undone.')) {
+      return;
+    }
+
+    try {
+      await cancelInvoice(id).unwrap();
+      toast.success('Invoice cancelled successfully');
+      refetch();
+    } catch (err: any) {
+      console.error('Failed to cancel invoice:', err);
+      toast.error(err?.data?.message || 'Failed to cancel invoice');
     }
   };
 
@@ -128,6 +147,8 @@ export const InvoiceDetailScreen = () => {
         return <span className={`inline-flex items-center rounded font-semibold bg-gray-50 text-gray-700 border border-gray-200 ${sizeClasses}`}>Draft</span>;
       case 'sent':
         return <span className={`inline-flex items-center rounded font-semibold bg-purple-50 text-purple-700 border border-purple-200 ${sizeClasses}`}>Sent</span>;
+      case 'cancelled':
+        return <span className={`inline-flex items-center rounded font-semibold bg-gray-50 text-gray-700 border border-gray-300 ${sizeClasses}`}>Cancelled</span>;
       default:
         return null;
     }
@@ -215,6 +236,16 @@ export const InvoiceDetailScreen = () => {
                     <Download className="w-4 h-4 mr-2" />
                     Download PDF
                   </DropdownMenuItem>
+                  {invoice.status !== 'cancelled' && invoice.status !== 'paid' && (
+                    <DropdownMenuItem
+                      onClick={handleCancelInvoice}
+                      disabled={isCancelling}
+                      className="text-red-600 focus:text-red-600"
+                    >
+                      <XCircle className="w-4 h-4 mr-2" />
+                      {isCancelling ? 'Cancelling...' : 'Cancel invoice'}
+                    </DropdownMenuItem>
+                  )}
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
@@ -287,6 +318,20 @@ export const InvoiceDetailScreen = () => {
                       <div>
                         <h3 className="text-sm font-semibold text-blue-900">Invoice Sent</h3>
                         <p className="text-sm text-blue-700">This invoice has been sent to the customer and is awaiting payment.</p>
+                      </div>
+                    </div>
+                  </div>
+                );
+              case 'cancelled':
+                return (
+                  <div className="border border-gray-300 bg-gray-50 rounded-lg p-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center shrink-0">
+                        <XCircle className="w-5 h-5 text-gray-600" />
+                      </div>
+                      <div>
+                        <h3 className="text-sm font-semibold text-gray-900">Invoice Cancelled</h3>
+                        <p className="text-sm text-gray-700">This invoice has been cancelled and is no longer active.</p>
                       </div>
                     </div>
                   </div>
@@ -623,7 +668,7 @@ export const InvoiceDetailScreen = () => {
         open={isDownloadDialogOpen}
         onClose={() => setIsDownloadDialogOpen(false)}
         invoice={invoice}
-        logo={invoice.organization?.logo}
+        logo={invoice.organization?.logo || invoice.organization?.icon}
       />
     </div>
   );

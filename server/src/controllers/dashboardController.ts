@@ -168,7 +168,7 @@ export const getDashboardStats = asyncHandler(async (req: Request, res: Response
 });
 
 /**
- * Get revenue data for charts
+ * Get revenue data for charts (Revenue vs Amount Paid)
  */
 export const getRevenueData = asyncHandler(async (req: Request, res: Response) => {
   const user = req.user?.user;
@@ -189,7 +189,29 @@ export const getRevenueData = asyncHandler(async (req: Request, res: Response) =
   const startDate = new Date();
   startDate.setDate(startDate.getDate() - daysNum);
 
-  const revenueData = await Invoice.aggregate([
+  // Get total revenue (all invoices created/sent in period)
+  const totalRevenueData = await Invoice.aggregate([
+    {
+      $match: {
+        organizationId: orgObjectId,
+        status: { $in: ['sent', 'pending', 'paid', 'overdue'] },
+        issueDate: { $gte: startDate },
+      },
+    },
+    {
+      $group: {
+        _id: {
+          $dateToString: { format: '%Y-%m-%d', date: '$issueDate' },
+        },
+        amount: { $sum: '$total' },
+        count: { $sum: 1 },
+      },
+    },
+    { $sort: { _id: 1 } },
+  ]);
+
+  // Get amount paid (only paid invoices in period)
+  const amountPaidData = await Invoice.aggregate([
     {
       $match: {
         organizationId: orgObjectId,
@@ -202,19 +224,44 @@ export const getRevenueData = asyncHandler(async (req: Request, res: Response) =
         _id: {
           $dateToString: { format: '%Y-%m-%d', date: '$paidAt' },
         },
-        amount: { $sum: '$total' },
+        amount: { $sum: '$amountPaid' },
         count: { $sum: 1 },
       },
     },
     { $sort: { _id: 1 } },
   ]);
 
-  res.json({
-    data: revenueData.map(item => ({
+  // Merge the two datasets by date
+  const dateMap = new Map();
+
+  totalRevenueData.forEach(item => {
+    dateMap.set(item._id, {
       date: item._id,
-      amount: item.amount,
-      invoices: item.count,
-    })),
+      revenue: item.amount,
+      paid: 0,
+    });
+  });
+
+  amountPaidData.forEach(item => {
+    const existing = dateMap.get(item._id);
+    if (existing) {
+      existing.paid = item.amount;
+    } else {
+      dateMap.set(item._id, {
+        date: item._id,
+        revenue: 0,
+        paid: item.amount,
+      });
+    }
+  });
+
+  // Convert map to array and sort by date
+  const combinedData = Array.from(dateMap.values()).sort((a, b) =>
+    a.date.localeCompare(b.date)
+  );
+
+  res.json({
+    data: combinedData,
   });
 });
 

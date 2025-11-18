@@ -6,7 +6,8 @@ export interface IOrganization extends Document {
   email: string;
   phone?: string;
   website?: string;
-  logo?: string;
+  logo?: string; // Full logo (can be rectangular)
+  icon?: string; // Square icon (1:1 aspect ratio)
   address?: Address;
   taxId?: string;
   currency: string;
@@ -50,7 +51,10 @@ const OrganizationSchema: Schema = new Schema(
       trim: true,
     },
     logo: {
-      type: String, // URL or path
+      type: String, // Full logo (can be rectangular)
+    },
+    icon: {
+      type: String, // Square icon (1:1 aspect ratio)
     },
     address: {
       street: String,

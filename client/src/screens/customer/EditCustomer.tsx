@@ -1,7 +1,6 @@
 import { useState, FormEvent, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ArrowLeft, Loader2 } from 'lucide-react';
@@ -117,7 +116,7 @@ export const EditCustomerScreen = () => {
 
   if (!isAuthReady || isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-[#FEFFFE]">
         <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
       </div>
     );
@@ -125,7 +124,7 @@ export const EditCustomerScreen = () => {
 
   if (error || !customer) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-[#FEFFFE]">
         <div className="text-center">
           <p className="text-red-600 mb-4">Failed to load customer details</p>
           <Button onClick={() => navigate('/customers')}>Back to Customers</Button>
@@ -136,197 +135,190 @@ export const EditCustomerScreen = () => {
 
   return (
     <div className="min-h-screen bg-[#FEFFFE]">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 md:px-8 py-6 md:py-8">
-        {/* Header */}
-        <div className="mb-6 md:mb-8">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 md:px-8 py-6 md:py-8">
+        {/* Back button */}
+        <div className="mb-6">
           <button
             onClick={() => navigate(`/customers/${id}`)}
-            className="flex items-center gap-1 text-sm text-[#635BFF] hover:text-[#5045e5] mb-4 md:mb-6 font-medium active:scale-95"
+            className="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900 transition-colors"
           >
             <ArrowLeft className="w-4 h-4" />
-            Back to Customer
+            <span>Customer details</span>
           </button>
-          <h1 className="text-2xl md:text-3xl font-semibold text-gray-900">Edit Customer</h1>
-          <p className="text-sm md:text-base text-gray-600 mt-1">Update customer profile information</p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Basic Information Card */}
-          <div className="border border-gray-200 rounded-lg p-4 md:p-6">
-            <div className="mb-5">
-              <h2 className="text-base font-semibold text-gray-900">Basic Information</h2>
-              <p className="text-sm text-gray-600 mt-1">Company details and contact information</p>
-            </div>
+        {/* Header */}
+        <div className="mb-6 md:mb-8">
+          <h1 className="text-xl md:text-[28px] font-semibold text-gray-900">Edit customer</h1>
+          <div className="flex items-center gap-1.5 mt-1">
+            <span className="text-sm text-gray-600">Update customer profile information</span>
+          </div>
+        </div>
 
-            <div className="grid grid-cols-2 gap-5">
-              <div className="col-span-2">
-                <Label htmlFor="company-name" className="text-sm font-semibold text-gray-700 mb-2 block">
-                  Company Name *
-                </Label>
+        <form onSubmit={handleSubmit}>
+          {/* Basic Information Section */}
+          <div className="mb-8 pb-8 border-b border-gray-200">
+            <div className="mb-4">
+              <h2 className="text-base font-semibold text-gray-900">Basic information</h2>
+            </div>
+            <p className="text-sm text-gray-600 mb-6">
+              Primary contact details for this customer.
+            </p>
+
+            <div className="space-y-4">
+              <div>
+                <label className="text-sm font-medium text-gray-700 block mb-1.5">
+                  Company name <span className="text-red-600">*</span>
+                </label>
                 <Input
-                  id="company-name"
                   placeholder="Acme Corporation"
                   value={formData.company}
                   onChange={(e) => handleInputChange('company', e.target.value)}
-                  className="h-11 border-gray-300 rounded-lg focus:ring-2 focus:ring-[#635bff]/20 focus:border-[#635bff] transition-all"
+                  className="h-8 text-sm"
                   required
                 />
               </div>
 
-              <div>
-                <Label htmlFor="contact-name" className="text-sm font-semibold text-gray-700 mb-2 block">
-                  Contact Name
-                </Label>
-                <Input
-                  id="contact-name"
-                  placeholder="John Doe"
-                  value={formData.name}
-                  onChange={(e) => handleInputChange('name', e.target.value)}
-                  className="h-11 border-gray-300 rounded-lg focus:ring-2 focus:ring-[#635bff]/20 focus:border-[#635bff] transition-all"
-                />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-medium text-gray-700 block mb-1.5">Contact name</label>
+                  <Input
+                    placeholder="John Doe"
+                    value={formData.name}
+                    onChange={(e) => handleInputChange('name', e.target.value)}
+                    className="h-8 text-sm"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-sm font-medium text-gray-700 block mb-1.5">
+                    Email address <span className="text-red-600">*</span>
+                  </label>
+                  <Input
+                    type="email"
+                    placeholder="contact@acme.com"
+                    value={formData.email}
+                    onChange={(e) => handleInputChange('email', e.target.value)}
+                    className="h-8 text-sm"
+                    required
+                  />
+                </div>
               </div>
 
-              <div>
-                <Label htmlFor="email" className="text-sm font-semibold text-gray-700 mb-2 block">
-                  Email Address *
-                </Label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="contact@acme.com"
-                  value={formData.email}
-                  onChange={(e) => handleInputChange('email', e.target.value)}
-                  className="h-11 border-gray-300 rounded-lg focus:ring-2 focus:ring-[#635bff]/20 focus:border-[#635bff] transition-all"
-                  required
-                />
-              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-medium text-gray-700 block mb-1.5">Phone number</label>
+                  <Input
+                    type="tel"
+                    placeholder="+1 (555) 000-0000"
+                    value={formData.phone}
+                    onChange={(e) => handleInputChange('phone', e.target.value)}
+                    className="h-8 text-sm"
+                  />
+                </div>
 
-              <div>
-                <Label htmlFor="phone" className="text-sm font-semibold text-gray-700 mb-2 block">
-                  Phone Number
-                </Label>
-                <Input
-                  id="phone"
-                  type="tel"
-                  placeholder="+1 (555) 000-0000"
-                  value={formData.phone}
-                  onChange={(e) => handleInputChange('phone', e.target.value)}
-                  className="h-11 border-gray-300 rounded-lg focus:ring-2 focus:ring-[#635bff]/20 focus:border-[#635bff] transition-all"
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="tax-id" className="text-sm font-semibold text-gray-700 mb-2 block">
-                  Tax ID / VAT Number
-                </Label>
-                <Input
-                  id="tax-id"
-                  placeholder="XX-XXXXXXX"
-                  value={formData.taxId}
-                  onChange={(e) => handleInputChange('taxId', e.target.value)}
-                  className="h-11 border-gray-300 rounded-lg focus:ring-2 focus:ring-[#635bff]/20 focus:border-[#635bff] transition-all"
-                />
+                <div>
+                  <label className="text-sm font-medium text-gray-700 block mb-1.5">Tax ID / VAT number</label>
+                  <Input
+                    placeholder="XX-XXXXXXX"
+                    value={formData.taxId}
+                    onChange={(e) => handleInputChange('taxId', e.target.value)}
+                    className="h-8 text-sm"
+                  />
+                </div>
               </div>
             </div>
           </div>
 
-          {/* Billing Address Card */}
-          <div className="border border-gray-200 rounded-lg p-4 md:p-6">
-            <div className="mb-5">
-              <h2 className="text-base font-semibold text-gray-900">Billing Address</h2>
-              <p className="text-sm text-gray-600 mt-1">Where invoices should be sent</p>
+          {/* Billing Address Section */}
+          <div className="mb-8 pb-8 border-b border-gray-200">
+            <div className="mb-4">
+              <h2 className="text-base font-semibold text-gray-900">Billing address</h2>
             </div>
+            <p className="text-sm text-gray-600 mb-6">
+              The address where invoices will be sent.
+            </p>
 
-            <div className="grid grid-cols-2 gap-5">
-              <div className="col-span-2">
-                <Label htmlFor="street" className="text-sm font-semibold text-gray-700 mb-2 block">
-                  Street Address
-                </Label>
+            <div className="space-y-4">
+              <div>
+                <label className="text-sm font-medium text-gray-700 block mb-1.5">Street address</label>
                 <Input
-                  id="street"
                   placeholder="123 Main Street"
                   value={formData.address.street}
                   onChange={(e) => handleAddressChange('street', e.target.value)}
-                  className="h-11 border-gray-300 rounded-lg focus:ring-2 focus:ring-[#635bff]/20 focus:border-[#635bff] transition-all"
+                  className="h-8 text-sm"
                 />
               </div>
 
-              <div>
-                <Label htmlFor="city" className="text-sm font-semibold text-gray-700 mb-2 block">
-                  City
-                </Label>
-                <Input
-                  id="city"
-                  placeholder="San Francisco"
-                  value={formData.address.city}
-                  onChange={(e) => handleAddressChange('city', e.target.value)}
-                  className="h-11 border-gray-300 rounded-lg focus:ring-2 focus:ring-[#635bff]/20 focus:border-[#635bff] transition-all"
-                />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-medium text-gray-700 block mb-1.5">City</label>
+                  <Input
+                    placeholder="San Francisco"
+                    value={formData.address.city}
+                    onChange={(e) => handleAddressChange('city', e.target.value)}
+                    className="h-8 text-sm"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-sm font-medium text-gray-700 block mb-1.5">State / Province</label>
+                  <Input
+                    placeholder="California"
+                    value={formData.address.state}
+                    onChange={(e) => handleAddressChange('state', e.target.value)}
+                    className="h-8 text-sm"
+                  />
+                </div>
               </div>
 
-              <div>
-                <Label htmlFor="state" className="text-sm font-semibold text-gray-700 mb-2 block">
-                  State / Province
-                </Label>
-                <Input
-                  id="state"
-                  placeholder="California"
-                  value={formData.address.state}
-                  onChange={(e) => handleAddressChange('state', e.target.value)}
-                  className="h-11 border-gray-300 rounded-lg focus:ring-2 focus:ring-[#635bff]/20 focus:border-[#635bff] transition-all"
-                />
-              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-medium text-gray-700 block mb-1.5">ZIP / Postal code</label>
+                  <Input
+                    placeholder="94103"
+                    value={formData.address.zipCode}
+                    onChange={(e) => handleAddressChange('zipCode', e.target.value)}
+                    className="h-8 text-sm"
+                  />
+                </div>
 
-              <div>
-                <Label htmlFor="zip" className="text-sm font-semibold text-gray-700 mb-2 block">
-                  ZIP / Postal Code
-                </Label>
-                <Input
-                  id="zip"
-                  placeholder="94103"
-                  value={formData.address.zipCode}
-                  onChange={(e) => handleAddressChange('zipCode', e.target.value)}
-                  className="h-11 border-gray-300 rounded-lg focus:ring-2 focus:ring-[#635bff]/20 focus:border-[#635bff] transition-all"
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="country" className="text-sm font-semibold text-gray-700 mb-2 block">
-                  Country
-                </Label>
-                <Select value={formData.address.country} onValueChange={(value) => handleAddressChange('country', value)}>
-                  <SelectTrigger className="h-11 border-gray-300 rounded-lg focus:ring-2 focus:ring-[#635bff]/20">
-                    <SelectValue placeholder="Select country" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="US">United States</SelectItem>
-                    <SelectItem value="UK">United Kingdom</SelectItem>
-                    <SelectItem value="CA">Canada</SelectItem>
-                    <SelectItem value="AU">Australia</SelectItem>
-                    <SelectItem value="IN">India</SelectItem>
-                  </SelectContent>
-                </Select>
+                <div>
+                  <label className="text-sm font-medium text-gray-700 block mb-1.5">Country</label>
+                  <Select value={formData.address.country} onValueChange={(value) => handleAddressChange('country', value)}>
+                    <SelectTrigger className="h-8 text-sm">
+                      <SelectValue placeholder="Select country" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="US">United States</SelectItem>
+                      <SelectItem value="UK">United Kingdom</SelectItem>
+                      <SelectItem value="CA">Canada</SelectItem>
+                      <SelectItem value="AU">Australia</SelectItem>
+                      <SelectItem value="IN">India</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
             </div>
           </div>
 
-          {/* Payment Preferences Card */}
-          <div className="border border-gray-200 rounded-lg p-4 md:p-6">
-            <div className="mb-5">
-              <h2 className="text-base font-semibold text-gray-900">Payment Preferences</h2>
-              <p className="text-sm text-gray-600 mt-1">Configure payment settings for this customer</p>
+          {/* Payment Preferences Section */}
+          <div className="mb-8 pb-8 border-b border-gray-200">
+            <div className="mb-4">
+              <h2 className="text-base font-semibold text-gray-900">Payment preferences</h2>
             </div>
+            <p className="text-sm text-gray-600 mb-6">
+              Set the customer's preferred payment method.
+            </p>
 
-            <div className="grid grid-cols-2 gap-5">
-              <div className="col-span-2">
-                <Label htmlFor="payment-method" className="text-sm font-semibold text-gray-700 mb-2 block">
-                  Preferred Payment Method (Optional)
-                </Label>
+            <div className="space-y-4">
+              <div>
+                <label className="text-sm font-medium text-gray-700 block mb-1.5">Preferred payment method</label>
                 <Select
                   value={formData.preferredPaymentMethod}
                   onValueChange={(value) => handleInputChange('preferredPaymentMethod', value)}
                 >
-                  <SelectTrigger className="h-11 border-gray-300 rounded-lg focus:ring-2 focus:ring-[#635bff]/20">
+                  <SelectTrigger className="h-8 text-sm">
                     <SelectValue placeholder="Select payment method" />
                   </SelectTrigger>
                   <SelectContent>
@@ -343,16 +335,13 @@ export const EditCustomerScreen = () => {
               </div>
 
               {formData.preferredPaymentMethod === 'digital_currency' && (
-                <div className="col-span-2">
-                  <Label htmlFor="wallet" className="text-sm font-semibold text-gray-700 mb-2 block">
-                    Payment Address (Optional)
-                  </Label>
+                <div>
+                  <label className="text-sm font-medium text-gray-700 block mb-1.5">Payment address</label>
                   <Input
-                    id="wallet"
                     placeholder="Enter payment address"
                     value={formData.walletAddress}
                     onChange={(e) => handleInputChange('walletAddress', e.target.value)}
-                    className="h-11 border-gray-300 rounded-lg focus:ring-2 focus:ring-[#635bff]/20 focus:border-[#635bff] transition-all font-mono text-sm"
+                    className="h-8 text-sm font-mono"
                   />
                   <p className="text-xs text-gray-500 mt-1.5">For digital currency payments</p>
                 </div>
@@ -360,53 +349,50 @@ export const EditCustomerScreen = () => {
             </div>
           </div>
 
-          {/* Additional Information Card */}
-          <div className="border border-gray-200 rounded-lg p-4 md:p-6">
-            <div className="mb-5">
-              <h2 className="text-base font-semibold text-gray-900">Additional Information</h2>
-              <p className="text-sm text-gray-600 mt-1">Notes and custom settings</p>
+          {/* Additional Information Section */}
+          <div className="mb-8 pb-8 border-b border-gray-200">
+            <div className="mb-4">
+              <h2 className="text-base font-semibold text-gray-900">Additional information</h2>
             </div>
+            <p className="text-sm text-gray-600 mb-6">
+              Private notes about this customer.
+            </p>
 
-            <div className="space-y-5">
-              <div>
-                <Label htmlFor="notes" className="text-sm font-semibold text-gray-700 mb-2 block">
-                  Internal Notes
-                </Label>
-                <Textarea
-                  id="notes"
-                  placeholder="Add any notes about this customer..."
-                  value={formData.notes}
-                  onChange={(e) => handleInputChange('notes', e.target.value)}
-                  className="min-h-[100px] border-gray-300 rounded-lg focus:ring-2 focus:ring-[#635bff]/20 focus:border-[#635bff] transition-all resize-none"
-                />
-                <p className="text-xs text-gray-500 mt-1.5">These notes are private and won't be visible to the customer</p>
-              </div>
+            <div>
+              <label className="text-sm font-medium text-gray-700 block mb-1.5">Internal notes</label>
+              <Textarea
+                placeholder="Add any notes about this customer..."
+                value={formData.notes}
+                onChange={(e) => handleInputChange('notes', e.target.value)}
+                className="min-h-[100px] resize-none text-sm"
+              />
+              <p className="text-xs text-gray-500 mt-1.5">These notes are private and won't be visible to the customer</p>
             </div>
           </div>
 
           {/* Action Buttons */}
-          <div className="flex items-center justify-end gap-3 pt-4">
+          <div className="flex items-center justify-end gap-3">
             <Button
               type="button"
               variant="outline"
               onClick={() => navigate(`/customers/${id}`)}
               disabled={isUpdating}
-              className="h-9 px-4 text-sm font-medium border-gray-300"
+              className="h-8 px-4 text-sm border-gray-300 rounded-md"
             >
               Cancel
             </Button>
             <Button
               type="submit"
               disabled={isUpdating}
-              className="h-9 px-4 text-sm font-medium bg-[#635BFF] hover:bg-[#5045e5] text-white"
+              className="h-8 px-4 text-sm bg-[#635BFF] hover:bg-[#5045e5]"
             >
               {isUpdating ? (
                 <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  <Loader2 className="w-3 h-3 mr-2 animate-spin" />
                   Updating...
                 </>
               ) : (
-                'Update Customer'
+                'Update customer'
               )}
             </Button>
           </div>

@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
-import { Plus, Search, MoreVertical, Filter, FileText, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Plus, Search, MoreVertical, Filter, FileText, ChevronLeft, ChevronRight, Eye, Edit, Trash2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { TableSkeleton, CardSkeleton } from '@/components/ui/skeleton';
 import { EmptyState } from '@/components/ui/empty-state';
 import { useNavigate } from 'react-router-dom';
@@ -213,7 +214,12 @@ export const InvoicesPage = () => {
                         </td>
                         <td className="px-3 py-4">
                           <div className="text-sm text-gray-900">
-                            {invoice.customerId?.name || invoice.customerId?.company || '—'}
+                            {invoice.customerId?.name ||
+                             invoice.customerId?.company ||
+                             invoice.customer?.name ||
+                             invoice.customer?.company ||
+                             invoice.toCompany ||
+                             '—'}
                           </div>
                         </td>
                         <td className="px-3 py-4">
@@ -247,15 +253,56 @@ export const InvoicesPage = () => {
                           </div>
                         </td>
                         <td className="px-3 py-4">
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              // Add menu logic here
-                            }}
-                            className="text-gray-400 hover:text-gray-600 p-1 rounded hover:bg-gray-100"
-                          >
-                            <MoreVertical className="w-4 h-4" />
-                          </button>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <button
+                                onClick={(e) => e.stopPropagation()}
+                                className="text-gray-400 hover:text-gray-600 p-1 rounded hover:bg-gray-100"
+                              >
+                                <MoreVertical className="w-4 h-4" />
+                              </button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-48">
+                              <DropdownMenuItem
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  const invoiceId = invoice._id || invoice.id;
+                                  navigate(`/invoices/${invoiceId}`);
+                                }}
+                              >
+                                <Eye className="w-4 h-4 mr-2" />
+                                View
+                              </DropdownMenuItem>
+                              {invoice.status === 'draft' && (
+                                <DropdownMenuItem
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    const invoiceId = invoice._id || invoice.id;
+                                    navigate(`/invoices/${invoiceId}/edit`);
+                                  }}
+                                >
+                                  <Edit className="w-4 h-4 mr-2" />
+                                  Edit
+                                </DropdownMenuItem>
+                              )}
+                              {invoice.status !== 'cancelled' && (
+                                <>
+                                  <DropdownMenuSeparator />
+                                  <DropdownMenuItem
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      const invoiceId = invoice._id || invoice.id;
+                                      navigate(`/invoices/${invoiceId}`);
+                                    }}
+                                    className="text-red-600 focus:text-red-600"
+                                  >
+                                    <Trash2 className="w-4 h-4 mr-2" />
+                                    Cancel Invoice
+                                  </DropdownMenuItem>
+                                </>
+                              )}
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                         </td>
                       </tr>
                     ))}
@@ -350,7 +397,12 @@ export const InvoicesPage = () => {
                         {invoice.invoiceNumber}
                       </div>
                       <div className="text-sm text-gray-900 mt-0.5">
-                        {invoice.customerId?.name || invoice.customerId?.company || '—'}
+                        {invoice.customerId?.name ||
+                         invoice.customerId?.company ||
+                         invoice.customer?.name ||
+                         invoice.customer?.company ||
+                         invoice.toCompany ||
+                         '—'}
                       </div>
                     </div>
                     <span

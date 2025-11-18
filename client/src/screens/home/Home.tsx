@@ -215,12 +215,22 @@ export const HomePage = () => {
 
         {/* Main Charts Section */}
         <div className="grid grid-cols-2 gap-6 mb-12 w-full">
-          {/* Revenue Chart */}
+          {/* Revenue vs Amount Paid Chart */}
           <div className="bg-white/80 backdrop-blur-sm border border-gray-200/60 rounded-xl p-7 shadow-sm hover:shadow-md transition-shadow">
             <div className="flex justify-between items-center mb-6">
               <div>
-                <h2 className="text-[17px] font-semibold text-gray-900">Revenue</h2>
-                <p className="text-[13px] text-gray-500 mt-1">Revenue overview for {timePeriod}</p>
+                <h2 className="text-[17px] font-semibold text-gray-900">Revenue vs Amount Paid</h2>
+                <p className="text-[13px] text-gray-500 mt-1">Financial overview for {timePeriod}</p>
+              </div>
+              <div className="flex items-center gap-4 text-xs">
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 rounded-full bg-[#635bff]"></div>
+                  <span className="text-gray-600">Revenue</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 rounded-full bg-[#22c55e]"></div>
+                  <span className="text-gray-600">Paid</span>
+                </div>
               </div>
             </div>
             <div className="h-[300px] w-full">
@@ -233,20 +243,63 @@ export const HomePage = () => {
                   <AreaChart data={revenueData || []} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                     <defs>
                       <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#635bff" stopOpacity={0.1} />
+                        <stop offset="5%" stopColor="#635bff" stopOpacity={0.15} />
                         <stop offset="95%" stopColor="#635bff" stopOpacity={0} />
                       </linearGradient>
+                      <linearGradient id="colorPaid" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#22c55e" stopOpacity={0.15} />
+                        <stop offset="95%" stopColor="#22c55e" stopOpacity={0} />
+                      </linearGradient>
                     </defs>
-                    <XAxis dataKey="date" axisLine={false} tickLine={false} />
-                    <YAxis axisLine={false} tickLine={false} tickFormatter={(value) => `$${value}`} />
+                    <XAxis
+                      dataKey="date"
+                      axisLine={false}
+                      tickLine={false}
+                      tick={{ fontSize: 12 }}
+                      tickFormatter={(value) => {
+                        const date = new Date(value);
+                        return `${date.getMonth() + 1}/${date.getDate()}`;
+                      }}
+                    />
+                    <YAxis
+                      axisLine={false}
+                      tickLine={false}
+                      tick={{ fontSize: 12 }}
+                      tickFormatter={(value) => `$${value}`}
+                    />
                     <Tooltip
                       contentStyle={{
                         backgroundColor: 'white',
                         border: '1px solid #e5e7eb',
-                        borderRadius: '6px',
+                        borderRadius: '8px',
+                        padding: '12px',
+                      }}
+                      formatter={(value: any) => [`$${value.toFixed(2)}`, '']}
+                      labelFormatter={(label) => {
+                        const date = new Date(label);
+                        return date.toLocaleDateString('en-US', {
+                          month: 'short',
+                          day: 'numeric',
+                          year: 'numeric'
+                        });
                       }}
                     />
-                    <Area type="monotone" dataKey="amount" stroke="#635bff" fill="url(#colorRevenue)" />
+                    <Area
+                      type="monotone"
+                      dataKey="revenue"
+                      stroke="#635bff"
+                      strokeWidth={2}
+                      fill="url(#colorRevenue)"
+                      name="Revenue"
+                    />
+                    <Area
+                      type="monotone"
+                      dataKey="paid"
+                      stroke="#22c55e"
+                      strokeWidth={2}
+                      fill="url(#colorPaid)"
+                      name="Amount Paid"
+                    />
                   </AreaChart>
                 </ResponsiveContainer>
               )}

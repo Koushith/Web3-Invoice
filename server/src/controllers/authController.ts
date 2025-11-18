@@ -38,6 +38,43 @@ export const register = asyncHandler(async (req: Request, res: Response) => {
     role: 'owner',
   });
 
+  // Auto-create organization for new user
+  let organization = null;
+  try {
+    const userName = displayName || email.split('@')[0];
+    const orgName = `${userName}'s Company`;
+
+    organization = await Organization.create({
+      name: orgName,
+      email: email,
+      currency: 'USD',
+      invoicePrefix: 'INV',
+      ownerId: user._id,
+    });
+
+    // Link organization to user
+    user.organizationId = organization._id;
+    await user.save();
+
+    console.log(`Auto-created organization "${orgName}" for user ${email}`);
+  } catch (orgError) {
+    console.error('Failed to auto-create organization:', orgError);
+    // Continue even if organization creation fails - user can create it manually later
+  }
+
+  // Send welcome email (don't block registration if email fails)
+  try {
+    const { sendWelcomeEmail } = await import('../services/emailService');
+    await sendWelcomeEmail({
+      to: email,
+      userName: displayName || email.split('@')[0],
+      userEmail: email,
+    });
+  } catch (emailError) {
+    console.error('Failed to send welcome email:', emailError);
+    // Continue with registration even if email fails
+  }
+
   res.status(201).json({
     message: 'User registered successfully',
     user: {
@@ -61,7 +98,35 @@ export const getProfile = asyncHandler(async (req: Request, res: Response) => {
     throw new AppError('User not found', 404, 'USER_NOT_FOUND');
   }
 
-  const populatedUser = await User.findById(user._id).populate('organizationId');
+  let populatedUser = await User.findById(user._id).populate('organizationId');
+
+  // Auto-create organization if user doesn't have one (for existing users)
+  if (populatedUser && !populatedUser.organizationId) {
+    try {
+      const userName = populatedUser.displayName || populatedUser.email.split('@')[0];
+      const orgName = `${userName}'s Company`;
+
+      const organization = await Organization.create({
+        name: orgName,
+        email: populatedUser.email,
+        currency: 'USD',
+        invoicePrefix: 'INV',
+        ownerId: populatedUser._id,
+      });
+
+      // Link organization to user
+      populatedUser.organizationId = organization._id;
+      await populatedUser.save();
+
+      // Refresh populated user
+      populatedUser = await User.findById(user._id).populate('organizationId');
+
+      console.log(`Auto-created organization "${orgName}" for existing user ${populatedUser.email}`);
+    } catch (orgError) {
+      console.error('Failed to auto-create organization for existing user:', orgError);
+      // Continue without organization
+    }
+  }
 
   res.json({
     user: {

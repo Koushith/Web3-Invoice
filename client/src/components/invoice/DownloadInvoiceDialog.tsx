@@ -72,7 +72,8 @@ export const DownloadInvoiceDialog = ({ open, onClose, invoice, logo }: Download
       quantity: item.quantity,
       price: item.unitPrice,
     })) || [],
-    notes: invoice.terms || '',
+    notes: invoice.notes || '',
+    terms: invoice.terms || '',
   };
 
   const paymentDetails = {

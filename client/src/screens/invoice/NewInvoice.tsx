@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -17,6 +17,7 @@ import {
   ElegantTemplate,
   CattyTemplate,
   FloralTemplate,
+  FloralDarkTemplate,
   PandaTemplate,
   PinkMinimalTemplate,
   CompactPandaTemplate,
@@ -29,7 +30,7 @@ import { toPng } from 'html-to-image';
 import { jsPDF } from 'jspdf';
 import { Currency } from '@/types/models';
 
-export type InvoiceStyle = 'standard' | 'modern' | 'minimal' | 'artistic' | 'gradient' | 'glass' | 'elegant' | 'catty' | 'floral' | 'panda' | 'pinkminimal' | 'compactpanda';
+export type InvoiceStyle = 'standard' | 'modern' | 'minimal' | 'artistic' | 'gradient' | 'glass' | 'elegant' | 'catty' | 'floral' | 'floraldark' | 'panda' | 'pinkminimal' | 'compactpanda';
 
 export interface InvoiceStyleProps {
   logo: string | null;
@@ -88,7 +89,6 @@ export const NewInvoice = () => {
   console.log('NewInvoice Mount:', { invoiceId, isEditMode, path: window.location.pathname });
   const [isAuthReady, setIsAuthReady] = useState(false);
   const [selectedCustomerId, setSelectedCustomerId] = useState<string>('');
-  const [logo] = useState<string | null>(null);
   const [invoiceStyle, setInvoiceStyle] = useState<InvoiceStyle>('standard');
   const [previewZoom, setPreviewZoom] = useState(0.8);
   const [previewTab, setPreviewTab] = useState<'pdf' | 'email' | 'hosted'>('pdf');
@@ -156,6 +156,9 @@ export const NewInvoice = () => {
     skip: !isAuthReady,
   });
 
+  // Derive logo from organization data (prefer full logo, fallback to icon)
+  const logo = useMemo(() => organization?.logo || organization?.icon || null, [organization]);
+
   // Sync payment method with currency type
   useEffect(() => {
     if (currencyType === 'crypto') {
@@ -188,13 +191,13 @@ export const NewInvoice = () => {
       }));
 
       // Set invoice prefix from organization settings
-      if (organization.invoicePrefix) {
-        setInvoicePrefix(organization.invoicePrefix);
+      if (organization.settings?.invoicePrefix) {
+        setInvoicePrefix(organization.settings.invoicePrefix);
       }
 
       // Auto-generate invoice number for new invoices only
-      if (!isEditMode && organization.invoiceNumberSequence) {
-        const nextNumber = String(organization.invoiceNumberSequence).padStart(3, '0');
+      if (!isEditMode && organization.settings?.invoiceNumberStart) {
+        const nextNumber = String(organization.settings.invoiceNumberStart).padStart(3, '0');
         setInvoiceData((prev) => ({
           ...prev,
           invoiceNumber: nextNumber,
@@ -202,8 +205,8 @@ export const NewInvoice = () => {
       }
 
       // Set default currency from organization settings
-      if (organization.currency) {
-        setCurrency(organization.currency);
+      if (organization.settings?.defaultCurrency) {
+        setCurrency(organization.settings.defaultCurrency);
       }
     }
   }, [organization, isEditMode]);
@@ -1179,7 +1182,8 @@ export const NewInvoice = () => {
                           <SelectItem value="glass">Executive</SelectItem>
                           <SelectItem value="elegant">Classic</SelectItem>
                           <SelectItem value="catty">Playful</SelectItem>
-                          <SelectItem value="floral">Dark Floral</SelectItem>
+                          <SelectItem value="floral">Light Floral</SelectItem>
+                          <SelectItem value="floraldark">Dark Floral</SelectItem>
                           <SelectItem value="panda">Panda</SelectItem>
                           <SelectItem value="pinkminimal">Pink Minimal</SelectItem>
                           <SelectItem value="compactpanda">Compact</SelectItem>
@@ -1372,6 +1376,18 @@ export const NewInvoice = () => {
                     )}
                     {invoiceStyle === 'floral' && (
                       <FloralTemplate
+                        logo={logo}
+                        invoiceData={{
+                          ...invoiceData,
+                          invoiceNumber: `${invoicePrefix}-${invoiceData.invoiceNumber || '001'}`,
+                          currency: showCustomCurrency && customCurrency ? customCurrency : currency,
+                          taxRate: taxRate,
+                        }}
+                        paymentDetails={paymentDetails}
+                      />
+                    )}
+                    {invoiceStyle === 'floraldark' && (
+                      <FloralDarkTemplate
                         logo={logo}
                         invoiceData={{
                           ...invoiceData,
@@ -1597,6 +1613,17 @@ export const NewInvoice = () => {
                             paymentDetails={paymentDetails}
                           />
                         )}
+                        {invoiceStyle === 'floraldark' && (
+                          <FloralDarkTemplate
+                            logo={logo}
+                            invoiceData={{
+                              ...invoiceData,
+                              invoiceNumber: `${invoicePrefix}-${invoiceData.invoiceNumber || '001'}`,
+                              currency: showCustomCurrency && customCurrency ? customCurrency : currency,
+                            }}
+                            paymentDetails={paymentDetails}
+                          />
+                        )}
                         {invoiceStyle === 'panda' && (
                           <PandaTemplate
                             logo={logo}
@@ -1638,7 +1665,10 @@ export const NewInvoice = () => {
 
               {/* Footer */}
               <div className="p-4 border-t border-gray-200 bg-gray-50">
-                <button className="text-xs text-[#635BFF] hover:underline flex items-center gap-1">
+                <button
+                  onClick={() => navigate('/business')}
+                  className="text-xs text-[#635BFF] hover:underline flex items-center gap-1"
+                >
                   <span>?</span>
                   <span>Change how this page looks in branding.</span>
                 </button>
