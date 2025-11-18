@@ -18,7 +18,7 @@ export const getOrganization = asyncHandler(async (req: Request, res: Response) 
   // If no organization exists, create a default one
   if (!organization) {
     organization = await Organization.create({
-      name: req.user?.displayName || req.user?.email || 'My Company',
+      name: req.user?.user?.displayName || req.user?.email || 'My Company',
       email: req.user?.email || '',
       ownerId: userId,
     });
