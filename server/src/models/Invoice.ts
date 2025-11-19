@@ -156,7 +156,7 @@ const InvoiceSchema: Schema = new Schema(
     },
     templateStyle: {
       type: String,
-      enum: ['standard', 'modern', 'minimal', 'artistic', 'gradient', 'glass', 'elegant', 'catty', 'floral', 'panda', 'pinkminimal', 'compactpanda'],
+      enum: ['standard', 'modern', 'minimal', 'artistic', 'gradient', 'glass', 'elegant', 'catty', 'floral', 'floraldark', 'panda', 'pinkminimal', 'compactpanda', 'cloudflare'],
     },
     metadata: {
       type: Schema.Types.Mixed,
