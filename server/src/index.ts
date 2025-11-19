@@ -18,9 +18,23 @@ import dashboardRoutes from './routes/dashboardRoutes.js';
 // Initialize express app
 const app = express();
 
-// Middleware
+// Middleware - CORS with multiple origins support
+const allowedOrigins = process.env.ALLOWED_ORIGINS
+  ? process.env.ALLOWED_ORIGINS.split(',').map(origin => origin.trim())
+  : ['http://localhost:5173'];
+
 app.use(cors({
-  origin: process.env.CLIENT_URL || 'http://localhost:5173',
+  origin: (origin, callback) => {
+    // Allow requests with no origin (like mobile apps or curl)
+    if (!origin) return callback(null, true);
+
+    if (allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      console.warn(`CORS: Blocked origin ${origin}`);
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true,
 }));
 app.use(express.json());
@@ -87,8 +101,10 @@ const startServer = async () => {
 ║   Environment: ${process.env.NODE_ENV || 'development'}            ║
 ║   MongoDB: Connected                    ║
 ║   Firebase: Initialized                 ║
+║   CORS Origins: ${allowedOrigins.join(', ')}     ║
 ╚════════════════════════════════════════╝
       `);
+      console.log('[CORS] Allowed origins:', allowedOrigins);
     });
   } catch (error) {
     console.error('Failed to start server:', error);
