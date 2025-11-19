@@ -12,8 +12,7 @@ import {
   LineChart,
   Line,
 } from 'recharts';
-import { Download, TrendingUp, TrendingDown, DollarSign, Users, FileText, Calendar } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { TrendingUp, TrendingDown, DollarSign, Users, FileText, Calendar } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { StatCardSkeleton } from '@/components/ui/skeleton';
 import { useGetDashboardMetricsQuery, useGetRevenueChartQuery } from '@/services/api.service';
@@ -47,31 +46,27 @@ export const ReportsScreen = () => {
   }, []);
 
   // Fetch dashboard metrics
-  const { data: metrics, isLoading: metricsLoading } = useGetDashboardMetricsQuery(
-    {},
-    { skip: !isAuthReady }
-  );
+  const { data: metrics, isLoading: metricsLoading } = useGetDashboardMetricsQuery({}, { skip: !isAuthReady });
 
   // Fetch revenue chart data
-  const { data: revenueChartData } = useGetRevenueChartQuery(
-    { period },
-    { skip: !isAuthReady }
-  );
+  const { data: revenueChartData } = useGetRevenueChartQuery({ period }, { skip: !isAuthReady });
 
   const revenueData = revenueChartData || [];
 
   // Process customer growth data from API
-  const customerGrowthData = metrics?.customerGrowth?.map((item: any) => ({
-    month: formatMonth(item._id),
-    customers: item.count,
-  })) || [];
+  const customerGrowthData =
+    metrics?.customerGrowth?.map((item: any) => ({
+      month: formatMonth(item._id),
+      customers: item.count,
+    })) || [];
 
   // Process top customers data from API
-  const topCustomers = metrics?.topCustomers?.map((item: any) => ({
-    name: item.name,
-    amount: item.totalRevenue,
-    invoices: item.invoiceCount,
-  })) || [];
+  const topCustomers =
+    metrics?.topCustomers?.map((item: any) => ({
+      name: item.name,
+      amount: item.totalRevenue,
+      invoices: item.invoiceCount,
+    })) || [];
 
   return (
     <div className="min-h-screen bg-[#FEFFFE]">
@@ -79,8 +74,10 @@ export const ReportsScreen = () => {
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6 md:mb-8">
           <div>
-            <h1 className="text-xl md:text-[26px] font-bold text-gray-900 tracking-tight">Reports & Analytics</h1>
-            <p className="text-xs md:text-[14px] text-gray-500 mt-1 md:mt-1.5">Detailed insights into your business performance</p>
+            <h1 className="text-xl md:text-[26px] font-bold text-gray-900 tracking-tight">Dashboard</h1>
+            <p className="text-xs md:text-[14px] text-gray-500 mt-1 md:mt-1.5">
+              Detailed insights into your business performance
+            </p>
           </div>
           <div className="flex items-center gap-2 md:gap-3">
             <Select defaultValue="30days">
@@ -94,13 +91,13 @@ export const ReportsScreen = () => {
                 <SelectItem value="year">This year</SelectItem>
               </SelectContent>
             </Select>
-            <Button
+            {/* <Button
               variant="outline"
               className="h-9 md:h-10 px-3 md:px-4 border-gray-300 rounded-lg text-xs md:text-sm"
             >
               <Download className="w-4 h-4 md:mr-2" />
               <span className="hidden md:inline">Export Report</span>
-            </Button>
+            </Button> */}
           </div>
         </div>
 
@@ -120,14 +117,27 @@ export const ReportsScreen = () => {
                   <DollarSign className="w-5 h-5 text-green-600" />
                 </div>
                 {metrics?.revenueChange !== undefined && (
-                  <span className={`flex items-center gap-1 text-xs font-semibold ${metrics.revenueChange >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                    {metrics.revenueChange >= 0 ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
-                    {metrics.revenueChange >= 0 ? '+' : ''}{metrics.revenueChange.toFixed(1)}%
+                  <span
+                    className={`flex items-center gap-1 text-xs font-semibold ${
+                      metrics.revenueChange >= 0 ? 'text-green-600' : 'text-red-600'
+                    }`}
+                  >
+                    {metrics.revenueChange >= 0 ? (
+                      <TrendingUp className="w-3 h-3" />
+                    ) : (
+                      <TrendingDown className="w-3 h-3" />
+                    )}
+                    {metrics.revenueChange >= 0 ? '+' : ''}
+                    {metrics.revenueChange.toFixed(1)}%
                   </span>
                 )}
               </div>
               <p className="text-2xl font-bold text-gray-900">
-                ${(metrics?.totalRevenue || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                $
+                {(metrics?.totalRevenue || 0).toLocaleString('en-US', {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })}
               </p>
               <p className="text-xs text-gray-500 mt-1">Total Revenue</p>
             </div>
@@ -138,9 +148,18 @@ export const ReportsScreen = () => {
                   <FileText className="w-5 h-5 text-blue-600" />
                 </div>
                 {metrics?.invoiceChange !== undefined && (
-                  <span className={`flex items-center gap-1 text-xs font-semibold ${metrics.invoiceChange >= 0 ? 'text-blue-600' : 'text-red-600'}`}>
-                    {metrics.invoiceChange >= 0 ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
-                    {metrics.invoiceChange >= 0 ? '+' : ''}{metrics.invoiceChange.toFixed(1)}%
+                  <span
+                    className={`flex items-center gap-1 text-xs font-semibold ${
+                      metrics.invoiceChange >= 0 ? 'text-blue-600' : 'text-red-600'
+                    }`}
+                  >
+                    {metrics.invoiceChange >= 0 ? (
+                      <TrendingUp className="w-3 h-3" />
+                    ) : (
+                      <TrendingDown className="w-3 h-3" />
+                    )}
+                    {metrics.invoiceChange >= 0 ? '+' : ''}
+                    {metrics.invoiceChange.toFixed(1)}%
                   </span>
                 )}
               </div>
@@ -154,14 +173,27 @@ export const ReportsScreen = () => {
                   <Users className="w-5 h-5 text-purple-600" />
                 </div>
                 {metrics?.paymentChange !== undefined && (
-                  <span className={`flex items-center gap-1 text-xs font-semibold ${metrics.paymentChange >= 0 ? 'text-purple-600' : 'text-red-600'}`}>
-                    {metrics.paymentChange >= 0 ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
-                    {metrics.paymentChange >= 0 ? '+' : ''}{metrics.paymentChange.toFixed(1)}%
+                  <span
+                    className={`flex items-center gap-1 text-xs font-semibold ${
+                      metrics.paymentChange >= 0 ? 'text-purple-600' : 'text-red-600'
+                    }`}
+                  >
+                    {metrics.paymentChange >= 0 ? (
+                      <TrendingUp className="w-3 h-3" />
+                    ) : (
+                      <TrendingDown className="w-3 h-3" />
+                    )}
+                    {metrics.paymentChange >= 0 ? '+' : ''}
+                    {metrics.paymentChange.toFixed(1)}%
                   </span>
                 )}
               </div>
               <p className="text-2xl font-bold text-gray-900">
-                ${(metrics?.pendingPayments || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                $
+                {(metrics?.pendingPayments || 0).toLocaleString('en-US', {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })}
               </p>
               <p className="text-xs text-gray-500 mt-1">Pending Payments</p>
             </div>
@@ -172,9 +204,18 @@ export const ReportsScreen = () => {
                   <Calendar className="w-5 h-5 text-orange-600" />
                 </div>
                 {metrics?.overdueChange !== undefined && (
-                  <span className={`flex items-center gap-1 text-xs font-semibold ${metrics.overdueChange <= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                    {metrics.overdueChange <= 0 ? <TrendingDown className="w-3 h-3" /> : <TrendingUp className="w-3 h-3" />}
-                    {metrics.overdueChange >= 0 ? '+' : ''}{metrics.overdueChange.toFixed(1)}%
+                  <span
+                    className={`flex items-center gap-1 text-xs font-semibold ${
+                      metrics.overdueChange <= 0 ? 'text-green-600' : 'text-red-600'
+                    }`}
+                  >
+                    {metrics.overdueChange <= 0 ? (
+                      <TrendingDown className="w-3 h-3" />
+                    ) : (
+                      <TrendingUp className="w-3 h-3" />
+                    )}
+                    {metrics.overdueChange >= 0 ? '+' : ''}
+                    {metrics.overdueChange.toFixed(1)}%
                   </span>
                 )}
               </div>
@@ -217,7 +258,13 @@ export const ReportsScreen = () => {
                     }}
                   />
                   <Area type="monotone" dataKey="revenue" stroke="#635bff" fill="url(#colorRevenue)" strokeWidth={2} />
-                  <Area type="monotone" dataKey="expenses" stroke="#ef4444" fill="url(#colorExpenses)" strokeWidth={2} />
+                  <Area
+                    type="monotone"
+                    dataKey="expenses"
+                    stroke="#ef4444"
+                    fill="url(#colorExpenses)"
+                    strokeWidth={2}
+                  />
                 </AreaChart>
               </ResponsiveContainer>
             </div>
@@ -327,7 +374,10 @@ export const ReportsScreen = () => {
             {metricsLoading ? (
               <div className="space-y-4">
                 {[1, 2, 3, 4, 5].map((i) => (
-                  <div key={i} className="flex items-center justify-between pb-4 border-b border-gray-100 last:border-0">
+                  <div
+                    key={i}
+                    className="flex items-center justify-between pb-4 border-b border-gray-100 last:border-0"
+                  >
                     <div className="flex items-center gap-3">
                       <div className="w-8 h-8 rounded-lg bg-gray-200 animate-pulse"></div>
                       <div>
@@ -350,7 +400,10 @@ export const ReportsScreen = () => {
             ) : (
               <div className="space-y-4">
                 {topCustomers.map((customer, index) => (
-                  <div key={index} className="flex items-center justify-between pb-4 border-b border-gray-100 last:border-0">
+                  <div
+                    key={index}
+                    className="flex items-center justify-between pb-4 border-b border-gray-100 last:border-0"
+                  >
                     <div className="flex items-center gap-3">
                       <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-50 to-indigo-50 flex items-center justify-center">
                         <span className="text-sm font-semibold text-blue-600">#{index + 1}</span>

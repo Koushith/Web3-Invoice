@@ -21,6 +21,8 @@ import {
   PinkMinimalTemplate,
   CompactPandaTemplate,
 } from './InvoiceTemplates';
+import { CloudflareTemplate } from './CloudflareTemplate';
+import { cn } from '@/lib/utils';
 
 interface DownloadInvoiceDialogProps {
   open: boolean;
@@ -29,7 +31,7 @@ interface DownloadInvoiceDialogProps {
   logo?: string | null;
 }
 
-type TemplateStyle = 'standard' | 'modern' | 'minimal' | 'artistic' | 'gradient' | 'glass' | 'elegant' | 'catty' | 'floral' | 'panda' | 'pinkminimal' | 'compactpanda';
+type TemplateStyle = 'standard' | 'modern' | 'minimal' | 'artistic' | 'gradient' | 'glass' | 'elegant' | 'catty' | 'floral' | 'panda' | 'pinkminimal' | 'compactpanda' | 'cloudflare';
 
 const templateNames: Record<TemplateStyle, string> = {
   standard: 'Standard',
@@ -44,6 +46,7 @@ const templateNames: Record<TemplateStyle, string> = {
   panda: 'Panda',
   pinkminimal: 'Pink Minimal',
   compactpanda: 'Compact',
+  cloudflare: 'Cloudflare',
 };
 
 export const DownloadInvoiceDialog = ({ open, onClose, invoice, logo }: DownloadInvoiceDialogProps) => {
@@ -116,6 +119,8 @@ export const DownloadInvoiceDialog = ({ open, onClose, invoice, logo }: Download
         return <PinkMinimalTemplate {...props} />;
       case 'compactpanda':
         return <CompactPandaTemplate {...props} />;
+      case 'cloudflare':
+        return <CloudflareTemplate {...props} />;
       default:
         return <StandardTemplate {...props} />;
     }
@@ -141,9 +146,32 @@ export const DownloadInvoiceDialog = ({ open, onClose, invoice, logo }: Download
 
       const imgProps = pdf.getImageProperties(dataUrl);
       const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+      const pdfHeight = pdf.internal.pageSize.getHeight();
 
-      pdf.addImage(dataUrl, 'PNG', 0, 0, pdfWidth, pdfHeight);
+      // Calculate the actual height needed for the image
+      const imgHeight = (imgProps.height * pdfWidth) / imgProps.width;
+
+      // If content fits on one page, add it normally
+      if (imgHeight <= pdfHeight) {
+        pdf.addImage(dataUrl, 'PNG', 0, 0, pdfWidth, imgHeight);
+      } else {
+        // Content needs multiple pages
+        let heightLeft = imgHeight;
+        let position = 0;
+
+        // Add first page
+        pdf.addImage(dataUrl, 'PNG', 0, position, pdfWidth, imgHeight);
+        heightLeft -= pdfHeight;
+
+        // Add additional pages as needed
+        while (heightLeft > 0) {
+          position = heightLeft - imgHeight; // negative value
+          pdf.addPage();
+          pdf.addImage(dataUrl, 'PNG', 0, position, pdfWidth, imgHeight);
+          heightLeft -= pdfHeight;
+        }
+      }
+
       pdf.save(`${invoice.invoiceNumber}-${templateNames[selectedTemplate]}.pdf`);
 
       onClose();
@@ -183,6 +211,7 @@ export const DownloadInvoiceDialog = ({ open, onClose, invoice, logo }: Download
                 <SelectItem value="panda">Panda</SelectItem>
                 <SelectItem value="pinkminimal">Pink Minimal</SelectItem>
                 <SelectItem value="compactpanda">Compact</SelectItem>
+                <SelectItem value="cloudflare">Cloudflare</SelectItem>
               </SelectContent>
             </Select>
             {invoice.templateStyle && invoice.templateStyle === selectedTemplate && (
@@ -227,7 +256,13 @@ export const DownloadInvoiceDialog = ({ open, onClose, invoice, logo }: Download
                     transition: 'transform 0.2s ease',
                   }}
                 >
-                  <div ref={previewRef} className="bg-white shadow-sm">
+                  <div
+                    ref={previewRef}
+                    className={cn(
+                      "shadow-sm",
+                      selectedTemplate === 'cloudflare' ? 'bg-[#F5F5F0]' : 'bg-white'
+                    )}
+                  >
                     {renderTemplate()}
                   </div>
                 </div>

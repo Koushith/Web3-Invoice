@@ -23,6 +23,7 @@ import {
   PinkMinimalTemplate,
   CompactPandaTemplate,
 } from '@/components/invoice/InvoiceTemplates';
+import { CloudflareTemplate } from '@/components/invoice/CloudflareTemplate';
 import { useGetCustomersQuery, useCreateInvoiceMutation, useGetInvoiceQuery, useUpdateInvoiceMutation, useGetOrganizationQuery } from '@/services/api.service';
 import { toast } from 'sonner';
 import { auth } from '@/lib/firebase';
@@ -31,8 +32,9 @@ import { toPng } from 'html-to-image';
 import { jsPDF } from 'jspdf';
 import { Currency } from '@/types/models';
 import { analytics } from '@/lib/analytics';
+import { CurrencyCombobox } from '@/components/ui/currency-combobox';
 
-export type InvoiceStyle = 'standard' | 'modern' | 'minimal' | 'artistic' | 'gradient' | 'glass' | 'elegant' | 'catty' | 'floral' | 'floraldark' | 'panda' | 'pinkminimal' | 'compactpanda';
+export type InvoiceStyle = 'standard' | 'modern' | 'minimal' | 'artistic' | 'gradient' | 'glass' | 'elegant' | 'catty' | 'floral' | 'floraldark' | 'panda' | 'pinkminimal' | 'compactpanda' | 'cloudflare';
 
 export interface InvoiceStyleProps {
   logo: string | null;
@@ -50,14 +52,19 @@ interface InvoiceData {
   invoiceNumber: string;
   date: string;
   dueDate: string;
-  memo: string;
+  memo?: string;
   fromCompany: string;
   fromAddress: string;
+  fromEmail?: string;
+  fromTaxId?: string;
   toCompany: string;
   toAddress: string;
+  toEmail?: string;
   items: InvoiceItem[];
   notes: string;
   terms: string;
+  currency?: string;
+  taxRate?: number;
 }
 
 type PaymentMethod = 'bank' | 'crypto' | 'other';
@@ -422,9 +429,32 @@ export const NewInvoice = () => {
 
       const imgProps = pdf.getImageProperties(imgData);
       const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+      const pdfHeight = pdf.internal.pageSize.getHeight();
 
-      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+      // Calculate the actual height needed for the image
+      const imgHeight = (imgProps.height * pdfWidth) / imgProps.width;
+
+      // If content fits on one page, add it normally
+      if (imgHeight <= pdfHeight) {
+        pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, imgHeight);
+      } else {
+        // Content needs multiple pages
+        let heightLeft = imgHeight;
+        let position = 0;
+
+        // Add first page
+        pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, imgHeight);
+        heightLeft -= pdfHeight;
+
+        // Add additional pages as needed
+        while (heightLeft > 0) {
+          position = heightLeft - imgHeight; // negative value
+          pdf.addPage();
+          pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, imgHeight);
+          heightLeft -= pdfHeight;
+        }
+      }
+
       pdf.save(`invoice-${invoiceData.invoiceNumber || 'draft'}.pdf`);
     } catch (error) {
       console.error('Error generating PDF:', error);
@@ -452,13 +482,25 @@ export const NewInvoice = () => {
       return;
     }
 
-    // Filter out completely empty items (rows that were never filled)
-    const validItems = invoiceData.items.filter((item) => item.description?.trim());
+    // Filter out completely empty items (rows that were never filled at all)
+    const nonEmptyItems = invoiceData.items.filter((item) =>
+      item.description?.trim() || item.quantity > 0 || item.price > 0
+    );
 
-    if (validItems.length === 0) {
+    if (nonEmptyItems.length === 0) {
       toast.error('Please add at least one line item');
       return;
     }
+
+    // Validate that all non-empty items have descriptions
+    const itemsWithoutDescription = nonEmptyItems.filter((item) => !item.description?.trim());
+    if (itemsWithoutDescription.length > 0) {
+      toast.error('All line items must have a description');
+      return;
+    }
+
+    // Now filter to get valid items (have description)
+    const validItems = nonEmptyItems.filter((item) => item.description?.trim());
 
     // Validate the items that have descriptions
     const invalidQuantity = validItems.filter((item) => item.quantity <= 0);
@@ -864,31 +906,25 @@ export const NewInvoice = () => {
                       </button>
                     </div>
                     {!showCustomCurrency ? (
-                      <Select value={currency} onValueChange={setCurrency}>
-                        <SelectTrigger className="h-9 text-sm">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {currencyType === 'fiat' ? (
-                            <>
-                              <SelectItem value="USD">USD - US Dollar</SelectItem>
-                              <SelectItem value="EUR">EUR - Euro</SelectItem>
-                              <SelectItem value="GBP">GBP - Pound</SelectItem>
-                              <SelectItem value="INR">INR - Rupee</SelectItem>
-                              <SelectItem value="CAD">CAD - Canadian Dollar</SelectItem>
-                              <SelectItem value="AUD">AUD - Australian Dollar</SelectItem>
-                              <SelectItem value="JPY">JPY - Yen</SelectItem>
-                            </>
-                          ) : (
-                            <>
-                              <SelectItem value="BTC">BTC - Bitcoin</SelectItem>
-                              <SelectItem value="ETH">ETH - Ethereum</SelectItem>
-                              <SelectItem value="USDT">USDT - Tether</SelectItem>
-                              <SelectItem value="USDC">USDC - USD Coin</SelectItem>
-                            </>
-                          )}
-                        </SelectContent>
-                      </Select>
+                      currencyType === 'fiat' ? (
+                        <CurrencyCombobox
+                          value={currency}
+                          onValueChange={setCurrency}
+                          className="w-full"
+                        />
+                      ) : (
+                        <Select value={currency} onValueChange={setCurrency}>
+                          <SelectTrigger className="h-9 text-sm">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="BTC">BTC - Bitcoin</SelectItem>
+                            <SelectItem value="ETH">ETH - Ethereum</SelectItem>
+                            <SelectItem value="USDT">USDT - Tether</SelectItem>
+                            <SelectItem value="USDC">USDC - USD Coin</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      )
                     ) : (
                       <Input
                         placeholder="Enter code"
@@ -1045,26 +1081,33 @@ export const NewInvoice = () => {
               <div className="p-4 md:p-5">
                 <div className="space-y-3">
                   {invoiceData.items.map((item, index) => {
-                    const hasEmptyDescription = !item.description?.trim();
-                    const hasInvalidQuantity = item.quantity <= 0;
+                    // Check if item has been touched (has any value)
+                    const isItemTouched = item.description?.trim() || item.quantity > 0 || item.price > 0;
+                    const hasEmptyDescription = !item.description?.trim() && isItemTouched;
+                    const hasInvalidQuantity = item.quantity <= 0 && isItemTouched;
                     const hasInvalidPrice = item.price < 0;
 
                     return (
                       <div key={index} className="border border-gray-200 rounded-md p-3 md:p-4">
                         <div className="space-y-3">
-                          <Input
-                            placeholder="Description"
-                            value={item.description}
-                            onChange={(e) => {
-                              const newItems = [...invoiceData.items];
-                              newItems[index].description = e.target.value;
-                              setInvoiceData({ ...invoiceData, items: newItems });
-                            }}
-                            className={cn(
-                              'h-10',
-                              hasEmptyDescription && item.description !== '' ? 'border-red-300' : ''
+                          <div>
+                            <Input
+                              placeholder="Description *"
+                              value={item.description}
+                              onChange={(e) => {
+                                const newItems = [...invoiceData.items];
+                                newItems[index].description = e.target.value;
+                                setInvoiceData({ ...invoiceData, items: newItems });
+                              }}
+                              className={cn(
+                                'h-10',
+                                hasEmptyDescription && 'border-red-500 focus-visible:ring-red-500'
+                              )}
+                            />
+                            {hasEmptyDescription && (
+                              <p className="text-xs text-red-600 mt-1">Description is required</p>
                             )}
-                          />
+                          </div>
                           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                             <div>
                               <Label className="text-xs text-gray-600 mb-1 block">Qty</Label>
@@ -1078,8 +1121,11 @@ export const NewInvoice = () => {
                                   newItems[index].quantity = Number(e.target.value);
                                   setInvoiceData({ ...invoiceData, items: newItems });
                                 }}
-                                className={cn('h-10', hasInvalidQuantity ? 'border-red-300' : '')}
+                                className={cn('h-10', hasInvalidQuantity && 'border-red-500 focus-visible:ring-red-500')}
                               />
+                              {hasInvalidQuantity && (
+                                <p className="text-xs text-red-600 mt-1">Qty must be &gt; 0</p>
+                              )}
                             </div>
                             <div>
                               <Label className="text-xs text-gray-600 mb-1 block">Unit price</Label>
@@ -1092,8 +1138,11 @@ export const NewInvoice = () => {
                                   newItems[index].price = Number(e.target.value);
                                   setInvoiceData({ ...invoiceData, items: newItems });
                                 }}
-                                className={cn('h-10', hasInvalidPrice ? 'border-red-300' : '')}
+                                className={cn('h-10', hasInvalidPrice && 'border-red-500 focus-visible:ring-red-500')}
                               />
+                              {hasInvalidPrice && (
+                                <p className="text-xs text-red-600 mt-1">Price cannot be negative</p>
+                              )}
                             </div>
                             <div className="col-span-2 sm:col-span-1">
                               <Label className="text-xs text-gray-600 mb-1 block">Amount</Label>
@@ -1413,6 +1462,7 @@ export const NewInvoice = () => {
                           <SelectItem value="panda">Panda</SelectItem>
                           <SelectItem value="pinkminimal">Pink Minimal</SelectItem>
                           <SelectItem value="compactpanda">Compact</SelectItem>
+                          <SelectItem value="cloudflare">Cloudflare</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -1501,7 +1551,10 @@ export const NewInvoice = () => {
                     >
                       <div
                         ref={printRef}
-                        className="bg-white invoice-preview shadow-sm"
+                        className={cn(
+                          "invoice-preview shadow-sm",
+                          invoiceStyle === 'cloudflare' ? 'bg-[#F5F5F0]' : 'bg-white'
+                        )}
                         style={{ width: '210mm', minHeight: '297mm' }}
                       >
                     {invoiceStyle === 'standard' && (
@@ -1650,6 +1703,18 @@ export const NewInvoice = () => {
                     )}
                     {invoiceStyle === 'compactpanda' && (
                       <CompactPandaTemplate
+                        logo={logo}
+                        invoiceData={{
+                          ...invoiceData,
+                          invoiceNumber: `${invoicePrefix}-${invoiceData.invoiceNumber || '001'}`,
+                          currency: showCustomCurrency && customCurrency ? customCurrency : currency,
+                          taxRate: taxRate,
+                        }}
+                        paymentDetails={paymentDetails}
+                      />
+                    )}
+                    {invoiceStyle === 'cloudflare' && (
+                      <CloudflareTemplate
                         logo={logo}
                         invoiceData={{
                           ...invoiceData,
@@ -1874,6 +1939,17 @@ export const NewInvoice = () => {
                         )}
                         {invoiceStyle === 'compactpanda' && (
                           <CompactPandaTemplate
+                            logo={logo}
+                            invoiceData={{
+                              ...invoiceData,
+                              invoiceNumber: `${invoicePrefix}-${invoiceData.invoiceNumber || '001'}`,
+                              currency: showCustomCurrency && customCurrency ? customCurrency : currency,
+                            }}
+                            paymentDetails={paymentDetails}
+                          />
+                        )}
+                        {invoiceStyle === 'cloudflare' && (
+                          <CloudflareTemplate
                             logo={logo}
                             invoiceData={{
                               ...invoiceData,
