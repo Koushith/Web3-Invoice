@@ -4,8 +4,8 @@
   "main": "src/index.ts",
   "type": "module",
   "scripts": {
-    "dev": "nodemon --exec tsx src/index.ts",
-    "start": "tsx src/index.ts",
+    "dev": "NODE_ENV=development nodemon --exec tsx src/index.ts",
+    "start": "NODE_ENV=production tsx src/index.ts",
     "build": "tsc",
     "test": "echo \"Error: no test specified\" && exit 1",
     "seed": "tsx src/scripts/seedData.ts"
