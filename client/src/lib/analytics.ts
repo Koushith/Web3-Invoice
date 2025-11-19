@@ -37,8 +37,8 @@ class Analytics {
 
     const GA_MEASUREMENT_ID = import.meta.env.VITE_GA_MEASUREMENT_ID;
 
-    // Initialize Google Analytics (GA4)
-    if (GA_MEASUREMENT_ID && isProduction) {
+    // Initialize Google Analytics (GA4) - now works in all environments
+    if (GA_MEASUREMENT_ID) {
       // Load GA4 script
       const script = document.createElement('script');
       script.async = true;
@@ -57,7 +57,9 @@ class Analytics {
         send_page_view: false, // We'll handle page views manually
       });
 
-      console.log('[Analytics] Google Analytics initialized');
+      console.log('[Analytics] Google Analytics initialized with ID:', GA_MEASUREMENT_ID);
+    } else {
+      console.warn('[Analytics] GA_MEASUREMENT_ID not found in environment variables');
     }
 
     // Example: Mixpanel (uncomment if using)
@@ -73,9 +75,9 @@ class Analytics {
    * Track page view
    */
   pageView(path: string, title?: string) {
+    // Always log in development for debugging
     if (!isProduction) {
       console.log('[Analytics] Page View:', { path, title });
-      return;
     }
 
     // Google Analytics page view
@@ -91,9 +93,9 @@ class Analytics {
    * Track custom event
    */
   track(eventName: string, properties?: EventProperties) {
+    // Always log in development for debugging
     if (!isProduction) {
       console.log('[Analytics] Event:', eventName, properties);
-      return;
     }
 
     // Google Analytics event
@@ -111,9 +113,9 @@ class Analytics {
    * Identify user
    */
   identify(userId: string, properties?: UserProperties) {
+    // Always log in development for debugging
     if (!isProduction) {
       console.log('[Analytics] Identify:', userId, properties);
-      return;
     }
 
     // Google Analytics user identification

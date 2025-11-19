@@ -16,6 +16,8 @@ import {
   Brush,
   Camera,
   Quote,
+  Menu,
+  X,
 } from 'lucide-react';
 
 // Import landing page images
@@ -34,6 +36,7 @@ const screenshots = [
 export const LandingPage = () => {
   const navigate = useNavigate();
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // Auto-change carousel every 3 seconds
   useEffect(() => {
@@ -44,19 +47,27 @@ export const LandingPage = () => {
     return () => clearInterval(interval);
   }, []);
 
+  // Close mobile menu when clicking on a link
+  const handleMobileMenuClick = () => {
+    setMobileMenuOpen(false);
+  };
+
   return (
     <div className="min-h-screen bg-white">
       {/* Nav */}
       <header className="fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
+            {/* Logo */}
             <button className="flex items-center gap-2 group" onClick={() => navigate('/reports')}>
               <div className="w-8 h-8 bg-[#635BFF] rounded-lg flex items-center justify-center">
                 <span className="text-white text-sm font-bold">D</span>
               </div>
               <h1 className="text-xl font-bold text-gray-900">DefInvoice</h1>
             </button>
-            <nav className="flex items-center gap-8">
+
+            {/* Desktop Navigation */}
+            <nav className="hidden md:flex items-center gap-8">
               <a href="#features" className="text-base font-medium text-gray-600 hover:text-gray-900 transition-colors">
                 Features
               </a>
@@ -69,7 +80,40 @@ export const LandingPage = () => {
                 GitHub
               </a>
             </nav>
+
+            {/* Mobile Menu Button */}
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="md:hidden p-2 text-gray-600 hover:text-gray-900 transition-colors"
+              aria-label="Toggle menu"
+            >
+              {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+            </button>
           </div>
+
+          {/* Mobile Navigation Menu */}
+          {mobileMenuOpen && (
+            <div className="md:hidden border-t border-gray-200 py-4">
+              <nav className="flex flex-col gap-4">
+                <a
+                  href="#features"
+                  onClick={handleMobileMenuClick}
+                  className="text-base font-medium text-gray-600 hover:text-gray-900 transition-colors px-4 py-2"
+                >
+                  Features
+                </a>
+                <a
+                  href="https://github.com/Koushith/DefinVoice"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={handleMobileMenuClick}
+                  className="text-base font-medium text-gray-600 hover:text-gray-900 transition-colors px-4 py-2"
+                >
+                  GitHub
+                </a>
+              </nav>
+            </div>
+          )}
         </div>
       </header>
 
