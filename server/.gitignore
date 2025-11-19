@@ -40,3 +40,4 @@ serviceAccountKey.json
 # Misc
 *.pem
 .cache/
+.claude

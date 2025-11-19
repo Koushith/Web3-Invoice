@@ -6,6 +6,7 @@ import { PersistGate } from 'redux-persist/integration/react';
 import { store, persistor } from './store/store';
 import './index.css';
 import App from './App.tsx';
+import './lib/logger'; // Initialize logger to disable console.logs in production
 
 // Error Boundary Component
 class ErrorBoundary extends Component<{ children: ReactNode }, { hasError: boolean }> {

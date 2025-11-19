@@ -28,6 +28,10 @@ export const NewCustomerScreen = () => {
     },
     preferredPaymentMethod: '',
     walletAddress: '',
+    invoiceSettings: {
+      prefix: '',
+      nextNumber: '',
+    },
     notes: '',
   });
 
@@ -39,6 +43,13 @@ export const NewCustomerScreen = () => {
     setFormData((prev) => ({
       ...prev,
       address: { ...prev.address, [field]: value },
+    }));
+  };
+
+  const handleInvoiceSettingsChange = (field: string, value: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      invoiceSettings: { ...prev.invoiceSettings, [field]: value },
     }));
   };
 
@@ -61,6 +72,10 @@ export const NewCustomerScreen = () => {
         address: formData.address.street ? formData.address : undefined,
         preferredPaymentMethod: formData.preferredPaymentMethod || undefined,
         walletAddress: formData.walletAddress || undefined,
+        invoiceSettings: (formData.invoiceSettings.prefix || formData.invoiceSettings.nextNumber) ? {
+          prefix: formData.invoiceSettings.prefix || undefined,
+          nextNumber: formData.invoiceSettings.nextNumber ? parseInt(formData.invoiceSettings.nextNumber) : undefined,
+        } : undefined,
         notes: formData.notes || undefined,
       };
 
@@ -286,6 +301,43 @@ export const NewCustomerScreen = () => {
                   <p className="text-xs text-gray-500 mt-1.5">For digital currency payments</p>
                 </div>
               )}
+            </div>
+          </div>
+
+          {/* Invoice Settings Section */}
+          <div className="mb-8 pb-8 border-b border-gray-200">
+            <div className="mb-4">
+              <h2 className="text-base font-semibold text-gray-900">Invoice settings</h2>
+            </div>
+            <p className="text-sm text-gray-600 mb-6">
+              Customize invoice numbering for this customer.
+            </p>
+
+            <div className="space-y-4">
+              <div>
+                <label className="text-sm font-medium text-gray-700 block mb-1.5">Invoice prefix</label>
+                <Input
+                  placeholder="ACME"
+                  value={formData.invoiceSettings.prefix}
+                  onChange={(e) => handleInvoiceSettingsChange('prefix', e.target.value.toUpperCase())}
+                  className="h-8 text-sm uppercase"
+                  maxLength={10}
+                />
+                <p className="text-xs text-gray-500 mt-1.5">Custom prefix for invoices (e.g., ACME-001)</p>
+              </div>
+
+              <div>
+                <label className="text-sm font-medium text-gray-700 block mb-1.5">Starting invoice number</label>
+                <Input
+                  type="number"
+                  placeholder="1"
+                  min="1"
+                  value={formData.invoiceSettings.nextNumber}
+                  onChange={(e) => handleInvoiceSettingsChange('nextNumber', e.target.value)}
+                  className="h-8 text-sm"
+                />
+                <p className="text-xs text-gray-500 mt-1.5">The next invoice number for this customer</p>
+              </div>
             </div>
           </div>
 

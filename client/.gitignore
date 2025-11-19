@@ -34,3 +34,6 @@ dist-ssr
 # Firebase
 firebase-credentials.json
 *-firebase-adminsdk-*.json
+
+.next
+.claude

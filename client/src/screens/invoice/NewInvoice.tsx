@@ -3,10 +3,11 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Trash2, Plus, ArrowLeft, Loader2, Printer, Download, ChevronDown, ChevronUp } from 'lucide-react';
+import { Trash2, Plus, ArrowLeft, Loader2, Printer, Download, ChevronDown, ChevronUp, UserPlus, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useNavigate, useParams } from 'react-router-dom';
+import { CreateCustomerDialog } from '@/components/customer/CreateCustomerDialog';
 import {
   StandardTemplate,
   ModernTemplate,
@@ -29,6 +30,7 @@ import { useReactToPrint } from 'react-to-print';
 import { toPng } from 'html-to-image';
 import { jsPDF } from 'jspdf';
 import { Currency } from '@/types/models';
+import { analytics } from '@/lib/analytics';
 
 export type InvoiceStyle = 'standard' | 'modern' | 'minimal' | 'artistic' | 'gradient' | 'glass' | 'elegant' | 'catty' | 'floral' | 'floraldark' | 'panda' | 'pinkminimal' | 'compactpanda';
 
@@ -101,6 +103,19 @@ export const NewInvoice = () => {
   const [showAdditionalOptions, setShowAdditionalOptions] = useState(false);
   const [invoicePrefix, setInvoicePrefix] = useState('INV');
   const [taxRate, setTaxRate] = useState(0);
+  const [showCreateCustomerDialog, setShowCreateCustomerDialog] = useState(false);
+  const [validationErrors, setValidationErrors] = useState({
+    customer: '',
+    invoicePrefix: '',
+    invoiceNumber: '',
+    date: '',
+  });
+  const [touched, setTouched] = useState({
+    customer: false,
+    invoicePrefix: false,
+    invoiceNumber: false,
+    date: false,
+  });
   const [invoiceData, setInvoiceData] = useState({
     invoiceNumber: '',
     date: new Date().toISOString().split('T')[0],
@@ -137,6 +152,41 @@ export const NewInvoice = () => {
 
   const printRef = useRef<HTMLDivElement>(null);
 
+  // Validation functions
+  const validateField = (field: string, value: any) => {
+    let error = '';
+
+    switch (field) {
+      case 'customer':
+        if (!value) {
+          error = 'Please select a customer';
+        }
+        break;
+      case 'invoicePrefix':
+        if (!value || !value.trim()) {
+          error = 'Prefix is required';
+        }
+        break;
+      case 'invoiceNumber':
+        if (!value || !value.trim()) {
+          error = 'Invoice number is required';
+        }
+        break;
+      case 'date':
+        if (!value) {
+          error = 'Invoice date is required';
+        }
+        break;
+    }
+
+    setValidationErrors(prev => ({ ...prev, [field]: error }));
+    return !error;
+  };
+
+  const markFieldAsTouched = (field: string) => {
+    setTouched(prev => ({ ...prev, [field]: true }));
+  };
+
   // Wait for Firebase auth
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((user) => {
@@ -150,6 +200,9 @@ export const NewInvoice = () => {
   // Fetch customers
   const { data: customersData } = useGetCustomersQuery({ page: 1, limit: 100 }, { skip: !isAuthReady });
   const customers = customersData?.data || [];
+
+  // Get selected customer data
+  const selectedCustomer = customers.find(c => c._id === selectedCustomerId);
 
   // Fetch organization data
   const { data: organization } = useGetOrganizationQuery(undefined, {
@@ -167,6 +220,23 @@ export const NewInvoice = () => {
       setPaymentDetails((prev) => ({ ...prev, method: 'bank' }));
     }
   }, [currencyType]);
+
+  // Update invoice prefix and number when customer with custom settings is selected
+  useEffect(() => {
+    if (!isEditMode && selectedCustomer?.invoiceSettings) {
+      // Customer has custom invoice settings
+      if (selectedCustomer.invoiceSettings.prefix) {
+        setInvoicePrefix(selectedCustomer.invoiceSettings.prefix);
+      }
+      if (selectedCustomer.invoiceSettings.nextNumber) {
+        const nextNumber = String(selectedCustomer.invoiceSettings.nextNumber).padStart(3, '0');
+        setInvoiceData((prev) => ({
+          ...prev,
+          invoiceNumber: nextNumber,
+        }));
+      }
+    }
+  }, [selectedCustomerId, selectedCustomer, isEditMode]);
 
   // Pre-populate from fields with organization data
   useEffect(() => {
@@ -363,19 +433,22 @@ export const NewInvoice = () => {
   };
 
   const handleCreateInvoice = async (saveAsDraft = false) => {
-    // Validation
-    if (!selectedCustomerId) {
-      toast.error('Please select a customer');
-      return;
-    }
+    // Mark all fields as touched to show validation errors
+    setTouched({
+      customer: true,
+      invoicePrefix: true,
+      invoiceNumber: true,
+      date: true,
+    });
 
-    if (!invoiceData.invoiceNumber?.trim()) {
-      toast.error('Please enter an invoice number');
-      return;
-    }
+    // Validate all required fields
+    const isCustomerValid = validateField('customer', selectedCustomerId);
+    const isPrefixValid = validateField('invoicePrefix', invoicePrefix);
+    const isInvoiceNumberValid = validateField('invoiceNumber', invoiceData.invoiceNumber);
+    const isDateValid = validateField('date', invoiceData.date);
 
-    if (!invoiceData.date) {
-      toast.error('Please select an invoice date');
+    if (!isCustomerValid || !isPrefixValid || !isInvoiceNumberValid || !isDateValid) {
+      toast.error('Please fill in all required fields');
       return;
     }
 
@@ -441,11 +514,22 @@ export const NewInvoice = () => {
         // Update existing invoice
         await updateInvoice({ id: invoiceId, data: invoicePayload }).unwrap();
         toast.success(saveAsDraft ? 'Draft saved successfully' : 'Invoice updated successfully');
+
+        // Track analytics
+        analytics.events.invoiceUpdated(invoiceId);
+
         navigate(`/invoices/${invoiceId}`);
       } else {
         // Create new invoice
-        await createInvoice(invoicePayload).unwrap();
+        const response = await createInvoice(invoicePayload).unwrap();
         toast.success(saveAsDraft ? 'Draft saved successfully' : 'Invoice created successfully');
+
+        // Track analytics
+        const createdInvoiceId = (response as any)?._id || (response as any)?.id;
+        if (createdInvoiceId) {
+          analytics.events.invoiceCreated(createdInvoiceId, total, finalCurrency);
+        }
+
         navigate('/invoices');
       }
     } catch (error: any) {
@@ -549,23 +633,106 @@ export const NewInvoice = () => {
                 <h2 className="text-sm font-semibold text-gray-900">Customer</h2>
               </div>
               <div className="p-4 md:p-5">
-                <Select value={selectedCustomerId} onValueChange={setSelectedCustomerId}>
-                  <SelectTrigger className="h-9 text-sm">
-                    <SelectValue placeholder="Find or add a customer..." />
+                <Select
+                  value={selectedCustomerId}
+                  onValueChange={(value) => {
+                    if (value === '__create_new__') {
+                      setShowCreateCustomerDialog(true);
+                      return;
+                    }
+                    setSelectedCustomerId(value);
+                    markFieldAsTouched('customer');
+                    validateField('customer', value);
+                  }}
+                >
+                  <SelectTrigger
+                    className={cn(
+                      'h-9 text-sm',
+                      touched.customer && validationErrors.customer ? 'border-red-500 focus:ring-red-500' : ''
+                    )}
+                    onBlur={() => {
+                      markFieldAsTouched('customer');
+                      validateField('customer', selectedCustomerId);
+                    }}
+                  >
+                    <SelectValue placeholder={customers.length === 0 ? "No customers - Create one first" : "Select a customer..."} />
                   </SelectTrigger>
                   <SelectContent>
-                    {customers.map((customer: any) => (
-                      <SelectItem key={customer._id || customer.id} value={customer._id || customer.id}>
-                        <div className="flex flex-col">
-                          <span className="font-medium">{customer.company || customer.name}</span>
-                          <span className="text-xs text-gray-500">{customer.email}</span>
+                    {customers.length > 0 ? (
+                      <>
+                        {/* Customer List */}
+                        {customers.map((customer: any) => (
+                          <SelectItem key={customer._id || customer.id} value={customer._id || customer.id}>
+                            <div className="flex flex-col">
+                              <span className="font-medium">{customer.company || customer.name}</span>
+                              <span className="text-xs text-gray-500">{customer.email}</span>
+                            </div>
+                          </SelectItem>
+                        ))}
+
+                        {/* Divider */}
+                        <div className="my-1 border-t border-gray-100" />
+
+                        {/* Create Customer Option */}
+                        <SelectItem value="__create_new__" className="text-[#635BFF] font-medium">
+                          <div className="flex items-center">
+                            <UserPlus className="w-4 h-4 mr-2" />
+                            Create new customer
+                          </div>
+                        </SelectItem>
+                      </>
+                    ) : (
+                      /* Empty State */
+                      <div className="px-4 py-8 text-center">
+                        <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gray-100 mb-3">
+                          <UserPlus className="w-6 h-6 text-gray-400" />
                         </div>
-                      </SelectItem>
-                    ))}
+                        <h4 className="text-sm font-semibold text-gray-900 mb-1">No customers yet</h4>
+                        <p className="text-xs text-gray-500 mb-4 max-w-[220px] mx-auto">
+                          Create your first customer to start sending invoices
+                        </p>
+                        <Button
+                          type="button"
+                          size="sm"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            setShowCreateCustomerDialog(true);
+                          }}
+                          className="h-8 bg-[#635BFF] hover:bg-[#5045e5] text-white"
+                        >
+                          <UserPlus className="w-4 h-4 mr-2" />
+                          Create customer
+                        </Button>
+                      </div>
+                    )}
                   </SelectContent>
                 </Select>
+                {touched.customer && validationErrors.customer && (
+                  <p className="text-xs text-red-600 mt-1.5">{validationErrors.customer}</p>
+                )}
+                {selectedCustomer?.invoiceSettings && !isEditMode && (
+                  <div className="mt-2 p-2 bg-blue-50 border border-blue-100 rounded-md">
+                    <p className="text-xs text-blue-700">
+                      <span className="font-medium">Next invoice:</span>{' '}
+                      {selectedCustomer.invoiceSettings.prefix || invoicePrefix}-
+                      {String(selectedCustomer.invoiceSettings.nextNumber || 1).padStart(3, '0')}
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
+
+            {/* Create Customer Dialog */}
+            <CreateCustomerDialog
+              open={showCreateCustomerDialog}
+              onOpenChange={setShowCreateCustomerDialog}
+              onCustomerCreated={(customerId) => {
+                setSelectedCustomerId(customerId);
+                markFieldAsTouched('customer');
+                validateField('customer', customerId);
+              }}
+            />
 
             {/* Invoice Details - Combined */}
             <div className="bg-white border border-gray-200 rounded-lg">
@@ -578,17 +745,61 @@ export const NewInvoice = () => {
                       <Input
                         placeholder="INV"
                         value={invoicePrefix}
-                        onChange={(e) => setInvoicePrefix(e.target.value.toUpperCase())}
-                        className="h-9 w-20 text-sm font-semibold text-gray-900"
+                        onChange={(e) => {
+                          setInvoicePrefix(e.target.value.toUpperCase());
+                          if (touched.invoicePrefix) {
+                            validateField('invoicePrefix', e.target.value.toUpperCase());
+                          }
+                        }}
+                        onBlur={() => {
+                          markFieldAsTouched('invoicePrefix');
+                          validateField('invoicePrefix', invoicePrefix);
+                        }}
+                        className={cn(
+                          'h-9 w-20 text-sm font-semibold text-gray-900',
+                          touched.invoicePrefix && validationErrors.invoicePrefix ? 'border-red-500 focus-visible:ring-red-500' : ''
+                        )}
                       />
                       <span className="flex items-center text-gray-300">-</span>
-                      <Input
-                        placeholder="001"
-                        value={invoiceData.invoiceNumber}
-                        onChange={(e) => setInvoiceData({ ...invoiceData, invoiceNumber: e.target.value })}
-                        className="h-9 flex-1 text-sm font-semibold text-gray-900"
-                      />
+                      <div className="flex-1 relative">
+                        <Input
+                          placeholder="001"
+                          value={invoiceData.invoiceNumber}
+                          onChange={(e) => {
+                            setInvoiceData({ ...invoiceData, invoiceNumber: e.target.value });
+                            if (touched.invoiceNumber) {
+                              validateField('invoiceNumber', e.target.value);
+                            }
+                          }}
+                          onBlur={() => {
+                            markFieldAsTouched('invoiceNumber');
+                            validateField('invoiceNumber', invoiceData.invoiceNumber);
+                          }}
+                          className={cn(
+                            'h-9 text-sm font-semibold text-gray-900 pr-8',
+                            touched.invoiceNumber && validationErrors.invoiceNumber && !invoiceData.invoiceNumber ? 'border-red-500 focus-visible:ring-red-500' :
+                            invoiceData.invoiceNumber ? 'border-green-200 bg-green-50/30 focus-visible:ring-green-200' : ''
+                          )}
+                        />
+                        {invoiceData.invoiceNumber && (
+                          <div className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none">
+                            <Check className="w-4 h-4 text-green-600" />
+                          </div>
+                        )}
+                      </div>
                     </div>
+                    {(touched.invoicePrefix && validationErrors.invoicePrefix && !invoicePrefix) || (touched.invoiceNumber && validationErrors.invoiceNumber && !invoiceData.invoiceNumber) ? (
+                      <p className="text-xs text-red-600 mt-1">
+                        {validationErrors.invoicePrefix || validationErrors.invoiceNumber}
+                      </p>
+                    ) : invoiceData.invoiceNumber && !isEditMode ? (
+                      <p className="text-xs text-gray-500 mt-1">
+                        <span className="inline-flex items-center gap-1">
+                          <span className="inline-block w-1.5 h-1.5 rounded-full bg-green-500"></span>
+                          Auto-generated • You can edit this
+                        </span>
+                      </p>
+                    ) : null}
                   </div>
 
                   {/* Issue Date */}
@@ -597,9 +808,24 @@ export const NewInvoice = () => {
                     <Input
                       type="date"
                       value={invoiceData.date}
-                      onChange={(e) => setInvoiceData({ ...invoiceData, date: e.target.value })}
-                      className="h-9 text-sm"
+                      onChange={(e) => {
+                        setInvoiceData({ ...invoiceData, date: e.target.value });
+                        if (touched.date) {
+                          validateField('date', e.target.value);
+                        }
+                      }}
+                      onBlur={() => {
+                        markFieldAsTouched('date');
+                        validateField('date', invoiceData.date);
+                      }}
+                      className={cn(
+                        'h-9 text-sm',
+                        touched.date && validationErrors.date ? 'border-red-500 focus-visible:ring-red-500' : ''
+                      )}
                     />
+                    {touched.date && validationErrors.date && (
+                      <p className="text-xs text-red-600 mt-1">{validationErrors.date}</p>
+                    )}
                   </div>
 
                   {/* Currency Type */}

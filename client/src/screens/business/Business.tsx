@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Loader2, Building2, ArrowLeft, Upload } from 'lucide-react';
+import { DetailSkeleton } from '@/components/ui/skeleton';
 import { useGetOrganizationQuery, useUpdateOrganizationMutation } from '@/services/api.service';
 import { toast } from 'sonner';
 import { auth } from '@/lib/firebase';
@@ -102,8 +103,10 @@ export const BusinessScreen = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#FEFFFE]">
-        <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
+      <div className="min-h-screen bg-[#FEFFFE]">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 md:px-8 py-6 md:py-8">
+          <DetailSkeleton />
+        </div>
       </div>
     );
   }

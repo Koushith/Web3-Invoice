@@ -88,6 +88,7 @@ export const createInvoice = asyncHandler(async (req: Request, res: Response) =>
   const user = req.user?.user;
   const {
     customerId,
+    invoiceNumber: providedInvoiceNumber,
     issueDate,
     dueDate,
     currency,
@@ -124,12 +125,44 @@ export const createInvoice = asyncHandler(async (req: Request, res: Response) =>
     throw new AppError('Organization not found', 404, 'ORG_NOT_FOUND');
   }
 
-  // Generate invoice number
-  const invoiceNumber = `${organization.invoicePrefix}-${String(organization.invoiceNumberSequence).padStart(4, '0')}`;
+  // Determine invoice number - use provided or generate new one
+  let invoiceNumber: string;
 
-  // Increment sequence
-  organization.invoiceNumberSequence += 1;
-  await organization.save();
+  if (providedInvoiceNumber) {
+    // Use provided invoice number, but check for duplicates
+    const existingInvoice = await Invoice.findOne({
+      organizationId: user.organizationId,
+      invoiceNumber: providedInvoiceNumber,
+    });
+
+    if (existingInvoice) {
+      throw new AppError(
+        `Invoice number ${providedInvoiceNumber} already exists. Please use a different number.`,
+        409,
+        'DUPLICATE_INVOICE_NUMBER'
+      );
+    }
+
+    invoiceNumber = providedInvoiceNumber;
+  } else {
+    // Auto-generate invoice number
+    // Check if customer has custom invoice settings
+    if (customer.invoiceSettings?.prefix && customer.invoiceSettings?.nextNumber) {
+      // Use customer-specific invoice numbering
+      invoiceNumber = `${customer.invoiceSettings.prefix}-${String(customer.invoiceSettings.nextNumber).padStart(3, '0')}`;
+
+      // Increment customer's next invoice number
+      customer.invoiceSettings.nextNumber += 1;
+      await customer.save();
+    } else {
+      // Use organization-level invoice numbering
+      invoiceNumber = `${organization.invoicePrefix}-${String(organization.invoiceNumberSequence).padStart(4, '0')}`;
+
+      // Increment organization sequence
+      organization.invoiceNumberSequence += 1;
+      await organization.save();
+    }
+  }
 
   // Calculate line item amounts
   const processedLineItems = lineItems.map((item: any) => ({

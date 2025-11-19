@@ -195,6 +195,7 @@ export interface Subscription {
 // ==================== Customer ====================
 
 export interface Customer extends BaseEntity, SoftDeletable {
+  _id?: string; // MongoDB ID
   name: string;
   email: string;
   phone?: string;
@@ -204,6 +205,10 @@ export interface Customer extends BaseEntity, SoftDeletable {
   address?: Address;
   walletAddress?: string;
   preferredPaymentMethod?: string;
+  invoiceSettings?: {
+    prefix?: string;
+    nextNumber?: number;
+  };
   notes?: string;
   organizationId: string;
   metadata?: Record<string, any>;

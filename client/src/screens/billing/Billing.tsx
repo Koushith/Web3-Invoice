@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Check, Sparkles, Zap, Globe, TrendingUp } from 'lucide-react';
+import { ArrowLeft, Check, Sparkles, Zap, Globe, TrendingUp, Building2, ArrowRight } from 'lucide-react';
 
 export const BillingScreen = () => {
   const navigate = useNavigate();
@@ -42,6 +42,28 @@ export const BillingScreen = () => {
         <div className="mb-8">
           <h1 className="text-[28px] font-semibold text-gray-900">Billing & Plans</h1>
           <p className="text-sm text-gray-600 mt-1">Manage your subscription and billing preferences</p>
+        </div>
+
+        {/* Complete Profile Banner */}
+        <div className="bg-gradient-to-r from-indigo-50 via-purple-50 to-pink-50 rounded-xl border border-indigo-100 p-6 mb-8">
+          <div className="flex items-start gap-4">
+            <div className="w-10 h-10 rounded-lg bg-white border border-indigo-200 flex items-center justify-center flex-shrink-0">
+              <Building2 className="w-5 h-5 text-indigo-600" />
+            </div>
+            <div className="flex-1">
+              <h3 className="text-base font-semibold text-gray-900 mb-1">Complete your business profile</h3>
+              <p className="text-sm text-gray-700 leading-relaxed mb-4">
+                Before you start invoicing, take a moment to add your business information, logo, and contact details. This will make your invoices look professional and build trust with your clients.
+              </p>
+              <button
+                onClick={() => navigate('/business')}
+                className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg transition-colors"
+              >
+                Set up business profile
+                <ArrowRight className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
         </div>
 
         {/* Hero Message */}

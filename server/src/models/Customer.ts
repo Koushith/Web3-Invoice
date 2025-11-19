@@ -13,6 +13,10 @@ export interface ICustomer extends Document {
   tags?: string[];
   preferredPaymentMethod?: string; // Preferred payment method
   walletAddress?: string; // For crypto payments
+  invoiceSettings?: {
+    prefix?: string; // Custom invoice prefix for this customer (e.g., "ACME")
+    nextNumber?: number; // Next invoice number for this customer
+  };
   totalInvoiced: number;
   totalPaid: number;
   isActive: boolean;
@@ -73,6 +77,17 @@ const CustomerSchema: Schema = new Schema(
     walletAddress: {
       type: String, // Ethereum/crypto wallet
       trim: true,
+    },
+    invoiceSettings: {
+      prefix: {
+        type: String,
+        trim: true,
+        uppercase: true,
+      },
+      nextNumber: {
+        type: Number,
+        min: 1,
+      },
     },
     totalInvoiced: {
       type: Number,

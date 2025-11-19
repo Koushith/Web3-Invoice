@@ -78,7 +78,7 @@ export const getCustomer = asyncHandler(async (req: Request, res: Response) => {
  */
 export const createCustomer = asyncHandler(async (req: Request, res: Response) => {
   const user = req.user?.user;
-  const { name, email, phone, company, address, taxId, notes, tags, preferredPaymentMethod, walletAddress } = req.body;
+  const { name, email, phone, company, address, taxId, notes, tags, preferredPaymentMethod, walletAddress, invoiceSettings } = req.body;
 
   if (!user?.organizationId) {
     throw new AppError('Organization not found', 404, 'ORG_NOT_FOUND');
@@ -111,6 +111,7 @@ export const createCustomer = asyncHandler(async (req: Request, res: Response) =
     tags,
     preferredPaymentMethod,
     walletAddress,
+    invoiceSettings,
   });
 
   res.status(201).json({
@@ -125,7 +126,7 @@ export const createCustomer = asyncHandler(async (req: Request, res: Response) =
 export const updateCustomer = asyncHandler(async (req: Request, res: Response) => {
   const user = req.user?.user;
   const { id } = req.params;
-  const { name, email, phone, company, address, taxId, notes, tags, preferredPaymentMethod, walletAddress } = req.body;
+  const { name, email, phone, company, address, taxId, notes, tags, preferredPaymentMethod, walletAddress, invoiceSettings } = req.body;
 
   if (!user?.organizationId) {
     throw new AppError('Organization not found', 404, 'ORG_NOT_FOUND');
@@ -147,7 +148,7 @@ export const updateCustomer = asyncHandler(async (req: Request, res: Response) =
 
   const customer = await Customer.findOneAndUpdate(
     { _id: id, organizationId: user.organizationId },
-    { name, email, phone, company, address, taxId, notes, tags, preferredPaymentMethod, walletAddress },
+    { name, email, phone, company, address, taxId, notes, tags, preferredPaymentMethod, walletAddress, invoiceSettings },
     { new: true, runValidators: true }
   );
 
