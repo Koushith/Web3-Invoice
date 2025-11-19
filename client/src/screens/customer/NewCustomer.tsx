@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ArrowLeft, Loader2 } from 'lucide-react';
+import { ArrowLeft, Loader2, ChevronDown, ChevronUp } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useCreateCustomerMutation } from '@/services/api.service';
 import { toast } from 'sonner';
@@ -11,6 +11,18 @@ import { toast } from 'sonner';
 export const NewCustomerScreen = () => {
   const navigate = useNavigate();
   const [createCustomer, { isLoading }] = useCreateCustomerMutation();
+
+  // Collapsible sections state
+  const [expandedSections, setExpandedSections] = useState({
+    address: false,
+    payment: false,
+    invoiceSettings: false,
+    notes: false,
+  });
+
+  const toggleSection = (section: keyof typeof expandedSections) => {
+    setExpandedSections(prev => ({ ...prev, [section]: !prev[section] }));
+  };
 
   // Form state
   const [formData, setFormData] = useState({
@@ -185,16 +197,31 @@ export const NewCustomerScreen = () => {
             </div>
           </div>
 
-          {/* Billing Address Section */}
+          {/* Billing Address Section - Collapsible */}
           <div className="mb-8 pb-8 border-b border-gray-200">
-            <div className="mb-4">
-              <h2 className="text-base font-semibold text-gray-900">Billing address</h2>
-            </div>
-            <p className="text-sm text-gray-600 mb-6">
-              The address where invoices will be sent.
-            </p>
+            <button
+              type="button"
+              onClick={() => toggleSection('address')}
+              className="w-full flex items-center justify-between mb-4 hover:bg-gray-50 -mx-2 px-2 py-2 rounded-lg transition-colors"
+            >
+              <div>
+                <h2 className="text-base font-semibold text-gray-900 text-left">Billing address</h2>
+                <p className="text-sm text-gray-500 text-left mt-0.5">Optional</p>
+              </div>
+              {expandedSections.address ? (
+                <ChevronUp className="w-5 h-5 text-gray-400" />
+              ) : (
+                <ChevronDown className="w-5 h-5 text-gray-400" />
+              )}
+            </button>
 
-            <div className="space-y-4">
+            {expandedSections.address && (
+              <>
+                <p className="text-sm text-gray-600 mb-6">
+                  The address where invoices will be sent.
+                </p>
+
+                <div className="space-y-4">
               <div>
                 <label className="text-sm font-medium text-gray-700 block mb-1.5">Street address</label>
                 <Input
@@ -255,18 +282,35 @@ export const NewCustomerScreen = () => {
                 </div>
               </div>
             </div>
+              </>
+            )}
           </div>
 
-          {/* Payment Preferences Section */}
+          {/* Payment Preferences Section - Collapsible */}
           <div className="mb-8 pb-8 border-b border-gray-200">
-            <div className="mb-4">
-              <h2 className="text-base font-semibold text-gray-900">Payment preferences</h2>
-            </div>
-            <p className="text-sm text-gray-600 mb-6">
-              Set the customer's preferred payment method.
-            </p>
+            <button
+              type="button"
+              onClick={() => toggleSection('payment')}
+              className="w-full flex items-center justify-between mb-4 hover:bg-gray-50 -mx-2 px-2 py-2 rounded-lg transition-colors"
+            >
+              <div>
+                <h2 className="text-base font-semibold text-gray-900 text-left">Payment preferences</h2>
+                <p className="text-sm text-gray-500 text-left mt-0.5">Optional</p>
+              </div>
+              {expandedSections.payment ? (
+                <ChevronUp className="w-5 h-5 text-gray-400" />
+              ) : (
+                <ChevronDown className="w-5 h-5 text-gray-400" />
+              )}
+            </button>
 
-            <div className="space-y-4">
+            {expandedSections.payment && (
+              <>
+                <p className="text-sm text-gray-600 mb-6">
+                  Set the customer's preferred payment method.
+                </p>
+
+                <div className="space-y-4">
               <div>
                 <label className="text-sm font-medium text-gray-700 block mb-1.5">Preferred payment method</label>
                 <Select
@@ -302,18 +346,35 @@ export const NewCustomerScreen = () => {
                 </div>
               )}
             </div>
+              </>
+            )}
           </div>
 
-          {/* Invoice Settings Section */}
+          {/* Invoice Settings Section - Collapsible */}
           <div className="mb-8 pb-8 border-b border-gray-200">
-            <div className="mb-4">
-              <h2 className="text-base font-semibold text-gray-900">Invoice settings</h2>
-            </div>
-            <p className="text-sm text-gray-600 mb-6">
-              Customize invoice numbering for this customer.
-            </p>
+            <button
+              type="button"
+              onClick={() => toggleSection('invoiceSettings')}
+              className="w-full flex items-center justify-between mb-4 hover:bg-gray-50 -mx-2 px-2 py-2 rounded-lg transition-colors"
+            >
+              <div>
+                <h2 className="text-base font-semibold text-gray-900 text-left">Invoice settings</h2>
+                <p className="text-sm text-gray-500 text-left mt-0.5">Optional</p>
+              </div>
+              {expandedSections.invoiceSettings ? (
+                <ChevronUp className="w-5 h-5 text-gray-400" />
+              ) : (
+                <ChevronDown className="w-5 h-5 text-gray-400" />
+              )}
+            </button>
 
-            <div className="space-y-4">
+            {expandedSections.invoiceSettings && (
+              <>
+                <p className="text-sm text-gray-600 mb-6">
+                  Customize invoice numbering for this customer.
+                </p>
+
+                <div className="space-y-4">
               <div>
                 <label className="text-sm font-medium text-gray-700 block mb-1.5">Invoice prefix</label>
                 <Input
@@ -339,27 +400,46 @@ export const NewCustomerScreen = () => {
                 <p className="text-xs text-gray-500 mt-1.5">The next invoice number for this customer</p>
               </div>
             </div>
+              </>
+            )}
           </div>
 
-          {/* Additional Information Section */}
+          {/* Additional Information Section - Collapsible */}
           <div className="mb-8 pb-8 border-b border-gray-200">
-            <div className="mb-4">
-              <h2 className="text-base font-semibold text-gray-900">Additional information</h2>
-            </div>
-            <p className="text-sm text-gray-600 mb-6">
-              Private notes about this customer.
-            </p>
+            <button
+              type="button"
+              onClick={() => toggleSection('notes')}
+              className="w-full flex items-center justify-between mb-4 hover:bg-gray-50 -mx-2 px-2 py-2 rounded-lg transition-colors"
+            >
+              <div>
+                <h2 className="text-base font-semibold text-gray-900 text-left">Additional information</h2>
+                <p className="text-sm text-gray-500 text-left mt-0.5">Optional</p>
+              </div>
+              {expandedSections.notes ? (
+                <ChevronUp className="w-5 h-5 text-gray-400" />
+              ) : (
+                <ChevronDown className="w-5 h-5 text-gray-400" />
+              )}
+            </button>
 
-            <div>
-              <label className="text-sm font-medium text-gray-700 block mb-1.5">Internal notes</label>
-              <Textarea
-                placeholder="Add any notes about this customer..."
-                value={formData.notes}
-                onChange={(e) => handleInputChange('notes', e.target.value)}
-                className="min-h-[100px] resize-none text-sm"
-              />
-              <p className="text-xs text-gray-500 mt-1.5">These notes are private and won't be visible to the customer</p>
-            </div>
+            {expandedSections.notes && (
+              <>
+                <p className="text-sm text-gray-600 mb-6">
+                  Private notes about this customer.
+                </p>
+
+                <div>
+                  <label className="text-sm font-medium text-gray-700 block mb-1.5">Internal notes</label>
+                  <Textarea
+                    placeholder="Add any notes about this customer..."
+                    value={formData.notes}
+                    onChange={(e) => handleInputChange('notes', e.target.value)}
+                    className="min-h-[100px] resize-none text-sm"
+                  />
+                  <p className="text-xs text-gray-500 mt-1.5">These notes are private and won't be visible to the customer</p>
+                </div>
+              </>
+            )}
           </div>
 
           {/* Action Buttons */}
