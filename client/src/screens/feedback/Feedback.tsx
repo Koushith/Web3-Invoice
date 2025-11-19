@@ -5,6 +5,7 @@ import { MessageSquare, Bug, Lightbulb, AlertCircle, Loader2, ArrowUp, Clock, Se
 import { GeneralFeedbackDialog } from '@/components/feedback/GeneralFeedbackDialog';
 import { auth } from '@/lib/firebase';
 import { toast } from 'sonner';
+import { getApiBaseUrl } from '@/lib/config';
 
 interface GitHubIssue {
   number?: number;
@@ -59,7 +60,7 @@ export const FeedbackScreen = () => {
       );
 
       // Fetch database feedback
-      const dbResponse = await fetch(`${import.meta.env.VITE_API_URL}/feedback`);
+      const dbResponse = await fetch(`${getApiBaseUrl()}/feedback`);
 
       let githubIssues: GitHubIssue[] = [];
       let dbFeedback: GitHubIssue[] = [];
@@ -127,7 +128,7 @@ export const FeedbackScreen = () => {
       const token = await currentUser.getIdToken();
 
       // Make upvote request
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/feedback/${issue._id}/upvote`, {
+      const response = await fetch(`${getApiBaseUrl()}/feedback/${issue._id}/upvote`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,

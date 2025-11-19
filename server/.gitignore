@@ -1,11 +1,18 @@
 # Dependencies
 node_modules/
 
-# Environment variables
-.env
+# Environment variables (commit .env for production, ignore .env.local for dev)
 .env.local
+.env
 .env.production
-
+.env.development
+.env.test
+.env.staging
+.env.local
+.env.development.local
+.env.test.local
+.env.staging.local
+.env.production.local   
 # Build output
 dist/
 build/

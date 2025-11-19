@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   ArrowRight,
@@ -17,8 +18,31 @@ import {
   Quote,
 } from 'lucide-react';
 
+// Import landing page images
+import reportsImg from '@/assets/landing/reports.png';
+import invoicesImg from '@/assets/landing/invoices.png';
+import businessImg from '@/assets/landing/business.png';
+import integrationsImg from '@/assets/landing/integrations.png';
+
+const screenshots = [
+  { src: reportsImg, alt: 'Reports Dashboard', title: 'Real-time Analytics' },
+  { src: invoicesImg, alt: 'Invoice Management', title: 'Invoice Management' },
+  { src: businessImg, alt: 'Business Settings', title: 'Business Customization' },
+  { src: integrationsImg, alt: 'Integrations', title: 'Powerful Integrations' },
+];
+
 export const LandingPage = () => {
   const navigate = useNavigate();
+  const [currentIndex, setCurrentIndex] = useState(0);
+
+  // Auto-change carousel every 3 seconds
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentIndex((prevIndex) => (prevIndex + 1) % screenshots.length);
+    }, 3000);
+
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <div className="min-h-screen bg-white">
@@ -134,7 +158,7 @@ export const LandingPage = () => {
                     <div className="relative bg-white rounded-2xl shadow-2xl border border-gray-200 overflow-hidden">
                       <div className="p-4 border-b border-gray-100 bg-gray-50">
                         <div className="flex items-center justify-between">
-                          <span className="text-sm font-bold text-gray-600">INVOICE PREVIEW</span>
+                          <span className="text-sm font-bold text-gray-600">APP PREVIEW</span>
                           <div className="flex gap-2">
                             <div className="w-3 h-3 rounded-full bg-red-400"></div>
                             <div className="w-3 h-3 rounded-full bg-yellow-400"></div>
@@ -143,18 +167,32 @@ export const LandingPage = () => {
                         </div>
                       </div>
                       <div className="p-4">
-                        <div className="relative w-full overflow-hidden rounded-2xl shadow-2xl h-[400px] rounded-lg overflow-hidden">
-                          <img
-                            src="/screenshots/dashboard.png"
-                            alt="Invoice Dashboard"
-                            className="w-full h-full object-cover object-center"
-                            onError={(e) => {
-                              e.currentTarget.style.display = 'none';
-                            }}
-                          />
+                        <div className="relative w-full overflow-hidden rounded-2xl shadow-2xl h-[400px]">
+                          {screenshots.map((screenshot, index) => (
+                            <img
+                              key={index}
+                              src={screenshot.src}
+                              alt={screenshot.alt}
+                              className={`absolute inset-0 w-full h-full object-cover object-top transition-opacity duration-500 ${
+                                index === currentIndex ? 'opacity-100' : 'opacity-0'
+                              }`}
+                            />
+                          ))}
                         </div>
                         <div className="flex justify-between items-center mt-4">
-                          <span className="text-sm font-semibold text-gray-700">Modern Minimalist</span>
+                          <span className="text-sm font-semibold text-gray-700">{screenshots[currentIndex].title}</span>
+                          <div className="flex gap-2">
+                            {screenshots.map((_, index) => (
+                              <button
+                                key={index}
+                                onClick={() => setCurrentIndex(index)}
+                                className={`w-2 h-2 rounded-full transition-colors ${
+                                  index === currentIndex ? 'bg-[#635BFF]' : 'bg-gray-300'
+                                }`}
+                                aria-label={`Go to screenshot ${index + 1}`}
+                              />
+                            ))}
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -304,25 +342,55 @@ export const LandingPage = () => {
               See what our community is saying about DefInvoice
             </p>
           </div>
-          <div className="grid md:grid-cols-3 gap-6 mb-12">
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
             {[
               {
-                name: 'Sarah Chen',
-                role: 'Freelance Designer',
-                text: 'DefInvoice saved me hours every week. The automated reminders alone are worth it!',
+                name: 'Darshan',
+                role: 'Digital Marketer',
+                text: 'This tool completely transformed how I manage client invoices. The automated reminders saved me hours of follow-ups!',
                 badge: 'saved me hours',
+                image: 'https://pbs.twimg.com/profile_images/1904968810349604865/KSNv1oUn_400x400.jpg',
+                twitter: 'https://x.com/Darshan570',
               },
               {
-                name: 'Mike Johnson',
-                role: 'Agency Owner',
-                text: 'Finally, an invoicing tool that just works. Clean, fast, and professional.',
-                badge: 'just works',
+                name: 'Srijith Padmesh',
+                role: 'Product Manager',
+                text: 'I was skeptical about another invoicing tool, but wow! Open source and self-hostable - exactly what I needed for my agency.',
+                badge: 'exactly what I needed',
+                image: 'https://pbs.twimg.com/profile_images/1610252835593289729/g3gYoXIt_400x400.jpg',
+                twitter: 'https://x.com/Srijith_Padmesh',
               },
               {
-                name: 'Emily Davis',
-                role: 'Consultant',
-                text: "Best invoicing software I've used. The interface is beautiful and intuitive.",
-                badge: 'beautiful UI',
+                name: 'Adii',
+                role: 'Product Manager',
+                text: 'My clients love the professional public invoice links. Payment tracking is seamless. Revenue collection improved significantly!',
+                badge: 'revenue improved',
+                image: 'https://pbs.twimg.com/profile_images/1905879296629223425/-uhwqdFJ_400x400.jpg',
+                twitter: 'https://x.com/adiiHQ',
+              },
+              {
+                name: 'Krypto',
+                role: 'Developer',
+                text: 'The speed and quality are incredible. Self-hosting gives me full control. Perfect for developers who value privacy.',
+                badge: 'full control',
+                image: 'https://pbs.twimg.com/profile_images/1526844822895869952/uD7JqSVM_400x400.jpg',
+                twitter: 'https://x.com/0xkryptocodes',
+              },
+              {
+                name: 'Preetham Amin',
+                role: 'UI/UX Designer',
+                text: 'Perfect for freelancers like me! Beautiful templates and the interface is so intuitive. Clients are always impressed.',
+                badge: 'clients impressed',
+                image: 'https://pbs.twimg.com/profile_images/1618643349396918273/um7jU_f9_400x400.jpg',
+                twitter: 'https://x.com/PreethamAmin__',
+              },
+              {
+                name: 'Koushith Amin',
+                role: 'Software Engineer',
+                text: 'Being open source means I can customize it for my needs. The codebase is clean and well-documented. Brilliant solution.',
+                badge: 'brilliant solution',
+                image: 'https://pbs.twimg.com/profile_images/1981055175495221248/S1OcF1F0_400x400.jpg',
+                twitter: 'https://x.com/KoushithAmin',
               },
             ].map((testimonial, idx) => (
               <div key={idx} className="group">
@@ -337,9 +405,20 @@ export const LandingPage = () => {
                   </div>
                   <p className="text-gray-700 font-medium leading-relaxed mb-6">"{testimonial.text}"</p>
                   <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 bg-gray-200 rounded-full"></div>
+                    <img
+                      src={testimonial.image}
+                      alt={`${testimonial.name} - ${testimonial.role}`}
+                      className="w-12 h-12 rounded-full object-cover ring-2 ring-gray-100"
+                    />
                     <div>
-                      <div className="font-semibold text-gray-900">{testimonial.name}</div>
+                      <a
+                        href={testimonial.twitter}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="font-semibold text-gray-900 hover:text-blue-600 transition-colors cursor-pointer"
+                      >
+                        {testimonial.name}
+                      </a>
                       <p className="text-sm font-medium text-gray-500">{testimonial.role}</p>
                     </div>
                   </div>

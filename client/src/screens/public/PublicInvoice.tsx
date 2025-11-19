@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom';
 import { Loader2, CheckCircle2, Clock, AlertCircle, Download, Building2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { format } from 'date-fns';
+import { getApiBaseUrl } from '@/lib/config';
 
 interface Invoice {
   _id: string;
@@ -51,8 +52,7 @@ export const PublicInvoiceScreen = () => {
   useEffect(() => {
     const fetchInvoice = async () => {
       try {
-        const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
-        const response = await fetch(`${apiUrl}/invoices/public/${publicId}`);
+        const response = await fetch(`${getApiBaseUrl()}/invoices/public/${publicId}`);
 
         if (!response.ok) {
           const errorData = await response.json();

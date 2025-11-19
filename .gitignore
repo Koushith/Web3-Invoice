@@ -3,8 +3,9 @@ node_modules/
 /client/node_modules/
 /server/node_modules/
 vendor/
-.env
+*.local
 
+.env
 # Build outputs
 dist/
 build/

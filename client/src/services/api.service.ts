@@ -6,6 +6,7 @@
 import { createApi, fetchBaseQuery, retry } from '@reduxjs/toolkit/query/react';
 import type { BaseQueryFn, FetchArgs, FetchBaseQueryError } from '@reduxjs/toolkit/query';
 import { auth } from '@/lib/firebase';
+import { getApiBaseUrl } from '@/lib/config';
 import type {
   User,
   Invoice,
@@ -27,7 +28,7 @@ import type {
 // ==================== Base Query Configuration ====================
 
 const baseQuery = fetchBaseQuery({
-  baseUrl: import.meta.env.VITE_API_URL || 'http://localhost:5001/api',
+  baseUrl: getApiBaseUrl(),
   prepareHeaders: async (headers) => {
     try {
       // Get Firebase ID token

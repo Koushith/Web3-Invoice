@@ -12,6 +12,7 @@ import { startRegistration, type PublicKeyCredentialCreationOptionsJSON } from '
 import { Fingerprint, Trash2, Smartphone, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
+import { getApiBaseUrl } from '@/lib/config';
 
 export function PasskeyManagement() {
   const { data: passkeys, isLoading, refetch } = useGetPasskeysQuery();
@@ -32,7 +33,7 @@ export function PasskeyManagement() {
       setShowNameDialog(false);
 
       // Get registration options from backend
-      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5001/api'}/passkeys/register-options`, {
+      const response = await fetch(`${getApiBaseUrl()}/passkeys/register-options`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -50,7 +51,7 @@ export function PasskeyManagement() {
       const registrationResponse = await startRegistration({ optionsJSON: options });
 
       // Send registration response to backend
-      const verifyResponse = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5001/api'}/passkeys/register`, {
+      const verifyResponse = await fetch(`${getApiBaseUrl()}/passkeys/register`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

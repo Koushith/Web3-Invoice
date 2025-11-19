@@ -7,6 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { getApiBaseUrl } from '@/lib/config';
 
 interface RecordPaymentDialogProps {
   open: boolean;
@@ -61,7 +62,7 @@ export const RecordPaymentDialog = ({
     setIsSubmitting(true);
 
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/invoices/${invoiceId}/mark-paid`, {
+      const response = await fetch(`${getApiBaseUrl()}/invoices/${invoiceId}/mark-paid`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

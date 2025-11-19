@@ -10,6 +10,7 @@ import { auth } from '@/lib/firebase';
 import { useAppDispatch } from '@/store/store';
 import { setToken, setUser } from '@/store/slices/auth.slice';
 import { apiService } from '@/services/api.service';
+import { getApiBaseUrl } from '@/lib/config';
 
 export const LoginScreen = () => {
   const [loading, setLoading] = useState(false);
@@ -37,7 +38,7 @@ export const LoginScreen = () => {
 
       // Use discoverable credentials (resident keys) - no email needed
       // Get authentication options from backend (without email)
-      const optionsResponse = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5001/api'}/passkeys/auth-options`, {
+      const optionsResponse = await fetch(`${getApiBaseUrl()}/passkeys/auth-options`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({}), // No email = usernameless
@@ -54,7 +55,7 @@ export const LoginScreen = () => {
       const authResponse = await startAuthentication({ optionsJSON: options });
 
       // Verify authentication with backend (without email)
-      const verifyResponse = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5001/api'}/passkeys/auth`, {
+      const verifyResponse = await fetch(`${getApiBaseUrl()}/passkeys/auth`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

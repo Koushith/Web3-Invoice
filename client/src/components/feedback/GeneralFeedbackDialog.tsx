@@ -6,6 +6,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Loader2, Star } from 'lucide-react';
 import { toast } from 'sonner';
+import { getApiBaseUrl } from '@/lib/config';
 
 interface GeneralFeedbackDialogProps {
   open: boolean;
@@ -55,7 +56,7 @@ export const GeneralFeedbackDialog = ({ open, onClose, onSuccess }: GeneralFeedb
     setIsSubmitting(true);
 
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/feedback`, {
+      const response = await fetch(`${getApiBaseUrl()}/feedback`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
