@@ -124,7 +124,7 @@ export const NewInvoice = () => {
     date: false,
   });
   const [invoiceData, setInvoiceData] = useState({
-    invoiceNumber: '',
+    invoiceNumber: isEditMode ? '' : '001', // Default to '001' for new invoices
     date: new Date().toISOString().split('T')[0],
     dueDate: '',
     fromCompany: '',
@@ -273,8 +273,11 @@ export const NewInvoice = () => {
       }
 
       // Auto-generate invoice number for new invoices only
-      if (!isEditMode && organization.settings?.invoiceNumberStart) {
-        const nextNumber = String(organization.settings.invoiceNumberStart).padStart(3, '0');
+      if (!isEditMode) {
+        // Use organization's invoiceNumberStart if available, otherwise default to "001"
+        const nextNumber = organization.settings?.invoiceNumberStart
+          ? String(organization.settings.invoiceNumberStart).padStart(3, '0')
+          : '001';
         setInvoiceData((prev) => ({
           ...prev,
           invoiceNumber: nextNumber,
@@ -805,7 +808,7 @@ export const NewInvoice = () => {
                       <span className="flex items-center text-gray-300">-</span>
                       <div className="flex-1 relative">
                         <Input
-                          placeholder="001"
+                          placeholder="e.g. 001"
                           value={invoiceData.invoiceNumber}
                           onChange={(e) => {
                             setInvoiceData({ ...invoiceData, invoiceNumber: e.target.value });
@@ -820,10 +823,10 @@ export const NewInvoice = () => {
                           className={cn(
                             'h-9 text-sm font-semibold text-gray-900 pr-8',
                             touched.invoiceNumber && validationErrors.invoiceNumber && !invoiceData.invoiceNumber ? 'border-red-500 focus-visible:ring-red-500' :
-                            invoiceData.invoiceNumber ? 'border-green-200 bg-green-50/30 focus-visible:ring-green-200' : ''
+                            invoiceData.invoiceNumber && invoiceData.invoiceNumber.trim() ? 'border-green-200 bg-green-50/30 focus-visible:ring-green-200' : ''
                           )}
                         />
-                        {invoiceData.invoiceNumber && (
+                        {invoiceData.invoiceNumber && invoiceData.invoiceNumber.trim() && (
                           <div className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none">
                             <Check className="w-4 h-4 text-green-600" />
                           </div>

@@ -382,9 +382,38 @@ Date: ${new Date().toISOString()}`;
 
   await invoice.save();
 
+  // Create Payment record for transactions page
+  const Payment = (await import('../models/Payment')).default;
+
+  // Map payment method to expected enum values
+  const normalizedPaymentMethod = paymentMethod?.toLowerCase() || 'bank_transfer';
+  const paymentMethodEnum = ['stripe', 'crypto', 'bank_transfer', 'cash', 'check'].includes(normalizedPaymentMethod)
+    ? normalizedPaymentMethod
+    : 'bank_transfer';
+
+  const payment = await Payment.create({
+    organizationId: user.organizationId,
+    invoiceId: invoice._id,
+    customerId: invoice.customerId,
+    amount: paymentAmount,
+    currency: invoice.currency,
+    paymentMethod: paymentMethodEnum,
+    status: 'completed',
+    transactionId: transactionReference || `MANUAL-${Date.now()}`,
+    notes: notes || `Manual payment recorded by ${user.displayName || user.email}`,
+    processedAt: paymentDate ? new Date(paymentDate) : new Date(),
+    metadata: {
+      recordedBy: user.email,
+      recordedByName: user.displayName,
+      recordedAt: new Date().toISOString(),
+      manual: true,
+    }
+  });
+
   res.json({
     message: 'Invoice marked as paid successfully',
     data: invoice,
+    payment: payment,
   });
 });
 
