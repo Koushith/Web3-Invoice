@@ -1,4 +1,6 @@
 import QRCode from 'react-qr-code';
+import flowerImage from '@/assets/invoice/flower.png';
+import catPeekImage from '@/assets/invoice/catpeek.png';
 
 // Helper function to get currency symbol
 const getCurrencySymbol = (currency?: string): string => {
@@ -1736,7 +1738,7 @@ export function CattyTemplate({ logo: _logo, invoiceData, paymentDetails }: Temp
 
       {/* Cat Image - Bottom Left */}
       <div className="absolute bottom-0 left-0 w-[200px] h-[200px]">
-        <img src="/src/assets/invoice/catpeek.png" alt="Cat peeking" className="w-full h-full object-contain" />
+        <img src={catPeekImage} alt="Cat peeking" className="w-full h-full object-contain" />
       </div>
 
       {/* Signature */}
@@ -1904,7 +1906,7 @@ export function FloralTemplate({ logo: _logo, invoiceData, paymentDetails }: Tem
 
       {/* Floral Image - Bottom Left */}
       <div className="absolute bottom-0 left-0 w-[300px] h-[300px]">
-        <img src="/src/assets/invoice/flower.png" alt="Floral decoration" className="w-full h-full object-contain" />
+        <img src={flowerImage} alt="Floral decoration" className="w-full h-full object-contain" />
       </div>
 
       {/* Signature */}
@@ -2072,7 +2074,7 @@ export function FloralDarkTemplate({ logo: _logo, invoiceData, paymentDetails }:
 
       {/* Floral Image - Bottom Left */}
       <div className="absolute bottom-0 left-0 w-[300px] h-[300px]">
-        <img src="/src/assets/invoice/flower.png" alt="Floral decoration" className="w-full h-full object-contain" />
+        <img src={flowerImage} alt="Floral decoration" className="w-full h-full object-contain" />
       </div>
 
       {/* Signature */}
