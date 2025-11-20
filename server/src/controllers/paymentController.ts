@@ -25,8 +25,8 @@ export const getPayments = asyncHandler(async (req: Request, res: Response) => {
   // Pagination
   const skip = (Number(page) - 1) * Number(limit);
   const payments = await Payment.find(query)
-    .populate('invoiceId', 'invoiceNumber total')
-    .populate('customerId', 'name email')
+    .populate('invoiceId', 'invoiceNumber total currency')
+    .populate('customerId', 'name email company')
     .sort({ createdAt: -1 })
     .skip(skip)
     .limit(Number(limit));

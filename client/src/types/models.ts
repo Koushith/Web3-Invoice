@@ -166,6 +166,9 @@ export interface Organization extends BaseEntity, SoftDeletable {
   icon?: string; // Square icon (1:1 aspect ratio)
   address?: Address;
   taxId?: string;
+  currency?: string;
+  invoicePrefix?: string;
+  invoiceNumberSequence?: number;
   settings?: OrganizationSettings;
   subscription?: Subscription;
   ownerId: string;
@@ -175,8 +178,9 @@ export interface Organization extends BaseEntity, SoftDeletable {
 export interface OrganizationSettings {
   defaultCurrency?: Currency;
   defaultPaymentTerms?: number;
-  invoicePrefix?: string;
-  invoiceNumberStart?: number;
+  defaultTaxRate?: number;
+  emailNotifications?: boolean;
+  autoReminders?: boolean;
   branding?: {
     primaryColor?: string;
     secondaryColor?: string;

@@ -24,7 +24,7 @@ import {
   CompactPandaTemplate,
 } from '@/components/invoice/InvoiceTemplates';
 import { CloudflareTemplate } from '@/components/invoice/CloudflareTemplate';
-import { useGetCustomersQuery, useCreateInvoiceMutation, useGetInvoiceQuery, useUpdateInvoiceMutation, useGetOrganizationQuery } from '@/services/api.service';
+import { useGetCustomersQuery, useCreateInvoiceMutation, useGetInvoiceQuery, useUpdateInvoiceMutation, useGetOrganizationQuery, useGetNextInvoiceNumberQuery } from '@/services/api.service';
 import { toast } from 'sonner';
 import { auth } from '@/lib/firebase';
 import { useReactToPrint } from 'react-to-print';
@@ -124,7 +124,7 @@ export const NewInvoice = () => {
     date: false,
   });
   const [invoiceData, setInvoiceData] = useState({
-    invoiceNumber: isEditMode ? '' : '001', // Default to '001' for new invoices
+    invoiceNumber: '', // Will be set by API for new invoices
     date: new Date().toISOString().split('T')[0],
     dueDate: '',
     fromCompany: '',
@@ -216,6 +216,11 @@ export const NewInvoice = () => {
     skip: !isAuthReady,
   });
 
+  // Fetch next invoice number (only for new invoices)
+  const { data: nextInvoiceData } = useGetNextInvoiceNumberQuery(undefined, {
+    skip: !isAuthReady || isEditMode,
+  });
+
   // Derive logo from organization data (prefer full logo, fallback to icon)
   const logo = useMemo(() => organization?.logo || organization?.icon || null, [organization]);
 
@@ -267,29 +272,30 @@ export const NewInvoice = () => {
           : '',
       }));
 
-      // Set invoice prefix from organization settings
-      if (organization.settings?.invoicePrefix) {
-        setInvoicePrefix(organization.settings.invoicePrefix);
+      // Set invoice prefix from organization (will be overridden by API data)
+      if (organization.invoicePrefix) {
+        setInvoicePrefix(organization.invoicePrefix);
       }
 
-      // Auto-generate invoice number for new invoices only
-      if (!isEditMode) {
-        // Use organization's invoiceNumberStart if available, otherwise default to "001"
-        const nextNumber = organization.settings?.invoiceNumberStart
-          ? String(organization.settings.invoiceNumberStart).padStart(3, '0')
-          : '001';
-        setInvoiceData((prev) => ({
-          ...prev,
-          invoiceNumber: nextNumber,
-        }));
-      }
-
-      // Set default currency from organization settings
-      if (organization.settings?.defaultCurrency) {
+      // Set default currency from organization
+      if (organization.currency) {
+        setCurrency(organization.currency as Currency);
+      } else if (organization.settings?.defaultCurrency) {
         setCurrency(organization.settings.defaultCurrency);
       }
     }
-  }, [organization, isEditMode]);
+  }, [organization]);
+
+  // Auto-generate invoice number for new invoices using API
+  useEffect(() => {
+    if (!isEditMode && nextInvoiceData) {
+      setInvoicePrefix(nextInvoiceData.prefix);
+      setInvoiceData((prev) => ({
+        ...prev,
+        invoiceNumber: nextInvoiceData.number,
+      }));
+    }
+  }, [nextInvoiceData, isEditMode]);
 
   // Create and update invoice mutations
   const [createInvoice, { isLoading: isCreating }] = useCreateInvoiceMutation();
@@ -692,7 +698,7 @@ export const NewInvoice = () => {
                 >
                   <SelectTrigger
                     className={cn(
-                      'h-9 text-sm',
+                      'h-11 text-sm',
                       touched.customer && validationErrors.customer ? 'border-red-500 focus:ring-red-500' : ''
                     )}
                     onBlur={() => {
@@ -700,7 +706,18 @@ export const NewInvoice = () => {
                       validateField('customer', selectedCustomerId);
                     }}
                   >
-                    <SelectValue placeholder={customers.length === 0 ? "No customers - Create one first" : "Select a customer..."} />
+                    {selectedCustomer ? (
+                      <div className="flex flex-col items-start gap-0.5 w-full">
+                        <span className="font-medium text-sm text-gray-900 truncate w-full text-left">
+                          {selectedCustomer.company || selectedCustomer.name}
+                        </span>
+                        <span className="text-xs text-gray-500 truncate w-full text-left">
+                          {selectedCustomer.email}
+                        </span>
+                      </div>
+                    ) : (
+                      <SelectValue placeholder={customers.length === 0 ? "No customers - Create one first" : "Select a customer..."} />
+                    )}
                   </SelectTrigger>
                   <SelectContent>
                     {customers.length > 0 ? (
@@ -755,15 +772,6 @@ export const NewInvoice = () => {
                 </Select>
                 {touched.customer && validationErrors.customer && (
                   <p className="text-xs text-red-600 mt-1.5">{validationErrors.customer}</p>
-                )}
-                {selectedCustomer?.invoiceSettings && !isEditMode && (
-                  <div className="mt-2 p-2 bg-blue-50 border border-blue-100 rounded-md">
-                    <p className="text-xs text-blue-700">
-                      <span className="font-medium">Next invoice:</span>{' '}
-                      {selectedCustomer.invoiceSettings.prefix || invoicePrefix}-
-                      {String(selectedCustomer.invoiceSettings.nextNumber || 1).padStart(3, '0')}
-                    </p>
-                  </div>
                 )}
               </div>
             </div>

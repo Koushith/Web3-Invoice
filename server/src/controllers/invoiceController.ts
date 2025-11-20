@@ -82,6 +82,51 @@ export const getInvoice = asyncHandler(async (req: Request, res: Response) => {
 });
 
 /**
+ * Get next available invoice number
+ */
+export const getNextInvoiceNumber = asyncHandler(async (req: Request, res: Response) => {
+  const user = req.user?.user;
+
+  if (!user?.organizationId) {
+    throw new AppError('Organization not found', 404, 'ORG_NOT_FOUND');
+  }
+
+  // Get organization to get the prefix
+  const organization = await Organization.findById(user.organizationId);
+  const prefix = organization?.invoicePrefix || 'INV';
+
+  // Find all invoices for this organization to get the highest number
+  const allInvoices = await Invoice.find({
+    organizationId: user.organizationId,
+  }).select('invoiceNumber');
+
+  let nextNumber = '001';
+
+  if (allInvoices.length > 0) {
+    // Extract all numbers and find the maximum
+    const invoiceNumbers = allInvoices
+      .map((inv) => {
+        const match = inv.invoiceNumber?.match(/(\d+)$/);
+        return match ? parseInt(match[1], 10) : 0;
+      })
+      .filter((num) => !isNaN(num));
+
+    if (invoiceNumbers.length > 0) {
+      const maxNumber = Math.max(...invoiceNumbers);
+      nextNumber = String(maxNumber + 1).padStart(4, '0');
+    }
+  }
+
+  res.json({
+    data: {
+      prefix,
+      number: nextNumber,
+      fullNumber: `${prefix}-${nextNumber}`,
+    },
+  });
+});
+
+/**
  * Create invoice
  */
 export const createInvoice = asyncHandler(async (req: Request, res: Response) => {

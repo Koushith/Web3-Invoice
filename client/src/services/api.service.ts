@@ -167,6 +167,11 @@ export const apiService = createApi({
       providesTags: (_result, _error, id) => [{ type: 'Invoice', id }],
     }),
 
+    getNextInvoiceNumber: builder.query<{ prefix: string; number: string; fullNumber: string }, void>({
+      query: () => '/invoices/next-number',
+      transformResponse: (response: ApiResponse<any>) => response.data!,
+    }),
+
     createInvoice: builder.mutation<Invoice, CreateInvoiceDTO>({
       query: (data) => ({
         url: '/invoices',
@@ -515,6 +520,7 @@ export const {
   // Invoices
   useGetInvoicesQuery,
   useGetInvoiceQuery,
+  useGetNextInvoiceNumberQuery,
   useCreateInvoiceMutation,
   useUpdateInvoiceMutation,
   useDeleteInvoiceMutation,
@@ -581,12 +587,22 @@ const transformMongoDoc = <T extends Record<string, any>>(doc: any): T => {
 
   // Transform nested customer if present
   if (doc.customerId && typeof doc.customerId === 'object') {
-    transformed.customer = {
+    // Keep the populated customer object in customerId
+    transformed.customerId = {
       ...doc.customerId,
       id: doc.customerId._id || doc.customerId.id,
     };
-    // Keep customerId as the string ID
-    transformed.customerId = doc.customerId._id || doc.customerId.id;
+    // Also add to customer property for compatibility
+    transformed.customer = transformed.customerId;
+  }
+
+  // Transform nested invoice if present
+  if (doc.invoiceId && typeof doc.invoiceId === 'object') {
+    // Keep the populated invoice object in invoiceId
+    transformed.invoiceId = {
+      ...doc.invoiceId,
+      id: doc.invoiceId._id || doc.invoiceId.id,
+    };
   }
 
   // Transform nested items if present

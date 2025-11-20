@@ -1,14 +1,17 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { TableSkeleton, CardSkeleton } from '@/components/ui/skeleton';
 import { EmptyState } from '@/components/ui/empty-state';
+import { SplashScreen } from '@/components/ui/splash-screen';
 import { Search, Filter, MoreVertical, CreditCard, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useGetPaymentsQuery } from '@/services/api.service';
 import { auth } from '@/lib/firebase';
 
 export const PaymentsScreen = () => {
+  const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [methodFilter, setMethodFilter] = useState('all');
@@ -58,23 +61,75 @@ export const PaymentsScreen = () => {
     return badges[status as keyof typeof badges] || 'bg-gray-100 text-gray-700 border-gray-200';
   };
 
-  const getMethodLabel = (method: string) => {
-    switch (method) {
+  const getMethodLabel = (payment: any) => {
+    const method = payment?.paymentMethod;
+    const isManual = payment?.metadata?.manual || payment?.metadata?.backfilled;
+
+    let methodText = '';
+    switch (method?.toLowerCase()) {
       case 'bank':
-        return 'Bank Transfer';
+      case 'bank_transfer':
+        methodText = 'Bank Transfer';
+        break;
       case 'crypto':
-        return 'Cryptocurrency';
+      case 'cryptocurrency':
+        methodText = 'Cryptocurrency';
+        break;
       case 'card':
-        return 'Credit Card';
+      case 'credit_card':
+      case 'stripe':
+        methodText = 'Card Payment';
+        break;
+      case 'cash':
+        methodText = 'Cash';
+        break;
+      case 'check':
+      case 'cheque':
+        methodText = 'Check';
+        break;
       default:
-        return 'Other';
+        methodText = method || 'Other';
+    }
+
+    if (isManual) {
+      return `${methodText} (Manual)`;
+    }
+
+    return methodText;
+  };
+
+  const getCustomerDisplay = (customer: any) => {
+    if (!customer) return '—';
+    // If customer is populated (object), show name or email
+    if (typeof customer === 'object') {
+      return customer.name || customer.email || '—';
+    }
+    // If customer is just an ID string, show truncated ID
+    if (typeof customer === 'string') {
+      return `Customer ${customer.substring(0, 8)}...`;
+    }
+    return '—';
+  };
+
+  const handleTransactionClick = (payment: any) => {
+    // Get invoice ID - check if it's populated or just an ID
+    const invoiceId = typeof payment.invoiceId === 'object'
+      ? payment.invoiceId.id || payment.invoiceId._id
+      : payment.invoiceId;
+
+    if (invoiceId) {
+      navigate(`/invoices/${invoiceId}`);
     }
   };
 
   return (
-    <div className="min-h-screen bg-[#FEFFFE]">
-      <div className="border-b border-gray-200 md:border-b">
-        <div className="max-w-[1400px] mx-auto">
+    <>
+      {/* Splash Screen - Render at root level when auth not ready */}
+      {!isAuthReady && <SplashScreen />}
+
+      <div className="min-h-screen bg-[#FEFFFE]">
+        <div className="border-b border-gray-200 md:border-b">
+          <div className="max-w-[1400px] mx-auto">
           {/* Header */}
           <div className="py-4 md:py-8">
             <div className="flex items-center justify-between">
@@ -138,8 +193,8 @@ export const PaymentsScreen = () => {
 
       {/* Content */}
       <div className="max-w-[1400px] mx-auto">
-        {/* Loading State */}
-        {(!isAuthReady || isLoading) && (
+        {/* Loading State - Show skeleton when fetching data */}
+        {isAuthReady && isLoading && (
           <div className="mt-6">
             <div className="hidden md:block">
               <TableSkeleton rows={5} />
@@ -203,6 +258,7 @@ export const PaymentsScreen = () => {
                 {filteredPayments.map((payment: any) => (
                   <tr
                     key={payment.id || payment._id}
+                    onClick={() => handleTransactionClick(payment)}
                     className="hover:bg-gray-50 transition-colors cursor-pointer"
                   >
                     <td className="px-3 py-4">
@@ -214,10 +270,10 @@ export const PaymentsScreen = () => {
                       </div>
                     </td>
                     <td className="px-3 py-4">
-                      <div className="text-sm text-gray-900">{payment.customerId?.name || payment.customerId || '—'}</div>
+                      <div className="text-sm text-gray-900">{getCustomerDisplay(payment.customerId)}</div>
                     </td>
                     <td className="px-3 py-4">
-                      <div className="text-sm text-gray-600">{getMethodLabel(payment.paymentMethod)}</div>
+                      <div className="text-sm text-gray-600">{getMethodLabel(payment)}</div>
                     </td>
                     <td className="px-3 py-4 text-right">
                       <div className="text-sm font-medium text-gray-900">
@@ -332,6 +388,7 @@ export const PaymentsScreen = () => {
             {filteredPayments.map((payment: any) => (
               <div
                 key={payment.id || payment._id}
+                onClick={() => handleTransactionClick(payment)}
                 className="bg-white border border-gray-200 rounded-lg p-4 active:scale-98 transition-transform cursor-pointer animate-slide-up"
               >
                 {/* Header */}
@@ -341,7 +398,7 @@ export const PaymentsScreen = () => {
                       {payment.invoiceId?.invoiceNumber || payment.invoiceId || '—'}
                     </div>
                     <div className="text-sm text-gray-900 mt-0.5">
-                      {payment.customerId?.name || payment.customerId || '—'}
+                      {getCustomerDisplay(payment.customerId)}
                     </div>
                     <div className="text-xs font-mono text-gray-500 mt-1">
                       {payment.transactionId || '—'}
@@ -370,7 +427,7 @@ export const PaymentsScreen = () => {
                   <div>
                     <div className="text-xs text-gray-500 mb-0.5">Method</div>
                     <div className="text-sm text-gray-900">
-                      {getMethodLabel(payment.paymentMethod)}
+                      {getMethodLabel(payment)}
                     </div>
                   </div>
                 </div>
@@ -424,5 +481,6 @@ export const PaymentsScreen = () => {
         )}
       </div>
     </div>
+    </>
   );
 };

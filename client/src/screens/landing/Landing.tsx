@@ -140,11 +140,12 @@ export const LandingPage = () => {
                     <span className="text-sm font-semibold text-blue-800">Open Source • Self-Hostable</span>
                   </div>
                   <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold leading-tight text-gray-900">
-                    Transform Your Invoicing
-                    <span className="block">in Seconds</span>
+                    Full-Fledged Billing & Payment Platform
+                    <span className="block">Built for Everyone</span>
                   </h1>
                   <p className="text-lg sm:text-xl font-medium text-gray-600 leading-relaxed">
-                    Open source invoicing for <span className="font-bold text-gray-900">freelancers</span> and{' '}
+                    Complete open source billing, payment, and invoicing solution for{' '}
+                    <span className="font-bold text-gray-900">freelancers</span> and{' '}
                     <span className="font-bold text-gray-900">businesses</span>. Self-host for complete control or use
                     our hosted version. Your data, your way.
                   </p>
@@ -552,7 +553,7 @@ export const LandingPage = () => {
                 <h3 className="text-2xl font-bold text-gray-900">DefInvoice</h3>
               </div>
               <p className="text-lg text-gray-600 mb-6 leading-relaxed">
-                Open source invoicing for everyone. Built by developers, for developers.
+                Full-fledged open source billing, payment, and invoicing solution. Built by developers, for developers.
               </p>
               <div className="flex items-center gap-3">
                 <a
@@ -636,14 +637,24 @@ export const LandingPage = () => {
 
           <div className="border-t border-gray-200 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
             <p className="text-gray-600 text-sm">© 2025 DefInvoice. Open source under MIT License.</p>
-            <a
-              href="https://github.com/Koushith"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-2 px-3 py-1 bg-[#635BFF]/10 hover:bg-[#635BFF]/20 rounded-full border border-[#635BFF]/30 transition-colors"
-            >
-              <span className="text-xs font-semibold text-[#635BFF]">Built by Koushith Amin</span>
-            </a>
+            <div className="flex items-center gap-3">
+              <a
+                href="https://koushith.in"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 px-3 py-1 bg-[#635BFF]/10 hover:bg-[#635BFF]/20 rounded-full border border-[#635BFF]/30 transition-colors"
+              >
+                <span className="text-xs font-semibold text-[#635BFF]">Built by Koushith</span>
+              </a>
+              <a
+                href="https://github.com/Koushith/DefinVoice"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-xs font-medium text-gray-600 hover:text-gray-900 transition-colors"
+              >
+                View on GitHub →
+              </a>
+            </div>
           </div>
         </div>
       </footer>

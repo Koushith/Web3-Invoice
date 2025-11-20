@@ -2,6 +2,7 @@ import { Router } from 'express';
 import {
   getInvoices,
   getInvoice,
+  getNextInvoiceNumber,
   createInvoice,
   updateInvoice,
   deleteInvoice,
@@ -21,6 +22,7 @@ router.get('/public/:publicId', getPublicInvoice);
 router.use(authenticate);
 
 router.get('/', getInvoices);
+router.get('/next-number', getNextInvoiceNumber);  // Must be before /:id route
 router.get('/:id', getInvoice);
 router.post('/', createInvoice);
 router.put('/:id', updateInvoice);

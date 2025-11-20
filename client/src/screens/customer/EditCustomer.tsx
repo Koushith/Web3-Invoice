@@ -46,6 +46,10 @@ export const EditCustomerScreen = () => {
     },
     preferredPaymentMethod: '',
     walletAddress: '',
+    invoiceSettings: {
+      prefix: '',
+      nextNumber: 1,
+    },
     notes: '',
   });
 
@@ -67,6 +71,10 @@ export const EditCustomerScreen = () => {
         },
         preferredPaymentMethod: customer.preferredPaymentMethod || '',
         walletAddress: customer.walletAddress || '',
+        invoiceSettings: {
+          prefix: customer.invoiceSettings?.prefix || '',
+          nextNumber: customer.invoiceSettings?.nextNumber || 1,
+        },
         notes: customer.notes || '',
       });
     }
@@ -80,6 +88,13 @@ export const EditCustomerScreen = () => {
     setFormData((prev) => ({
       ...prev,
       address: { ...prev.address, [field]: value },
+    }));
+  };
+
+  const handleInvoiceSettingsChange = (field: string, value: string | number) => {
+    setFormData((prev) => ({
+      ...prev,
+      invoiceSettings: { ...prev.invoiceSettings, [field]: value },
     }));
   };
 
@@ -102,6 +117,10 @@ export const EditCustomerScreen = () => {
         address: formData.address.street ? formData.address : undefined,
         preferredPaymentMethod: formData.preferredPaymentMethod || undefined,
         walletAddress: formData.walletAddress || undefined,
+        invoiceSettings: formData.invoiceSettings.prefix ? {
+          prefix: formData.invoiceSettings.prefix.toUpperCase(),
+          nextNumber: formData.invoiceSettings.nextNumber,
+        } : undefined,
         notes: formData.notes || undefined,
       };
 
@@ -346,6 +365,58 @@ export const EditCustomerScreen = () => {
                   <p className="text-xs text-gray-500 mt-1.5">For digital currency payments</p>
                 </div>
               )}
+            </div>
+          </div>
+
+          {/* Invoice Settings Section */}
+          <div className="mb-8 pb-8 border-b border-gray-200">
+            <div className="mb-4">
+              <h2 className="text-base font-semibold text-gray-900">Invoice settings</h2>
+            </div>
+            <p className="text-sm text-gray-600 mb-6">
+              Customize invoice numbering for this customer (optional).
+            </p>
+
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-medium text-gray-700 block mb-1.5">Invoice prefix</label>
+                  <Input
+                    placeholder="e.g. CUST"
+                    value={formData.invoiceSettings.prefix}
+                    onChange={(e) => handleInvoiceSettingsChange('prefix', e.target.value.toUpperCase())}
+                    className="h-8 text-sm font-semibold uppercase"
+                    maxLength={10}
+                  />
+                  <p className="text-xs text-gray-500 mt-1.5">Custom prefix for invoices to this customer (e.g. CUST-001)</p>
+                </div>
+
+                <div>
+                  <label className="text-sm font-medium text-gray-700 block mb-1.5">Starting number</label>
+                  <Input
+                    type="number"
+                    placeholder="1"
+                    value={formData.invoiceSettings.nextNumber}
+                    onChange={(e) => handleInvoiceSettingsChange('nextNumber', parseInt(e.target.value) || 1)}
+                    className="h-8 text-sm"
+                    min={1}
+                  />
+                  <p className="text-xs text-gray-500 mt-1.5">Next invoice number for this customer</p>
+                </div>
+              </div>
+              <div className="bg-blue-50 border border-blue-200 rounded-md p-3">
+                <p className="text-xs text-blue-800">
+                  <strong>Note:</strong> If set, invoices for this customer will use{' '}
+                  {formData.invoiceSettings.prefix ? (
+                    <span className="font-mono font-semibold">
+                      {formData.invoiceSettings.prefix}-{String(formData.invoiceSettings.nextNumber).padStart(3, '0')}
+                    </span>
+                  ) : (
+                    'the organization default prefix'
+                  )}{' '}
+                  instead of your organization's default numbering.
+                </p>
+              </div>
             </div>
           </div>
 
