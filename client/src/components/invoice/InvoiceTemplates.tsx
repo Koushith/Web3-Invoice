@@ -1177,14 +1177,35 @@ export function GradientTemplate({ logo, invoiceData, paymentDetails }: Template
                   )}
                 </div>
               )}
-              {paymentDetails.method === 'crypto' && paymentDetails.cryptoDetails?.walletAddress && (
-                <div className="mt-3 p-3 bg-[#f8f8f8] border border-[#d0d0d0]">
-                  <div className="flex justify-center mb-2">
-                    <QRCode value={paymentDetails.cryptoDetails.walletAddress} size={100} />
-                  </div>
-                  <p className="text-[#4a4a4a] text-xs text-center break-all font-mono">
-                    {paymentDetails.cryptoDetails.walletAddress}
-                  </p>
+              {paymentDetails.method === 'crypto' && paymentDetails.cryptoDetails && (
+                <div className="space-y-2 text-sm">
+                  {paymentDetails.cryptoDetails.currency && (
+                    <p>
+                      <span className="text-[#666666]">Currency:</span>{' '}
+                      <span className="text-[#1a1a1a] ml-2 font-semibold">{paymentDetails.cryptoDetails.currency}</span>
+                    </p>
+                  )}
+                  {paymentDetails.cryptoDetails.network && (
+                    <p>
+                      <span className="text-[#666666]">Network:</span>{' '}
+                      <span className="text-[#1a1a1a] ml-2 font-semibold">{paymentDetails.cryptoDetails.network}</span>
+                    </p>
+                  )}
+                  {paymentDetails.cryptoDetails.walletAddress && (
+                    <div>
+                      <p className="mb-2">
+                        <span className="text-[#666666]">Wallet Address:</span>
+                      </p>
+                      <div className="mt-3 p-3 bg-[#f8f8f8] border border-[#d0d0d0]">
+                        <div className="flex justify-center mb-2">
+                          <QRCode value={paymentDetails.cryptoDetails.walletAddress} size={100} />
+                        </div>
+                        <p className="text-[#4a4a4a] text-xs text-center break-all font-mono">
+                          {paymentDetails.cryptoDetails.walletAddress}
+                        </p>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -1359,14 +1380,33 @@ export function GlassTemplate({ logo, invoiceData, paymentDetails }: TemplatePro
                   )}
                 </div>
               )}
-              {paymentDetails.method === 'crypto' && paymentDetails.cryptoDetails?.walletAddress && (
-                <div className="mt-3 p-4 bg-[#f8f8f8] border border-[#d0d0d0]">
-                  <div className="flex justify-center mb-2">
-                    <QRCode value={paymentDetails.cryptoDetails.walletAddress} size={100} />
-                  </div>
-                  <p className="text-[#4a4a4a] text-xs text-center break-all font-mono mt-2">
-                    {paymentDetails.cryptoDetails.walletAddress}
-                  </p>
+              {paymentDetails.method === 'crypto' && paymentDetails.cryptoDetails && (
+                <div className="space-y-3 text-sm">
+                  {paymentDetails.cryptoDetails.currency && (
+                    <div className="flex">
+                      <span className="text-[#666666] w-32">Currency:</span>
+                      <span className="text-[#1a1a1a] font-medium">{paymentDetails.cryptoDetails.currency}</span>
+                    </div>
+                  )}
+                  {paymentDetails.cryptoDetails.network && (
+                    <div className="flex">
+                      <span className="text-[#666666] w-32">Network:</span>
+                      <span className="text-[#1a1a1a] font-medium">{paymentDetails.cryptoDetails.network}</span>
+                    </div>
+                  )}
+                  {paymentDetails.cryptoDetails.walletAddress && (
+                    <div className="flex items-start gap-2">
+                      <span className="text-[#666666] w-32">Wallet Address:</span>
+                      <span className="text-[#1a1a1a] font-mono text-xs break-all flex-1">{paymentDetails.cryptoDetails.walletAddress}</span>
+                    </div>
+                  )}
+                  {paymentDetails.cryptoDetails.walletAddress && (
+                    <div className="mt-3 p-4 bg-[#f8f8f8] border border-[#d0d0d0]">
+                      <div className="flex justify-center mb-2">
+                        <QRCode value={paymentDetails.cryptoDetails.walletAddress} size={100} />
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -1554,14 +1594,33 @@ export function ElegantTemplate({ logo, invoiceData, paymentDetails }: TemplateP
                     )}
                   </div>
                 )}
-                {paymentDetails.method === 'crypto' && paymentDetails.cryptoDetails?.walletAddress && (
-                  <div className="p-4 bg-[#f8f8f8] border-l-4 border-gray-700">
-                    <div className="flex justify-center mb-2">
-                      <QRCode value={paymentDetails.cryptoDetails.walletAddress} size={100} />
-                    </div>
-                    <p className="text-[#4a4a4a] text-xs text-center break-all font-mono mt-2">
-                      {paymentDetails.cryptoDetails.walletAddress}
-                    </p>
+                {paymentDetails.method === 'crypto' && paymentDetails.cryptoDetails && (
+                  <div className="space-y-2 text-sm bg-[#f8f8f8] p-4 border-l-4 border-gray-700">
+                    {paymentDetails.cryptoDetails.currency && (
+                      <div className="flex gap-2">
+                        <span className="text-[#4a4a4a] font-semibold min-w-[120px]">Currency:</span>
+                        <span className="text-[#1a1a1a]">{paymentDetails.cryptoDetails.currency}</span>
+                      </div>
+                    )}
+                    {paymentDetails.cryptoDetails.network && (
+                      <div className="flex gap-2">
+                        <span className="text-[#4a4a4a] font-semibold min-w-[120px]">Network:</span>
+                        <span className="text-[#1a1a1a]">{paymentDetails.cryptoDetails.network}</span>
+                      </div>
+                    )}
+                    {paymentDetails.cryptoDetails.walletAddress && (
+                      <div>
+                        <div className="flex gap-2 mb-2">
+                          <span className="text-[#4a4a4a] font-semibold min-w-[120px]">Wallet Address:</span>
+                        </div>
+                        <div className="flex justify-center mb-2">
+                          <QRCode value={paymentDetails.cryptoDetails.walletAddress} size={100} />
+                        </div>
+                        <p className="text-[#4a4a4a] text-xs text-center break-all font-mono mt-2">
+                          {paymentDetails.cryptoDetails.walletAddress}
+                        </p>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
@@ -1688,12 +1747,12 @@ export function CattyTemplate({ logo: _logo, invoiceData, paymentDetails }: Temp
         </p>
       </div>
 
-      {/* Bank Details and Notes - Side by Side */}
+      {/* Payment Details and Notes - Side by Side */}
       <div className="grid grid-cols-2 gap-16 mb-16">
         {/* Left Side - Empty space for cat image */}
         <div></div>
 
-        {/* Right Side - Bank Details */}
+        {/* Right Side - Payment Details */}
         {paymentDetails.method === 'bank' && paymentDetails.bankDetails && (
           <div className="text-sm leading-relaxed space-y-3">
             <p className="font-medium mb-4">Bank Details</p>
@@ -1734,18 +1793,46 @@ export function CattyTemplate({ logo: _logo, invoiceData, paymentDetails }: Temp
             )}
           </div>
         )}
+
+        {/* Crypto Details */}
+        {paymentDetails.method === 'crypto' && paymentDetails.cryptoDetails && (
+          <div className="text-sm leading-relaxed space-y-3">
+            <p className="font-medium mb-4">Crypto Payment</p>
+
+            {paymentDetails.cryptoDetails.currency && (
+              <div className="flex">
+                <span className="inline-block w-40 text-[#4a4a4a]">Currency</span>
+                <span>: {paymentDetails.cryptoDetails.currency}</span>
+              </div>
+            )}
+
+            {paymentDetails.cryptoDetails.network && (
+              <div className="flex">
+                <span className="inline-block w-40 text-[#4a4a4a]">Network</span>
+                <span>: {paymentDetails.cryptoDetails.network}</span>
+              </div>
+            )}
+
+            {paymentDetails.cryptoDetails.walletAddress && (
+              <div className="flex">
+                <span className="inline-block w-40 text-[#4a4a4a]">Wallet Address</span>
+                <span className="font-mono text-xs break-all flex-1">: {paymentDetails.cryptoDetails.walletAddress}</span>
+              </div>
+            )}
+
+            {/* Notes below crypto details */}
+            {invoiceData.notes && (
+              <div className="mt-8 pt-8 border-t border-[#b0b0b0]">
+                <p className="whitespace-pre-wrap">{invoiceData.notes}</p>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Cat Image - Bottom Left */}
       <div className="absolute bottom-0 left-0 w-[200px] h-[200px]">
         <img src={catPeekImage} alt="Cat peeking" className="w-full h-full object-contain" />
-      </div>
-
-      {/* Signature */}
-      <div className="absolute bottom-8 right-20 text-sm">
-        <p className="italic text-[#4a4a4a]" style={{ fontFamily: 'cursive' }}>
-          -{invoiceData.fromCompany?.split('\n')[0]?.split(' ')[0] || 'Signature'}
-        </p>
       </div>
     </div>
   );
@@ -1856,12 +1943,12 @@ export function FloralTemplate({ logo: _logo, invoiceData, paymentDetails }: Tem
         </p>
       </div>
 
-      {/* Bank Details and Notes - Side by Side */}
+      {/* Payment Details and Notes - Side by Side */}
       <div className="grid grid-cols-2 gap-16 mb-16">
         {/* Left Side - Empty space for floral image */}
         <div></div>
 
-        {/* Right Side - Bank Details */}
+        {/* Right Side - Payment Details */}
         {paymentDetails.method === 'bank' && paymentDetails.bankDetails && (
           <div className="text-sm leading-relaxed space-y-3">
             <p className="font-medium mb-4">Bank Details</p>
@@ -1902,18 +1989,46 @@ export function FloralTemplate({ logo: _logo, invoiceData, paymentDetails }: Tem
             )}
           </div>
         )}
+
+        {/* Crypto Details */}
+        {paymentDetails.method === 'crypto' && paymentDetails.cryptoDetails && (
+          <div className="text-sm leading-relaxed space-y-3">
+            <p className="font-medium mb-4">Crypto Payment</p>
+
+            {paymentDetails.cryptoDetails.currency && (
+              <div className="flex">
+                <span className="inline-block w-40 text-[#666666]">Currency</span>
+                <span>: {paymentDetails.cryptoDetails.currency}</span>
+              </div>
+            )}
+
+            {paymentDetails.cryptoDetails.network && (
+              <div className="flex">
+                <span className="inline-block w-40 text-[#666666]">Network</span>
+                <span>: {paymentDetails.cryptoDetails.network}</span>
+              </div>
+            )}
+
+            {paymentDetails.cryptoDetails.walletAddress && (
+              <div className="flex">
+                <span className="inline-block w-40 text-[#666666]">Wallet Address</span>
+                <span className="font-mono text-xs break-all text-[#333333] flex-1">: {paymentDetails.cryptoDetails.walletAddress}</span>
+              </div>
+            )}
+
+            {/* Notes below crypto details */}
+            {invoiceData.notes && (
+              <div className="mt-8 pt-8 border-t border-[#b0b0b0]">
+                <p className="whitespace-pre-wrap text-[#333333]">{invoiceData.notes}</p>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Floral Image - Bottom Left */}
       <div className="absolute bottom-0 left-0 w-[300px] h-[300px]">
         <img src={flowerImage} alt="Floral decoration" className="w-full h-full object-contain" />
-      </div>
-
-      {/* Signature */}
-      <div className="absolute bottom-8 right-20 text-sm">
-        <p className="italic text-[#666666]" style={{ fontFamily: 'cursive' }}>
-          -{invoiceData.fromCompany?.split('\n')[0]?.split(' ')[0] || 'Signature'}
-        </p>
       </div>
     </div>
   );
@@ -2070,18 +2185,46 @@ export function FloralDarkTemplate({ logo: _logo, invoiceData, paymentDetails }:
             )}
           </div>
         )}
+
+        {/* Right Side - Crypto Details */}
+        {paymentDetails.method === 'crypto' && paymentDetails.cryptoDetails && (
+          <div className="text-sm leading-relaxed space-y-3">
+            <p className="font-medium mb-4">Crypto Payment</p>
+
+            {paymentDetails.cryptoDetails.currency && (
+              <div className="flex">
+                <span className="inline-block w-40 text-[#888888]">Currency</span>
+                <span>: {paymentDetails.cryptoDetails.currency}</span>
+              </div>
+            )}
+
+            {paymentDetails.cryptoDetails.network && (
+              <div className="flex">
+                <span className="inline-block w-40 text-[#888888]">Network</span>
+                <span>: {paymentDetails.cryptoDetails.network}</span>
+              </div>
+            )}
+
+            {paymentDetails.cryptoDetails.walletAddress && (
+              <div className="flex">
+                <span className="inline-block w-40 text-[#888888]">Wallet Address</span>
+                <span className="font-mono text-xs break-all flex-1">: {paymentDetails.cryptoDetails.walletAddress}</span>
+              </div>
+            )}
+
+            {/* Notes below crypto details */}
+            {invoiceData.notes && (
+              <div className="mt-8 pt-8 border-t border-gray-700">
+                <p className="whitespace-pre-wrap text-gray-300">{invoiceData.notes}</p>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Floral Image - Bottom Left */}
       <div className="absolute bottom-0 left-0 w-[300px] h-[300px]">
         <img src={flowerImage} alt="Floral decoration" className="w-full h-full object-contain" />
-      </div>
-
-      {/* Signature */}
-      <div className="absolute bottom-8 right-20 text-sm">
-        <p className="italic text-[#888888]" style={{ fontFamily: 'cursive' }}>
-          -{invoiceData.fromCompany?.split('\n')[0]?.split(' ')[0] || 'Signature'}
-        </p>
       </div>
     </div>
   );
@@ -2238,6 +2381,41 @@ export function PandaTemplate({ invoiceData, paymentDetails }: TemplateProps) {
           </div>
         </div>
       )}
+
+      {/* Crypto Payment Info */}
+      {paymentDetails.method === 'crypto' && paymentDetails.cryptoDetails && (
+        <div className="border-t border-[#b0b0b0] pt-6">
+          <p className="text-xs font-semibold text-[#666666] uppercase tracking-wider mb-4">Crypto Payment info</p>
+          <div className="space-y-3 text-sm">
+            {paymentDetails.cryptoDetails.currency && (
+              <div className="flex items-start gap-3">
+                <span className="text-xs font-semibold text-[#666666] uppercase min-w-[140px]">Currency</span>
+                <span className="text-[#1a1a1a]">: {paymentDetails.cryptoDetails.currency}</span>
+              </div>
+            )}
+            {paymentDetails.cryptoDetails.network && (
+              <div className="flex items-start gap-3">
+                <span className="text-xs font-semibold text-[#666666] uppercase min-w-[140px]">Network</span>
+                <span className="text-[#1a1a1a]">: {paymentDetails.cryptoDetails.network}</span>
+              </div>
+            )}
+            {paymentDetails.cryptoDetails.walletAddress && (
+              <div className="flex items-start gap-3">
+                <span className="text-xs font-semibold text-[#666666] uppercase min-w-[140px]">Wallet Address</span>
+                <span className="text-[#1a1a1a] font-mono text-xs break-all flex-1">: {paymentDetails.cryptoDetails.walletAddress}</span>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Notes */}
+      {invoiceData.notes && (
+        <div className="border-t border-[#b0b0b0] pt-6 mt-6">
+          <p className="text-xs font-semibold text-[#666666] uppercase tracking-wider mb-3">Notes</p>
+          <p className="text-sm text-[#4a4a4a] whitespace-pre-line">{invoiceData.notes}</p>
+        </div>
+      )}
     </div>
   );
 }
@@ -2387,6 +2565,29 @@ export function PinkMinimalTemplate({ invoiceData, paymentDetails }: TemplatePro
               )}
             </div>
           )}
+
+          {paymentDetails.method === 'crypto' && paymentDetails.cryptoDetails && (
+            <div className="space-y-2 text-sm">
+              {paymentDetails.cryptoDetails.currency && (
+                <div className="flex justify-between">
+                  <span className="text-[#4a4a4a]">Currency</span>
+                  <span className="text-[#1a1a1a]">{paymentDetails.cryptoDetails.currency}</span>
+                </div>
+              )}
+              {paymentDetails.cryptoDetails.network && (
+                <div className="flex justify-between">
+                  <span className="text-[#4a4a4a]">Network</span>
+                  <span className="text-[#1a1a1a]">{paymentDetails.cryptoDetails.network}</span>
+                </div>
+              )}
+              {paymentDetails.cryptoDetails.walletAddress && (
+                <div className="flex items-start gap-2">
+                  <span className="text-[#4a4a4a] min-w-[100px]">Wallet Address</span>
+                  <span className="text-[#1a1a1a] font-mono text-xs break-all flex-1">{paymentDetails.cryptoDetails.walletAddress}</span>
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Right - Thank You */}
@@ -2398,11 +2599,19 @@ export function PinkMinimalTemplate({ invoiceData, paymentDetails }: TemplatePro
           </div>
         </div>
       </div>
+
+      {/* Notes Section */}
+      {invoiceData.notes && (
+        <div className="pt-8 border-t border-[#d0d0d0] mt-8">
+          <p className="text-sm font-semibold text-[#1a1a1a] mb-3">Notes</p>
+          <p className="text-sm text-[#666666] whitespace-pre-line">{invoiceData.notes}</p>
+        </div>
+      )}
     </div>
   );
 }
 
-export function CompactPandaTemplate({ invoiceData, paymentDetails: _paymentDetails }: TemplateProps) {
+export function CompactPandaTemplate({ invoiceData, paymentDetails }: TemplateProps) {
   const currencySymbol = getCurrencySymbol(invoiceData.currency);
   const subtotal = invoiceData.items.reduce((sum, item) => sum + item.quantity * item.price, 0);
   const taxRate = 0; // 0% tax as shown in reference
@@ -2542,6 +2751,73 @@ export function CompactPandaTemplate({ invoiceData, paymentDetails: _paymentDeta
           <p>Please pay within 15 days of receiving this invoice.</p>
         </div>
       </div>
+
+      {/* Payment Details */}
+      {paymentDetails.method === 'bank' && paymentDetails.bankDetails && (
+        <div className="pt-6 border-t border-[#b0b0b0] mb-8">
+          <p className="text-xs font-semibold text-[#666666] uppercase mb-4">Payment info</p>
+          <div className="grid grid-cols-2 gap-4 text-xs">
+            {paymentDetails.bankDetails.accountName && (
+              <div>
+                <p className="text-[#666666] mb-1">Account name</p>
+                <p className="text-[#1a1a1a]">{paymentDetails.bankDetails.accountName}</p>
+              </div>
+            )}
+            {paymentDetails.bankDetails.bankName && (
+              <div>
+                <p className="text-[#666666] mb-1">Bank name</p>
+                <p className="text-[#1a1a1a]">{paymentDetails.bankDetails.bankName}</p>
+              </div>
+            )}
+            {paymentDetails.bankDetails.accountNumber && (
+              <div>
+                <p className="text-[#666666] mb-1">Account #</p>
+                <p className="text-[#1a1a1a]">{paymentDetails.bankDetails.accountNumber}</p>
+              </div>
+            )}
+            {paymentDetails.bankDetails.swiftCode && (
+              <div>
+                <p className="text-[#666666] mb-1">Swift code</p>
+                <p className="text-[#1a1a1a]">{paymentDetails.bankDetails.swiftCode}</p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {paymentDetails.method === 'crypto' && paymentDetails.cryptoDetails && (
+        <div className="pt-6 border-t border-[#b0b0b0] mb-8">
+          <p className="text-xs font-semibold text-[#666666] uppercase mb-4">Crypto Payment info</p>
+          <div className="space-y-3 text-xs">
+            {paymentDetails.cryptoDetails.currency && (
+              <div className="flex items-start gap-3">
+                <span className="text-[#666666] min-w-[120px]">Currency</span>
+                <span className="text-[#1a1a1a]">: {paymentDetails.cryptoDetails.currency}</span>
+              </div>
+            )}
+            {paymentDetails.cryptoDetails.network && (
+              <div className="flex items-start gap-3">
+                <span className="text-[#666666] min-w-[120px]">Network</span>
+                <span className="text-[#1a1a1a]">: {paymentDetails.cryptoDetails.network}</span>
+              </div>
+            )}
+            {paymentDetails.cryptoDetails.walletAddress && (
+              <div className="flex items-start gap-3">
+                <span className="text-[#666666] min-w-[120px]">Wallet Address</span>
+                <span className="text-[#1a1a1a] font-mono text-xs break-all flex-1">: {paymentDetails.cryptoDetails.walletAddress}</span>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Notes */}
+      {invoiceData.notes && (
+        <div className="pt-6 border-t border-[#b0b0b0] mb-8">
+          <p className="text-xs font-semibold text-[#666666] uppercase mb-3">Notes</p>
+          <p className="text-xs text-[#4a4a4a] whitespace-pre-line">{invoiceData.notes}</p>
+        </div>
+      )}
 
       {/* Footer */}
       <div className="pt-8 border-t border-[#b0b0b0]">

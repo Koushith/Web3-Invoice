@@ -904,7 +904,7 @@ export const NewInvoice = () => {
                         type="button"
                         onClick={() => {
                           setCurrencyType('crypto');
-                          setCurrency('BTC');
+                          setCurrency('CRYPTO');
                           setShowCustomCurrency(false);
                         }}
                         className={`flex-1 h-8 rounded text-xs font-medium transition-colors ${
@@ -924,17 +924,9 @@ export const NewInvoice = () => {
                           className="w-full"
                         />
                       ) : (
-                        <Select value={currency} onValueChange={setCurrency}>
-                          <SelectTrigger className="h-9 text-sm">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="BTC">BTC - Bitcoin</SelectItem>
-                            <SelectItem value="ETH">ETH - Ethereum</SelectItem>
-                            <SelectItem value="USDT">USDT - Tether</SelectItem>
-                            <SelectItem value="USDC">USDC - USD Coin</SelectItem>
-                          </SelectContent>
-                        </Select>
+                        <div className="h-9 flex items-center px-3 bg-gray-50 border border-gray-200 rounded text-sm text-gray-600">
+                          Select coin in Payment Details below
+                        </div>
                       )
                     ) : (
                       <Input
@@ -947,7 +939,7 @@ export const NewInvoice = () => {
                         className="h-9 text-sm"
                       />
                     )}
-                    <p className="text-[11px] text-gray-500 mt-1">Currency for invoice amounts</p>
+                    <p className="text-[11px] text-gray-500 mt-1">{currencyType === 'crypto' ? 'Choose cryptocurrency in payment details' : 'Currency for invoice amounts'}</p>
                   </div>
 
                   {/* Due Date */}
@@ -1261,8 +1253,11 @@ export const NewInvoice = () => {
                       </div>
                     ) : (
                       <div>
-                        <p className="text-xs text-gray-600 mb-2">Payment method: <span className="font-medium">Cryptocurrency</span></p>
-                        <p className="text-[11px] text-gray-500">Auto-selected based on invoice currency</p>
+                        <Label className="text-xs text-gray-600 mb-1.5 block">Payment method</Label>
+                        <div className="h-9 flex items-center px-3 bg-gray-50 border border-gray-200 rounded text-sm font-medium text-gray-900">
+                          Cryptocurrency
+                        </div>
+                        <p className="text-[11px] text-gray-500 mt-1">Auto-selected based on invoice currency</p>
                       </div>
                     )}
 
@@ -1319,25 +1314,29 @@ export const NewInvoice = () => {
                     {/* Crypto Details */}
                     {paymentDetails.method === 'crypto' && (
                       <div className="space-y-3">
-                        <Select
-                          value={paymentDetails.cryptoDetails?.currency}
-                          onValueChange={(value) =>
-                            setPaymentDetails({
-                              ...paymentDetails,
-                              cryptoDetails: { ...paymentDetails.cryptoDetails, currency: value },
-                            })
-                          }
-                        >
-                          <SelectTrigger className="h-9 text-sm">
-                            <SelectValue placeholder="Select currency" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="BTC">Bitcoin (BTC)</SelectItem>
-                            <SelectItem value="ETH">Ethereum (ETH)</SelectItem>
-                            <SelectItem value="USDT">Tether (USDT)</SelectItem>
-                            <SelectItem value="USDC">USD Coin (USDC)</SelectItem>
-                          </SelectContent>
-                        </Select>
+                        <div>
+                          <Label className="text-xs text-gray-600 mb-1.5 block">Cryptocurrency</Label>
+                          <Select
+                            value={paymentDetails.cryptoDetails?.currency || currency}
+                            onValueChange={(value) => {
+                              setPaymentDetails({
+                                ...paymentDetails,
+                                cryptoDetails: { ...paymentDetails.cryptoDetails, currency: value },
+                              });
+                              setCurrency(value);
+                            }}
+                          >
+                            <SelectTrigger className="h-9 text-sm">
+                              <SelectValue placeholder="Select cryptocurrency" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="BTC">Bitcoin (BTC)</SelectItem>
+                              <SelectItem value="ETH">Ethereum (ETH)</SelectItem>
+                              <SelectItem value="USDT">Tether (USDT)</SelectItem>
+                              <SelectItem value="USDC">USD Coin (USDC)</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
                         <Select
                           value={paymentDetails.cryptoDetails?.network}
                           onValueChange={(value) =>
