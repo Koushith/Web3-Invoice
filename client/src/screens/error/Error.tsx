@@ -30,7 +30,7 @@ export const ErrorScreen = ({ error, message = "We couldn't find the page you're
           <Button variant="default" onClick={() => navigate(-1)}>
             Go Back
           </Button>
-          <Button variant="outline" onClick={() => navigate('/reports')}>
+          <Button variant="outline" onClick={() => navigate('/dashboard')}>
             <HomeIcon className="mr-2 h-4 w-4" />
             Return Home
           </Button>

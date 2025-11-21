@@ -9,11 +9,36 @@ import { asyncHandler, AppError } from '../middleware';
 export const getDashboardStats = asyncHandler(async (req: Request, res: Response) => {
   const user = req.user?.user;
 
+  // CRITICAL: Strict validation to prevent unauthorized data access
   if (!user?.organizationId) {
-    throw new AppError('Organization not found', 404, 'ORG_NOT_FOUND');
+    return res.json({
+      data: {
+        totalRevenue: 0,
+        totalInvoices: 0,
+        paidInvoices: 0,
+        pendingInvoices: 0,
+        partialInvoices: 0,
+        overdueInvoices: 0,
+        averageInvoiceValue: 0,
+        outstandingAmount: 0,
+        paidAmount: 0,
+        customerCount: 0,
+        statusBreakdown: [],
+        recentInvoices: [],
+        recentPayments: [],
+        customerGrowth: [],
+        topCustomers: [],
+      },
+    });
   }
 
   const organizationId = user.organizationId;
+
+  // Ensure organizationId is a valid ObjectId
+  if (!mongoose.Types.ObjectId.isValid(organizationId)) {
+    throw new AppError('Invalid organization ID', 400, 'INVALID_ORG_ID');
+  }
+
   // Convert to ObjectId for aggregation queries
   const orgObjectId = new mongoose.Types.ObjectId(organizationId);
 
@@ -174,11 +199,18 @@ export const getRevenueData = asyncHandler(async (req: Request, res: Response) =
   const user = req.user?.user;
   const { period = 'week' } = req.query;
 
+  // CRITICAL: Strict validation to prevent unauthorized data access
   if (!user?.organizationId) {
-    throw new AppError('Organization not found', 404, 'ORG_NOT_FOUND');
+    return res.json({ data: [] });
   }
 
   const organizationId = user.organizationId;
+
+  // Ensure organizationId is a valid ObjectId
+  if (!mongoose.Types.ObjectId.isValid(organizationId)) {
+    throw new AppError('Invalid organization ID', 400, 'INVALID_ORG_ID');
+  }
+
   const orgObjectId = new mongoose.Types.ObjectId(organizationId);
 
   // Calculate days based on period
@@ -272,13 +304,21 @@ export const getActivityFeed = asyncHandler(async (req: Request, res: Response) 
   const user = req.user?.user;
   const { limit = 20 } = req.query;
 
+  // CRITICAL: Strict validation to prevent unauthorized data access
   if (!user?.organizationId) {
-    throw new AppError('Organization not found', 404, 'ORG_NOT_FOUND');
+    return res.json({ data: [] });
+  }
+
+  const organizationId = user.organizationId;
+
+  // Ensure organizationId is a valid ObjectId
+  if (!mongoose.Types.ObjectId.isValid(organizationId)) {
+    throw new AppError('Invalid organization ID', 400, 'INVALID_ORG_ID');
   }
 
   // Get recent invoices with status changes
   const recentInvoices = await Invoice.find({
-    organizationId: user.organizationId,
+    organizationId,
   })
     .populate('customerId', 'name')
     .sort({ updatedAt: -1 })
@@ -286,7 +326,7 @@ export const getActivityFeed = asyncHandler(async (req: Request, res: Response) 
 
   // Get recent payments
   const recentPayments = await Payment.find({
-    organizationId: user.organizationId,
+    organizationId,
   })
     .populate('invoiceId', 'invoiceNumber')
     .sort({ createdAt: -1 })

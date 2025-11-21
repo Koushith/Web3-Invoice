@@ -20,8 +20,8 @@ import {
   PandaTemplate,
   PinkMinimalTemplate,
   CompactPandaTemplate,
+  CloudflareTemplate,
 } from './InvoiceTemplates';
-import { CloudflareTemplate } from './CloudflareTemplate';
 import { cn } from '@/lib/utils';
 
 interface DownloadInvoiceDialogProps {

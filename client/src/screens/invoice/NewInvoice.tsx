@@ -22,8 +22,8 @@ import {
   PandaTemplate,
   PinkMinimalTemplate,
   CompactPandaTemplate,
+  CloudflareTemplate,
 } from '@/components/invoice/InvoiceTemplates';
-import { CloudflareTemplate } from '@/components/invoice/CloudflareTemplate';
 import { useGetCustomersQuery, useCreateInvoiceMutation, useGetInvoiceQuery, useUpdateInvoiceMutation, useGetOrganizationQuery, useGetNextInvoiceNumberQuery } from '@/services/api.service';
 import { toast } from 'sonner';
 import { auth } from '@/lib/firebase';
@@ -1319,9 +1319,14 @@ export const NewInvoice = () => {
                           <Select
                             value={paymentDetails.cryptoDetails?.currency || currency}
                             onValueChange={(value) => {
+                              // Reset network when currency changes
                               setPaymentDetails({
                                 ...paymentDetails,
-                                cryptoDetails: { ...paymentDetails.cryptoDetails, currency: value },
+                                cryptoDetails: {
+                                  ...paymentDetails.cryptoDetails,
+                                  currency: value,
+                                  network: undefined // Reset network when currency changes
+                                },
                               });
                               setCurrency(value);
                             }}
@@ -1334,32 +1339,54 @@ export const NewInvoice = () => {
                               <SelectItem value="ETH">Ethereum (ETH)</SelectItem>
                               <SelectItem value="USDT">Tether (USDT)</SelectItem>
                               <SelectItem value="USDC">USD Coin (USDC)</SelectItem>
+                              <SelectItem value="SOL">Solana (SOL)</SelectItem>
                             </SelectContent>
                           </Select>
                         </div>
-                        <Select
-                          value={paymentDetails.cryptoDetails?.network}
-                          onValueChange={(value) =>
-                            setPaymentDetails({
-                              ...paymentDetails,
-                              cryptoDetails: { ...paymentDetails.cryptoDetails, network: value },
-                            })
-                          }
-                        >
-                          <SelectTrigger className="h-9 text-sm">
-                            <SelectValue placeholder="Select chain" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="Ethereum">Ethereum</SelectItem>
-                            <SelectItem value="Polygon">Polygon</SelectItem>
-                            <SelectItem value="BSC">Binance Smart Chain</SelectItem>
-                            <SelectItem value="Arbitrum">Arbitrum</SelectItem>
-                            <SelectItem value="Optimism">Optimism</SelectItem>
-                            <SelectItem value="Base">Base</SelectItem>
-                            <SelectItem value="Solana">Solana</SelectItem>
-                            <SelectItem value="Bitcoin">Bitcoin</SelectItem>
-                          </SelectContent>
-                        </Select>
+                        <div>
+                          <Select
+                            value={paymentDetails.cryptoDetails?.network}
+                            onValueChange={(value) =>
+                              setPaymentDetails({
+                                ...paymentDetails,
+                                cryptoDetails: { ...paymentDetails.cryptoDetails, network: value },
+                              })
+                            }
+                            disabled={!paymentDetails.cryptoDetails?.currency}
+                          >
+                            <SelectTrigger className="h-9 text-sm">
+                              <SelectValue placeholder={!paymentDetails.cryptoDetails?.currency ? "Select cryptocurrency first" : "Select chain"} />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {/* Bitcoin networks */}
+                              {paymentDetails.cryptoDetails?.currency === 'BTC' && (
+                                <SelectItem value="Bitcoin">Bitcoin</SelectItem>
+                              )}
+
+                              {/* Solana networks */}
+                              {paymentDetails.cryptoDetails?.currency === 'SOL' && (
+                                <SelectItem value="Solana">Solana</SelectItem>
+                              )}
+
+                              {/* EVM-compatible networks (ETH, USDT, USDC) */}
+                              {(paymentDetails.cryptoDetails?.currency === 'ETH' ||
+                                paymentDetails.cryptoDetails?.currency === 'USDT' ||
+                                paymentDetails.cryptoDetails?.currency === 'USDC') && (
+                                <>
+                                  <SelectItem value="Ethereum">Ethereum</SelectItem>
+                                  <SelectItem value="Polygon">Polygon</SelectItem>
+                                  <SelectItem value="BSC">Binance Smart Chain</SelectItem>
+                                  <SelectItem value="Arbitrum">Arbitrum</SelectItem>
+                                  <SelectItem value="Optimism">Optimism</SelectItem>
+                                  <SelectItem value="Base">Base</SelectItem>
+                                </>
+                              )}
+                            </SelectContent>
+                          </Select>
+                          {!paymentDetails.cryptoDetails?.currency && (
+                            <p className="text-[11px] text-gray-500 mt-1">Select a cryptocurrency first</p>
+                          )}
+                        </div>
                         <Input
                           placeholder="Wallet address"
                           value={paymentDetails.cryptoDetails?.walletAddress}

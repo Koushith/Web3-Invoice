@@ -59,7 +59,7 @@ export const LandingPage = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             {/* Logo */}
-            <button className="flex items-center gap-2 group" onClick={() => navigate('/reports')}>
+            <button className="flex items-center gap-2 group" onClick={() => navigate('/dashboard')}>
               <div className="w-8 h-8 bg-[#635BFF] rounded-lg flex items-center justify-center">
                 <span className="text-white text-sm font-bold">D</span>
               </div>
@@ -591,7 +591,7 @@ export const LandingPage = () => {
                     </a>
                   </li>
                   <li>
-                    <a href="/reports" className="text-gray-600 hover:text-gray-900 transition-colors">
+                    <a href="/dashboard" className="text-gray-600 hover:text-gray-900 transition-colors">
                       Get Started
                     </a>
                   </li>

@@ -15,7 +15,7 @@ export const SignupScreen = () => {
       setLoading(true);
       await loginWithGoogle();
       toast.success('Welcome to DefInvoice!');
-      navigate('/reports');
+      navigate('/dashboard');
     } catch (error: any) {
       console.error('Google signup error:', error);
       toast.error(error.message || 'Failed to sign up with Google.');

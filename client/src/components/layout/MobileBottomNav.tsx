@@ -94,7 +94,7 @@ export function MobileBottomNav() {
           <BottomNavItem
             icon={<LayoutDashboard size={20} strokeWidth={2} />}
             label="Home"
-            to="/reports"
+            to="/dashboard"
           />
           <BottomNavItem
             icon={<FileText size={20} strokeWidth={2} />}
