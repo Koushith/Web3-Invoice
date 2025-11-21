@@ -29,12 +29,6 @@ import { Toaster } from 'sonner';
 import { CustomersScreen } from './screens/customer/Customer';
 import { useAppDispatch } from '@/store/store';
 import { initializeAuth } from '@/store/slices/auth.slice';
-import { analytics } from '@/lib/analytics';
-import { auth } from '@/lib/firebase';
-
-// Analytics Page View Tracker
-// Note: Page views are tracked automatically on route changes
-// This can be enhanced later with a custom component if needed
 
 const router = createBrowserRouter([
   // Landing page - public route at root
@@ -184,33 +178,6 @@ function App() {
   useEffect(() => {
     dispatch(initializeAuth());
   }, [dispatch]);
-
-  // Track user when authenticated and page views on route changes
-  useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged((user) => {
-      if (user) {
-        analytics.identify(user.uid, {
-          email: user.email || undefined,
-          displayName: user.displayName || undefined,
-        });
-      }
-    });
-    return unsubscribe;
-  }, []);
-
-  // Track page views on navigation
-  useEffect(() => {
-    // Track initial page view
-    analytics.pageView(window.location.pathname + window.location.search);
-
-    // Listen for route changes
-    const handleRouteChange = () => {
-      analytics.pageView(window.location.pathname + window.location.search);
-    };
-
-    window.addEventListener('popstate', handleRouteChange);
-    return () => window.removeEventListener('popstate', handleRouteChange);
-  }, []);
 
   return (
     <>

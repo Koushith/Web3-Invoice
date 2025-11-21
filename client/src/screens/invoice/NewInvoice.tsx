@@ -31,7 +31,6 @@ import { useReactToPrint } from 'react-to-print';
 import { toPng } from 'html-to-image';
 import { jsPDF } from 'jspdf';
 import { Currency } from '@/types/models';
-import { analytics } from '@/lib/analytics';
 import { CurrencyCombobox } from '@/components/ui/currency-combobox';
 
 export type InvoiceStyle = 'standard' | 'modern' | 'minimal' | 'artistic' | 'gradient' | 'glass' | 'elegant' | 'catty' | 'floral' | 'floraldark' | 'panda' | 'pinkminimal' | 'compactpanda' | 'cloudflare';
@@ -566,20 +565,11 @@ export const NewInvoice = () => {
         await updateInvoice({ id: invoiceId, data: invoicePayload }).unwrap();
         toast.success(saveAsDraft ? 'Draft saved successfully' : 'Invoice updated successfully');
 
-        // Track analytics
-        analytics.events.invoiceUpdated(invoiceId);
-
         navigate(`/invoices/${invoiceId}`);
       } else {
         // Create new invoice
-        const response = await createInvoice(invoicePayload).unwrap();
+        await createInvoice(invoicePayload).unwrap();
         toast.success(saveAsDraft ? 'Draft saved successfully' : 'Invoice created successfully');
-
-        // Track analytics
-        const createdInvoiceId = (response as any)?._id || (response as any)?.id;
-        if (createdInvoiceId) {
-          analytics.events.invoiceCreated(createdInvoiceId, total, finalCurrency);
-        }
 
         navigate('/invoices');
       }
