@@ -18,12 +18,6 @@ import { StatCardSkeleton } from '@/components/ui/skeleton';
 import { useGetDashboardMetricsQuery, useGetRevenueChartQuery } from '@/services/api.service';
 import { auth } from '@/lib/firebase';
 
-const invoiceStatusData = [
-  { name: 'Paid', value: 65, color: '#22c55e' },
-  { name: 'Pending', value: 25, color: '#eab308' },
-  { name: 'Overdue', value: 10, color: '#ef4444' },
-];
-
 // Helper function to format month
 const formatMonth = (yearMonth: string) => {
   const [year, month] = yearMonth.split('-');
@@ -67,6 +61,37 @@ export const ReportsScreen = () => {
       amount: item.totalRevenue,
       invoices: item.invoiceCount,
     })) || [];
+
+  // Calculate invoice status data from actual metrics
+  const totalInvoices = metrics?.totalInvoices || 0;
+  const invoiceStatusData = totalInvoices > 0 && metrics
+    ? [
+        {
+          name: 'Paid',
+          value: Math.round(((metrics.paidInvoices || 0) / totalInvoices) * 100),
+          count: metrics.paidInvoices || 0,
+          color: '#22c55e'
+        },
+        {
+          name: 'Pending',
+          value: Math.round(((metrics.pendingInvoices || 0) / totalInvoices) * 100),
+          count: metrics.pendingInvoices || 0,
+          color: '#eab308'
+        },
+        {
+          name: 'Partial',
+          value: Math.round(((metrics.partialInvoices || 0) / totalInvoices) * 100),
+          count: metrics.partialInvoices || 0,
+          color: '#3b82f6'
+        },
+        {
+          name: 'Overdue',
+          value: Math.round(((metrics.overdueInvoices || 0) / totalInvoices) * 100),
+          count: metrics.overdueInvoices || 0,
+          color: '#ef4444'
+        },
+      ].filter(item => item.value > 0) // Only show categories with values
+    : [];
 
   return (
     <div className="min-h-screen bg-[#FEFFFE]">
@@ -286,37 +311,60 @@ export const ReportsScreen = () => {
               <h3 className="text-lg font-semibold text-gray-900">Invoice Status</h3>
               <p className="text-sm text-gray-500 mt-1">Distribution overview</p>
             </div>
-            <div className="h-[300px] flex items-center justify-center">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={invoiceStatusData}
-                    innerRadius={60}
-                    outerRadius={90}
-                    paddingAngle={5}
-                    dataKey="value"
-                    cx="50%"
-                    cy="50%"
-                  >
-                    {invoiceStatusData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                  </Pie>
-                  <Tooltip />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
-            <div className="space-y-2">
-              {invoiceStatusData.map((item) => (
-                <div key={item.name} className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded-full" style={{ backgroundColor: item.color }}></div>
-                    <span className="text-sm text-gray-600">{item.name}</span>
-                  </div>
-                  <span className="text-sm font-semibold text-gray-900">{item.value}%</span>
+            {metricsLoading ? (
+              <div className="h-[300px] flex items-center justify-center">
+                <div className="animate-pulse text-gray-400">Loading...</div>
+              </div>
+            ) : invoiceStatusData.length === 0 ? (
+              <div className="h-[300px] flex items-center justify-center">
+                <div className="text-center">
+                  <FileText className="w-12 h-12 text-gray-300 mx-auto mb-2" />
+                  <p className="text-sm text-gray-500">No invoice data yet</p>
+                  <p className="text-xs text-gray-400 mt-1">Create invoices to see status breakdown</p>
                 </div>
-              ))}
-            </div>
+              </div>
+            ) : (
+              <>
+                <div className="h-[200px] flex items-center justify-center mb-4">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={invoiceStatusData}
+                        innerRadius={50}
+                        outerRadius={80}
+                        paddingAngle={5}
+                        dataKey="value"
+                        cx="50%"
+                        cy="50%"
+                      >
+                        {invoiceStatusData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.color} />
+                        ))}
+                      </Pie>
+                      <Tooltip
+                        formatter={(value: any, name: any, props: any) => [`${value}% (${props.payload.count} invoices)`, name]}
+                        contentStyle={{
+                          backgroundColor: 'white',
+                          border: '1px solid #e5e7eb',
+                          borderRadius: '8px',
+                        }}
+                      />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+                <div className="space-y-2">
+                  {invoiceStatusData.map((item) => (
+                    <div key={item.name} className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <div className="w-3 h-3 rounded-full" style={{ backgroundColor: item.color }}></div>
+                        <span className="text-sm text-gray-600">{item.name}</span>
+                      </div>
+                      <span className="text-sm font-semibold text-gray-900">{item.value}% ({item.count})</span>
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
           </div>
         </div>
 
