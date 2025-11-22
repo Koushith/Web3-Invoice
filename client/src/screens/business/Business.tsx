@@ -290,17 +290,20 @@ export const BusinessScreen = () => {
                   placeholder="Your Company Inc."
                 />
               </div>
+              <div>
+                <label className="text-sm font-medium text-gray-700 block mb-1.5">Contact email</label>
+                <Input
+                  type="email"
+                  value={organizationData.email}
+                  disabled
+                  className="h-8 text-sm bg-gray-50 cursor-not-allowed"
+                  placeholder="hello@company.com"
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Email cannot be changed here. Add a new business to change it.
+                </p>
+              </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm font-medium text-gray-700 block mb-1.5">Contact email</label>
-                  <Input
-                    type="email"
-                    value={organizationData.email}
-                    onChange={(e) => setOrganizationData((prev) => ({ ...prev, email: e.target.value }))}
-                    className="h-8 text-sm"
-                    placeholder="hello@company.com"
-                  />
-                </div>
                 <div>
                   <label className="text-sm font-medium text-gray-700 block mb-1.5">Phone number</label>
                   <Input
@@ -311,8 +314,6 @@ export const BusinessScreen = () => {
                     placeholder="+1 (555) 000-0000"
                   />
                 </div>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="text-sm font-medium text-gray-700 block mb-1.5">Website</label>
                   <Input
@@ -323,15 +324,15 @@ export const BusinessScreen = () => {
                     placeholder="https://yourcompany.com"
                   />
                 </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-700 block mb-1.5">Tax ID</label>
-                  <Input
-                    value={organizationData.taxId}
-                    onChange={(e) => setOrganizationData((prev) => ({ ...prev, taxId: e.target.value }))}
-                    className="h-8 text-sm"
-                    placeholder="e.g., EIN, GST, VAT"
-                  />
-                </div>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-700 block mb-1.5">Tax ID</label>
+                <Input
+                  value={organizationData.taxId}
+                  onChange={(e) => setOrganizationData((prev) => ({ ...prev, taxId: e.target.value }))}
+                  className="h-8 text-sm"
+                  placeholder="e.g., EIN, GST, VAT"
+                />
               </div>
             </div>
           ) : (
@@ -514,9 +515,15 @@ export const BusinessScreen = () => {
                 <div className="flex-1">
                   <div className="text-sm text-gray-900">
                     {organizationData.address.street && <div>{organizationData.address.street}</div>}
-                    {(organizationData.address.city || organizationData.address.state || organizationData.address.postalCode) && (
+                    {(organizationData.address.city ||
+                      organizationData.address.state ||
+                      organizationData.address.postalCode) && (
                       <div>
-                        {[organizationData.address.city, organizationData.address.state, organizationData.address.postalCode]
+                        {[
+                          organizationData.address.city,
+                          organizationData.address.state,
+                          organizationData.address.postalCode,
+                        ]
                           .filter(Boolean)
                           .join(', ')}
                       </div>
@@ -526,7 +533,8 @@ export const BusinessScreen = () => {
                       !organizationData.address.city &&
                       !organizationData.address.state &&
                       !organizationData.address.postalCode &&
-                      !organizationData.address.country && '—'}
+                      !organizationData.address.country &&
+                      '—'}
                   </div>
                 </div>
               </div>
