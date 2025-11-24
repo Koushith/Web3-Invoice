@@ -140,28 +140,26 @@ export const LandingPage = () => {
                     <span className="text-sm font-semibold text-blue-800">Open Source • Self-Hostable</span>
                   </div>
                   <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold leading-tight text-gray-900">
-                    Full-Fledged Billing & Payment Platform
-                    <span className="block">Built for Everyone</span>
+                    Stop Chasing Payments.
+                    <span className="block">Start Getting Paid.</span>
                   </h1>
                   <p className="text-lg sm:text-xl font-medium text-gray-600 leading-relaxed">
-                    Complete open source billing, payment, and invoicing solution for{' '}
-                    <span className="font-bold text-gray-900">freelancers</span> and{' '}
-                    <span className="font-bold text-gray-900">businesses</span>. Self-host for complete control or use
-                    our hosted version. Your data, your way.
+                    Create professional invoices in 30 seconds. Send shareable links your clients actually pay.
+                    Open source, so you own your data forever.
                   </p>
                   <div className="space-y-3">
                     <div className="flex items-center gap-3">
                       <div className="w-5 h-5 rounded-full bg-[#635BFF] flex items-center justify-center flex-shrink-0">
                         <Check className="w-3 h-3 text-white" />
                       </div>
-                      <span className="text-base font-medium text-gray-700">100% open source - self-host anywhere</span>
+                      <span className="text-base font-medium text-gray-700">No more spreadsheets or Word docs</span>
                     </div>
                     <div className="flex items-center gap-3">
                       <div className="w-5 h-5 rounded-full bg-[#635BFF] flex items-center justify-center flex-shrink-0">
                         <Check className="w-3 h-3 text-white" />
                       </div>
                       <span className="text-base font-medium text-gray-700">
-                        12 beautiful templates & automated reminders
+                        Auto-reminders so you never have to follow up
                       </span>
                     </div>
                     <div className="flex items-center gap-3">
@@ -169,7 +167,7 @@ export const LandingPage = () => {
                         <Check className="w-3 h-3 text-white" />
                       </div>
                       <span className="text-base font-medium text-gray-700">
-                        Public hosted invoices with shareable links
+                        Self-host or use our cloud — your choice
                       </span>
                     </div>
                   </div>
@@ -178,22 +176,22 @@ export const LandingPage = () => {
                       onClick={() => navigate('/login')}
                       className="inline-flex items-center justify-center px-6 py-3 bg-[#635BFF] text-white font-semibold text-base rounded-lg hover:bg-[#5045e5] transition-colors gap-2"
                     >
-                      Start For Free
-                      <Upload className="w-4 h-4" />
+                      Create Your First Invoice
+                      <ArrowRight className="w-4 h-4" />
                     </button>
                   </div>
                   <div className="flex items-center gap-8 pt-8 border-t border-gray-200">
+                    <div>
+                      <p className="text-2xl font-extrabold text-gray-900">30s</p>
+                      <p className="text-sm font-semibold text-gray-600">To Create</p>
+                    </div>
                     <div>
                       <p className="text-2xl font-extrabold text-gray-900">12</p>
                       <p className="text-sm font-semibold text-gray-600">Templates</p>
                     </div>
                     <div>
-                      <p className="text-2xl font-extrabold text-gray-900">Auto</p>
-                      <p className="text-sm font-semibold text-gray-600">Reminders</p>
-                    </div>
-                    <div>
-                      <p className="text-2xl font-extrabold text-gray-900">HD</p>
-                      <p className="text-sm font-semibold text-gray-600">PDF Export</p>
+                      <p className="text-2xl font-extrabold text-gray-900">Free</p>
+                      <p className="text-sm font-semibold text-gray-600">Forever</p>
                     </div>
                   </div>
                 </div>
@@ -254,45 +252,44 @@ export const LandingPage = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <div className="inline-flex items-center gap-2 px-4 py-2 bg-blue-50 rounded-full mb-6">
-              <span className="text-sm font-semibold text-blue-800">Why Choose Us?</span>
+              <span className="text-sm font-semibold text-blue-800">Everything You Need</span>
             </div>
-            <h2 className="text-4xl font-bold text-gray-900 mb-4">Why Choose DefInvoice?</h2>
+            <h2 className="text-4xl font-bold text-gray-900 mb-4">Invoicing Without the Hassle</h2>
             <p className="text-xl font-medium text-gray-600 max-w-2xl mx-auto">
-              Open source invoicing made simple. Self-host for full control or use our hosted version. Your data stays
-              yours.
+              Built for freelancers and small businesses who want to look professional and get paid faster.
             </p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {[
               {
                 icon: Zap,
-                title: '100% Open Source',
-                desc: 'Full source code available on GitHub. Self-host on your infrastructure or use our cloud version.',
+                title: 'Ready in 30 Seconds',
+                desc: 'Fill in the details, pick a template, send. Your first invoice goes out today, not next week.',
               },
               {
                 icon: Shield,
-                title: 'Own Your Data',
-                desc: 'Complete control over your invoices and customer data. No vendor lock-in, export anytime.',
+                title: 'Your Data, Your Rules',
+                desc: 'Open source means no lock-in. Self-host anywhere or export everything with one click.',
               },
               {
                 icon: Brush,
-                title: '12 Beautiful Templates',
-                desc: 'Choose from professionally designed invoice templates. From minimalist to artistic styles.',
+                title: 'Look Professional Instantly',
+                desc: '12 stunning templates designed to impress. From clean minimalist to bold artistic styles.',
               },
               {
                 icon: Clock,
-                title: 'Automated Reminders',
-                desc: 'Set it and forget it. Automatic email reminders sent to customers for overdue invoices.',
+                title: 'Never Chase Payments',
+                desc: 'Automatic reminders do the awkward follow-ups for you. Just set the schedule and relax.',
               },
               {
                 icon: Camera,
-                title: 'Public Invoice Links',
-                desc: 'Share professional hosted invoices with customers via a simple link. No downloads required.',
+                title: 'One Link, Done',
+                desc: 'Send clients a beautiful hosted invoice link. They view it, you track it — no PDFs to lose.',
               },
               {
                 icon: Users,
-                title: 'Payment Tracking',
-                desc: 'Record payments manually with detailed tracking. Fiat & crypto integrations coming soon!',
+                title: 'Know Where You Stand',
+                desc: 'Track every payment with detailed history. See who paid, who owes, and what\'s overdue.',
               },
             ].map((feature, idx) => (
               <div key={idx} className="text-center">
@@ -317,7 +314,7 @@ export const LandingPage = () => {
           <div className="text-center mb-20">
             <h2 className="text-5xl lg:text-6xl font-black text-gray-900 mb-6">How It Works</h2>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              Create professional invoices in 4 simple steps. No experience required.
+              From signup to getting paid — under 5 minutes.
             </p>
           </div>
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 mb-20">
@@ -325,26 +322,26 @@ export const LandingPage = () => {
               {
                 step: '01',
                 icon: Upload,
-                title: 'Create Account',
-                desc: 'Sign up in seconds. No credit card required to start.',
+                title: 'Sign Up Free',
+                desc: 'Create your account in 10 seconds. No credit card, no commitment.',
               },
               {
                 step: '02',
                 icon: Palette,
-                title: 'Add Customer',
-                desc: 'Import or add customer details and payment preferences.',
+                title: 'Add Your Client',
+                desc: 'Enter their name and email. That\'s all you need to get started.',
               },
               {
                 step: '03',
                 icon: Sparkles,
-                title: 'Generate Invoice',
-                desc: 'Create professional invoices in just 30 seconds.',
+                title: 'Build Your Invoice',
+                desc: 'Add line items, pick a template, preview it. Done in 30 seconds.',
               },
               {
                 step: '04',
                 icon: Download,
-                title: 'Get Paid',
-                desc: 'Send and track payments with automated reminders.',
+                title: 'Send & Track',
+                desc: 'Hit send. We\'ll handle the reminders. You focus on your work.',
               },
             ].map((item, idx) => (
               <div key={idx} className="relative group">
@@ -380,11 +377,11 @@ export const LandingPage = () => {
           <div className="text-center mb-16">
             <div className="inline-flex items-center gap-2 px-4 py-2 bg-blue-50 rounded-full mb-6">
               <Star className="w-4 h-4 text-blue-500 fill-current" />
-              <span className="text-sm font-semibold text-blue-800">Trusted by Our Growing Community</span>
+              <span className="text-sm font-semibold text-blue-800">Real Users, Real Results</span>
             </div>
-            <h2 className="text-4xl lg:text-5xl font-extrabold text-gray-900 mb-4">Wall of Love</h2>
+            <h2 className="text-4xl lg:text-5xl font-extrabold text-gray-900 mb-4">People Love DefInvoice</h2>
             <p className="text-xl font-medium text-gray-600 max-w-2xl mx-auto mb-8">
-              See what our community is saying about DefInvoice
+              Join freelancers and businesses who switched and never looked back.
             </p>
           </div>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
@@ -482,28 +479,28 @@ export const LandingPage = () => {
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <div className="inline-flex items-center gap-2 px-4 py-2 bg-blue-50 rounded-full mb-6">
-              <span className="text-sm font-semibold text-blue-800">Got Questions?</span>
+              <span className="text-sm font-semibold text-blue-800">Common Questions</span>
             </div>
-            <h2 className="text-4xl lg:text-5xl font-extrabold text-gray-900 mb-4">Frequently Asked Questions</h2>
-            <p className="text-xl font-medium text-gray-600">Everything you need to know about DefInvoice</p>
+            <h2 className="text-4xl lg:text-5xl font-extrabold text-gray-900 mb-4">Quick Answers</h2>
+            <p className="text-xl font-medium text-gray-600">The stuff people usually ask before signing up.</p>
           </div>
           <div className="grid gap-4">
             {[
               {
-                q: 'Is DefInvoice really open source?',
-                a: 'Yes! 100% open source on GitHub. You can view the code, contribute, and self-host on your own infrastructure with complete control.',
+                q: 'Is this really free?',
+                a: 'Yes, 100%. DefInvoice is open source — no hidden fees, no premium tiers, no "upgrade to unlock" features. Everything is free, forever.',
               },
               {
-                q: 'Can I self-host DefInvoice?',
-                a: 'Absolutely! DefInvoice is designed to be self-hosted. Deploy on your own server with Docker, VPS, or cloud provider. Your data stays with you.',
+                q: 'Can I self-host it?',
+                a: 'Absolutely. Deploy on your own server, VPS, or any cloud provider. Your data never leaves your control. Full source code is on GitHub.',
               },
               {
-                q: 'What about the hosted version?',
-                a: 'We offer a hosted version for convenience. Same great features without the hassle of managing infrastructure. You can switch anytime.',
+                q: 'What if I don\'t want to self-host?',
+                a: 'Use our hosted version — same features, zero setup. Create an account and start invoicing in under a minute.',
               },
               {
-                q: 'Do you support payment integrations?',
-                a: "Currently, you can record payments manually. We're working on integrating fiat and crypto payment gateways in future updates!",
+                q: 'How do I track payments?',
+                a: 'Record payments manually with full details — amount, date, method, notes. Crypto and Stripe integrations are coming soon.',
               },
             ].map((faq, idx) => (
               <div key={idx} className="group">
@@ -528,13 +525,13 @@ export const LandingPage = () => {
       {/* CTA */}
       <section className="py-20 bg-[#635BFF]">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-4xl md:text-6xl font-bold text-white mb-6">Ready to Get Started?</h2>
-          <p className="text-xl text-white/90 mb-10">Transform your invoicing in minutes, not hours</p>
+          <h2 className="text-4xl md:text-6xl font-bold text-white mb-6">Your First Invoice Is 30 Seconds Away</h2>
+          <p className="text-xl text-white/90 mb-10">Free forever. No credit card. No catch.</p>
           <button
             onClick={() => navigate('/login')}
             className="inline-flex items-center justify-center px-10 py-4 bg-white text-[#635BFF] font-bold rounded-2xl hover:shadow-2xl transition-all duration-300 text-lg"
           >
-            Start For Free
+            Get Started Now
             <ArrowRight className="w-5 h-5 ml-2" />
           </button>
         </div>
@@ -553,7 +550,7 @@ export const LandingPage = () => {
                 <h3 className="text-2xl font-bold text-gray-900">DefInvoice</h3>
               </div>
               <p className="text-lg text-gray-600 mb-6 leading-relaxed">
-                Full-fledged open source billing, payment, and invoicing solution. Built by developers, for developers.
+                Open source invoicing that puts you in control. Built for freelancers, agencies, and small businesses.
               </p>
               <div className="flex items-center gap-3">
                 <a
