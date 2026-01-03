@@ -25,6 +25,7 @@ import organizationRoutes from './routes/organizationRoutes.js';
 import passkeyRoutes from './routes/passkeys.js';
 import paymentRoutes from './routes/paymentRoutes.js';
 import userRoutes from './routes/users.js';
+import { startRecurringInvoiceScheduler } from './services/recurringInvoiceService.js';
 
 // ============================================================================
 // Environment Configuration
@@ -148,6 +149,9 @@ async function startServer() {
   try {
     // Connect to MongoDB
     await connectDatabase();
+
+    // Start Recurring Invoice Scheduler
+    startRecurringInvoiceScheduler();
 
     // Start Express server
     app.listen(PORT, () => {

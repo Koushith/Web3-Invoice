@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
-import { Invoice, Organization, Customer } from '../models';
-import { asyncHandler, AppError } from '../middleware';
+import { AppError, asyncHandler } from '../middleware';
+import { Customer, Invoice, Organization } from '../models';
 
 /**
  * Get all invoices for organization
@@ -144,6 +144,10 @@ export const createInvoice = asyncHandler(async (req: Request, res: Response) =>
     allowedPaymentMethods,
     status,
     templateStyle,
+    isRecurring,
+    recurringInterval,
+    recurringEndDate,
+    customFields,
   } = req.body;
 
   if (!user?.organizationId) {
@@ -236,6 +240,10 @@ export const createInvoice = asyncHandler(async (req: Request, res: Response) =>
     total: 0,
     amountPaid: 0,
     amountDue: 0,
+    isRecurring: !!isRecurring,
+    recurringInterval,
+    recurringEndDate,
+    customFields,
   });
 
   res.status(201).json({

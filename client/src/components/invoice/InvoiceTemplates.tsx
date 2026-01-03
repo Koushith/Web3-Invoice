@@ -40,6 +40,7 @@ interface InvoiceData {
   terms: string;
   currency?: string;
   taxRate?: number;
+  customFields?: { label: string; value: string }[];
 }
 
 interface PaymentDetails {
@@ -110,6 +111,12 @@ export function StandardTemplate({ logo, invoiceData, paymentDetails }: Template
               </p>
             </div>
           )}
+          {invoiceData.customFields?.map((field, index) => (
+            <div key={`custom-${index}`} className="mb-3">
+              <p className="text-xs text-[#666666] font-semibold mb-1">{field.label}</p>
+              <p className="text-sm text-[#1a1a1a]">{field.value}</p>
+            </div>
+          ))}
         </div>
       </div>
 
@@ -142,15 +149,13 @@ export function StandardTemplate({ logo, invoiceData, paymentDetails }: Template
           <tbody>
             {invoiceData.items.map((item, index) => (
               <tr key={index} className="border-b border-[#d0d0d0]">
-                <td className="py-4 text-sm text-[#1a1a1a]">{item.description}</td>
+                <td className="py-4 text-sm text-[#1a1a1a] break-all">{item.description}</td>
                 <td className="py-4 text-sm text-center text-[#333333]">{item.quantity}</td>
                 <td className="py-4 text-sm text-right text-[#333333]">
-                  {currencySymbol}
-                  {item.price.toFixed(2)}
+                  {currencySymbol} {item.price.toFixed(2)}
                 </td>
                 <td className="py-4 text-sm text-right text-[#1a1a1a]">
-                  {currencySymbol}
-                  {(item.quantity * item.price).toFixed(2)}
+                  {currencySymbol} {(item.quantity * item.price).toFixed(2)}
                 </td>
               </tr>
             ))}
@@ -164,16 +169,14 @@ export function StandardTemplate({ logo, invoiceData, paymentDetails }: Template
               <div className="flex justify-between items-center text-sm">
                 <span className="text-[#333333]">Subtotal</span>
                 <span className="text-[#1a1a1a]">
-                  {currencySymbol}
-                  {subtotal.toFixed(2)}
+                  {currencySymbol} {subtotal.toFixed(2)}
                 </span>
               </div>
               {taxRate > 0 && (
                 <div className="flex justify-between items-center text-sm">
                   <span className="text-[#333333]">Tax ({taxRate}%)</span>
                   <span className="text-[#1a1a1a]">
-                    {currencySymbol}
-                    {taxAmount.toFixed(2)}
+                    {currencySymbol} {taxAmount.toFixed(2)}
                   </span>
                 </div>
               )}
@@ -182,8 +185,7 @@ export function StandardTemplate({ logo, invoiceData, paymentDetails }: Template
               <div className="flex justify-between items-center">
                 <span className="text-sm font-bold text-[#1a1a1a]">TOTAL</span>
                 <span className="text-xl font-bold text-[#1a1a1a]">
-                  {currencySymbol}
-                  {total.toFixed(2)}
+                  {currencySymbol} {total.toFixed(2)}
                 </span>
               </div>
             </div>
@@ -246,7 +248,7 @@ export function StandardTemplate({ logo, invoiceData, paymentDetails }: Template
                 </div>
                 <div className="bg-white p-3 rounded border border-[#b0b0b0] relative">
                   <QRCode
-                    value={paymentDetails.cryptoDetails.walletAddress}
+                    value={paymentDetails.cryptoDetails.walletAddress || ''}
                     size={120}
                     level="H"
                     className="w-full h-full"
@@ -340,6 +342,13 @@ export function ModernTemplate({ logo, invoiceData, paymentDetails }: TemplatePr
               </p>
             </div>
           )}
+          {/* Custom Fields */}
+          {invoiceData.customFields?.map((field, index) => (
+            <div key={`custom-${index}`} className="space-y-1">
+              <p className="text-xs font-semibold text-[#666666] uppercase tracking-wider">{field.label}</p>
+              <p className="text-sm font-medium text-[#1a1a1a]">{field.value}</p>
+            </div>
+          ))}
         </div>
       </div>
 
@@ -376,13 +385,13 @@ export function ModernTemplate({ logo, invoiceData, paymentDetails }: TemplatePr
           <tbody>
             {invoiceData.items.map((item, index) => (
               <tr key={index} className="border-b border-[#d0d0d0]">
-                <td className="py-4 px-0 text-sm text-[#1a1a1a]">{item.description}</td>
+                <td className="py-4 px-0 text-sm text-[#1a1a1a] break-all">{item.description}</td>
                 <td className="py-4 px-4 text-sm text-right text-[#4a4a4a]">{item.quantity}</td>
                 <td className="py-4 px-4 text-sm text-right text-[#4a4a4a]">
-                  {currencySymbol}{item.price.toFixed(2)}
+                  {currencySymbol} {item.price.toFixed(2)}
                 </td>
                 <td className="py-4 px-4 text-sm text-right font-medium text-[#1a1a1a]">
-                  {currencySymbol}{(item.quantity * item.price).toFixed(2)}
+                  {currencySymbol} {(item.quantity * item.price).toFixed(2)}
                 </td>
               </tr>
             ))}
@@ -396,14 +405,14 @@ export function ModernTemplate({ logo, invoiceData, paymentDetails }: TemplatePr
               <div className="flex justify-between items-center text-sm">
                 <span className="text-[#4a4a4a]">Subtotal</span>
                 <span className="text-[#1a1a1a]">
-                  {currencySymbol}{subtotal.toFixed(2)}
+                  {currencySymbol} {subtotal.toFixed(2)}
                 </span>
               </div>
               {taxRate > 0 && (
                 <div className="flex justify-between items-center text-sm">
                   <span className="text-[#4a4a4a]">Tax ({taxRate}%)</span>
                   <span className="text-[#1a1a1a]">
-                    {currencySymbol}{taxAmount.toFixed(2)}
+                    {currencySymbol} {taxAmount.toFixed(2)}
                   </span>
                 </div>
               )}
@@ -411,7 +420,7 @@ export function ModernTemplate({ logo, invoiceData, paymentDetails }: TemplatePr
             <div className="flex justify-between items-center py-4 px-6 bg-gray-900 text-white rounded-lg">
               <span className="text-base font-semibold">Total</span>
               <span className="text-2xl font-bold">
-                {currencySymbol}{total.toFixed(2)}
+                {currencySymbol} {total.toFixed(2)}
               </span>
             </div>
           </div>
@@ -558,6 +567,13 @@ export function MinimalTemplate({ logo, invoiceData, paymentDetails }: TemplateP
                 })}
               </p>
             )}
+            {/* Custom Fields */}
+            {invoiceData.customFields?.map((field, index) => (
+              <p key={`custom-${index}`} className="text-[#4a4a4a] mt-1">
+                <span className="text-[#666666] mr-1">{field.label}:</span>
+                {field.value}
+              </p>
+            ))}
           </div>
         </div>
       </div>
@@ -582,15 +598,13 @@ export function MinimalTemplate({ logo, invoiceData, paymentDetails }: TemplateP
         {invoiceData.items.map((item, index) => (
           <div key={index} className="flex justify-between items-center py-3 border-b border-[#d0d0d0]">
             <div className="flex-1">
-              <p className="font-medium text-[#1a1a1a]">{item.description}</p>
+              <p className="font-medium text-[#1a1a1a] break-all">{item.description}</p>
               <p className="text-sm text-[#666666] mt-1">
-                {item.quantity} × {currencySymbol}
-                {item.price.toFixed(2)}
+                {item.quantity} × {currencySymbol} {item.price.toFixed(2)}
               </p>
             </div>
             <p className="font-semibold text-[#1a1a1a] text-lg">
-              {currencySymbol}
-              {(item.quantity * item.price).toFixed(2)}
+              {currencySymbol} {(item.quantity * item.price).toFixed(2)}
             </p>
           </div>
         ))}
@@ -602,8 +616,7 @@ export function MinimalTemplate({ logo, invoiceData, paymentDetails }: TemplateP
           <div className="flex gap-12 items-baseline">
             <p className="text-lg font-light text-[#4a4a4a]">Total</p>
             <p className="text-4xl font-light text-[#1a1a1a]">
-              {currencySymbol}
-              {invoiceData.items.reduce((sum, item) => sum + item.quantity * item.price, 0).toFixed(2)}
+              {currencySymbol} {invoiceData.items.reduce((sum, item) => sum + item.quantity * item.price, 0).toFixed(2)}
             </p>
           </div>
         </div>
@@ -793,11 +806,17 @@ export function ArtisticTemplate({ logo, invoiceData, paymentDetails }: Template
               </span>
             </div>
           )}
+          {/* Custom Fields */}
+          {invoiceData.customFields?.map((field, index) => (
+            <div key={`custom-${index}`} className="flex justify-between items-center pt-2 border-t border-amber-200/40">
+              <span className="text-amber-800/80 font-medium tracking-wide">{field.label}</span>
+              <span className="font-semibold text-[#1a1a1a]">{field.value}</span>
+            </div>
+          ))}
           <div className="flex justify-between items-center pt-2 border-t border-amber-200/40">
             <span className="text-amber-800/80 font-medium tracking-wide">Amount Due</span>
             <span className="font-bold text-amber-900 text-base">
-              {currencySymbol}
-              {invoiceData.items.reduce((sum, item) => sum + item.quantity * item.price, 0).toFixed(2)}
+              {currencySymbol} {invoiceData.items.reduce((sum, item) => sum + item.quantity * item.price, 0).toFixed(2)}
             </span>
           </div>
         </div>
@@ -813,12 +832,11 @@ export function ArtisticTemplate({ logo, invoiceData, paymentDetails }: Template
         {invoiceData.items.map((item, index) => (
           <div key={index} className="flex justify-between items-center text-sm py-3 border-b border-amber-200/30 hover:bg-amber-50/30 transition-colors px-2">
             <div className="flex-1">
-              <span className="text-[#262626] font-medium">{item.description}</span>
+              <span className="text-[#262626] font-medium break-all">{item.description}</span>
               <span className="text-[#666666] text-xs ml-3">× {item.quantity}</span>
             </div>
             <span className="font-semibold text-amber-900 ml-4">
-              {currencySymbol}
-              {(item.quantity * item.price).toFixed(2)}
+              {currencySymbol} {(item.quantity * item.price).toFixed(2)}
             </span>
           </div>
         ))}
@@ -830,8 +848,7 @@ export function ArtisticTemplate({ logo, invoiceData, paymentDetails }: Template
         <div className="relative flex justify-between items-center text-lg py-6 px-4">
           <span className="font-bold text-amber-900 tracking-wide" style={{ fontFamily: "'Playfair Display', serif" }}>Total Amount</span>
           <span className="font-bold text-2xl text-amber-900">
-            {currencySymbol}
-            {invoiceData.items.reduce((sum, item) => sum + item.quantity * item.price, 0).toFixed(2)}
+            {currencySymbol} {invoiceData.items.reduce((sum, item) => sum + item.quantity * item.price, 0).toFixed(2)}
           </span>
         </div>
       </div>
@@ -1028,7 +1045,7 @@ export function GradientTemplate({ logo, invoiceData, paymentDetails }: Template
   const total = subtotal + taxAmount;
 
   return (
-    <div className="bg-white p-[25mm] min-h-[297mm]">
+    <div className="bg-white p-[25mm] min-h-full">
       {/* Header */}
       <div className="flex justify-between items-start pb-8 mb-8 border-b-2 border-[#b0b0b0]">
         <div className="space-y-4">
@@ -1067,6 +1084,13 @@ export function GradientTemplate({ logo, invoiceData, paymentDetails }: Template
               </p>
             </div>
           )}
+          {/* Custom Fields */}
+          {invoiceData.customFields?.map((field, index) => (
+            <div key={`custom-${index}`} className="pt-2 border-t border-[#d0d0d0]">
+              <p className="text-xs text-[#666666] uppercase font-semibold">{field.label}</p>
+              <p className="text-[#1a1a1a] font-semibold">{field.value}</p>
+            </div>
+          ))}
         </div>
       </div>
 
@@ -1090,23 +1114,21 @@ export function GradientTemplate({ logo, invoiceData, paymentDetails }: Template
           <thead>
             <tr className="bg-gray-900">
               <th className="py-3 px-4 text-left text-xs font-semibold text-white uppercase">Description</th>
-              <th className="py-3 px-4 text-center text-xs font-semibold text-white uppercase">Qty</th>
-              <th className="py-3 px-4 text-right text-xs font-semibold text-white uppercase">Unit Price</th>
-              <th className="py-3 px-4 text-right text-xs font-semibold text-white uppercase">Amount</th>
+              <th className="py-3 px-4 text-center text-xs font-semibold text-white uppercase w-20">Qty</th>
+              <th className="py-3 px-4 text-right text-xs font-semibold text-white uppercase w-28">Unit Price</th>
+              <th className="py-3 px-4 text-right text-xs font-semibold text-white uppercase w-32">Amount</th>
             </tr>
           </thead>
           <tbody>
             {invoiceData.items.map((item, index) => (
               <tr key={index} className={`border-b border-[#d0d0d0] ${index % 2 === 0 ? 'bg-[#f8f8f8]' : 'bg-white'}`}>
-                <td className="py-3 px-4 text-[#1a1a1a]">{item.description}</td>
+                <td className="py-3 px-4 text-[#1a1a1a] break-all">{item.description}</td>
                 <td className="py-3 px-4 text-center text-[#333333]">{item.quantity}</td>
                 <td className="py-3 px-4 text-right text-[#333333]">
-                  {currencySymbol}
-                  {item.price.toFixed(2)}
+                  {currencySymbol} {item.price.toFixed(2)}
                 </td>
                 <td className="py-3 px-4 text-right text-[#1a1a1a] font-semibold">
-                  {currencySymbol}
-                  {(item.quantity * item.price).toFixed(2)}
+                  {currencySymbol} {(item.quantity * item.price).toFixed(2)}
                 </td>
               </tr>
             ))}
@@ -1128,8 +1150,7 @@ export function GradientTemplate({ logo, invoiceData, paymentDetails }: Template
             <div className="flex justify-between py-2 border-b border-[#d0d0d0]">
               <span className="text-[#4a4a4a]">Tax ({taxRate}%)</span>
               <span className="text-[#1a1a1a] font-semibold">
-                {currencySymbol}
-                {taxAmount.toFixed(2)}
+                {currencySymbol} {taxAmount.toFixed(2)}
               </span>
             </div>
           )}
@@ -1198,7 +1219,11 @@ export function GradientTemplate({ logo, invoiceData, paymentDetails }: Template
                       </p>
                       <div className="mt-3 p-3 bg-[#f8f8f8] border border-[#d0d0d0]">
                         <div className="flex justify-center mb-2">
-                          <QRCode value={paymentDetails.cryptoDetails.walletAddress} size={100} />
+                          <QRCode
+                            value={paymentDetails.cryptoDetails.walletAddress || ''}
+                            size={100}
+                            style={{ height: 'auto', maxWidth: '100%', width: '100px' }}
+                          />
                         </div>
                         <p className="text-[#4a4a4a] text-xs text-center break-all font-mono">
                           {paymentDetails.cryptoDetails.walletAddress}
@@ -1229,7 +1254,7 @@ export function GlassTemplate({ logo, invoiceData, paymentDetails }: TemplatePro
   const total = subtotal;
 
   return (
-    <div className="bg-white p-[25mm] min-h-[297mm]">
+    <div className="bg-white p-[25mm] min-h-full">
       {/* Header with Blue Bar */}
       <div className="mb-8">
         <div className="bg-blue-600 h-3 w-full mb-6"></div>
@@ -1270,6 +1295,13 @@ export function GlassTemplate({ logo, invoiceData, paymentDetails }: TemplatePro
                 </p>
               </div>
             )}
+            {/* Custom Fields */}
+            {invoiceData.customFields?.map((field, index) => (
+              <div key={index} className="flex justify-between text-sm">
+                <span className="text-[#666666]">{field.label}:</span>
+                <span className="text-[#1a1a1a] font-medium">{field.value}</span>
+              </div>
+            ))}
           </div>
         </div>
       </div>
@@ -1296,25 +1328,23 @@ export function GlassTemplate({ logo, invoiceData, paymentDetails }: TemplatePro
               <th className="py-3 px-0 text-left text-xs font-bold text-[#333333] uppercase tracking-wide">
                 Item Description
               </th>
-              <th className="py-3 px-4 text-center text-xs font-bold text-[#333333] uppercase tracking-wide">
+              <th className="py-3 px-4 text-center text-xs font-bold text-[#333333] uppercase tracking-wide w-20">
                 Quantity
               </th>
-              <th className="py-3 px-4 text-right text-xs font-bold text-[#333333] uppercase tracking-wide">Rate</th>
-              <th className="py-3 px-4 text-right text-xs font-bold text-[#333333] uppercase tracking-wide">Amount</th>
+              <th className="py-3 px-4 text-right text-xs font-bold text-[#333333] uppercase tracking-wide w-28">Rate</th>
+              <th className="py-3 px-4 text-right text-xs font-bold text-[#333333] uppercase tracking-wide w-32">Amount</th>
             </tr>
           </thead>
           <tbody>
             {invoiceData.items.map((item, index) => (
               <tr key={index} className="border-b border-[#d0d0d0]">
-                <td className="py-4 px-0 text-[#1a1a1a] font-medium">{item.description}</td>
+                <td className="py-4 px-0 text-[#1a1a1a] font-medium break-all">{item.description}</td>
                 <td className="py-4 px-4 text-center text-[#333333]">{item.quantity}</td>
                 <td className="py-4 px-4 text-right text-[#333333]">
-                  {currencySymbol}
-                  {item.price.toFixed(2)}
+                  {currencySymbol} {item.price.toFixed(2)}
                 </td>
                 <td className="py-4 px-4 text-right text-[#1a1a1a] font-semibold">
-                  {currencySymbol}
-                  {(item.quantity * item.price).toFixed(2)}
+                  {currencySymbol} {(item.quantity * item.price).toFixed(2)}
                 </td>
               </tr>
             ))}
@@ -1335,8 +1365,7 @@ export function GlassTemplate({ logo, invoiceData, paymentDetails }: TemplatePro
           <div className="flex justify-between py-4 bg-blue-600 px-6 mt-3">
             <span className="text-white font-bold text-lg">Amount Due</span>
             <span className="text-white font-bold text-2xl">
-              {currencySymbol}
-              {total.toFixed(2)}
+              {currencySymbol} {total.toFixed(2)}
             </span>
           </div>
         </div>
@@ -1403,7 +1432,11 @@ export function GlassTemplate({ logo, invoiceData, paymentDetails }: TemplatePro
                   {paymentDetails.cryptoDetails.walletAddress && (
                     <div className="mt-3 p-4 bg-[#f8f8f8] border border-[#d0d0d0]">
                       <div className="flex justify-center mb-2">
-                        <QRCode value={paymentDetails.cryptoDetails.walletAddress} size={100} />
+                        <QRCode
+                          value={paymentDetails.cryptoDetails.walletAddress || ''}
+                          size={100}
+                          style={{ height: 'auto', maxWidth: '100%', width: '100px' }}
+                        />
                       </div>
                     </div>
                   )}
@@ -1435,7 +1468,7 @@ export function ElegantTemplate({ logo, invoiceData, paymentDetails }: TemplateP
   const total = subtotal;
 
   return (
-    <div className="bg-white p-[25mm] min-h-[297mm]">
+    <div className="bg-white p-[25mm] min-h-full">
       {/* Letterhead Header */}
       <div className="mb-10">
         <div className="flex justify-between items-start pb-6 mb-6 border-b-4 border-double border-gray-400">
@@ -1483,6 +1516,13 @@ export function ElegantTemplate({ logo, invoiceData, paymentDetails }: TemplateP
             </span>
           </div>
         )}
+        {/* Custom Fields */}
+        {invoiceData.customFields?.map((field, index) => (
+          <div key={`custom-${index}`} className="flex gap-3">
+            <span className="text-[#4a4a4a] font-semibold min-w-[100px]">{field.label}:</span>
+            <span className="text-[#1a1a1a]">{field.value}</span>
+          </div>
+        ))}
       </div>
 
       {/* Addresses */}
@@ -1511,10 +1551,10 @@ export function ElegantTemplate({ logo, invoiceData, paymentDetails }: TemplateP
               <th className="py-3 px-4 text-left text-xs font-semibold text-white uppercase border-r border-gray-600">
                 Description
               </th>
-              <th className="py-3 px-4 text-center text-xs font-semibold text-white uppercase border-r border-gray-600 w-24">
+              <th className="py-3 px-4 text-center text-xs font-semibold text-white uppercase border-r border-gray-600 w-20">
                 Qty
               </th>
-              <th className="py-3 px-4 text-right text-xs font-semibold text-white uppercase border-r border-gray-600 w-32">
+              <th className="py-3 px-4 text-right text-xs font-semibold text-white uppercase border-r border-gray-600 w-28">
                 Unit Price
               </th>
               <th className="py-3 px-4 text-right text-xs font-semibold text-white uppercase w-32">Amount</th>
@@ -1523,15 +1563,13 @@ export function ElegantTemplate({ logo, invoiceData, paymentDetails }: TemplateP
           <tbody>
             {invoiceData.items.map((item, index) => (
               <tr key={index} className={`border-b border-[#b0b0b0] ${index % 2 === 0 ? 'bg-white' : 'bg-[#f8f8f8]'}`}>
-                <td className="py-3 px-4 text-[#1a1a1a] border-r border-[#b0b0b0]">{item.description}</td>
+                <td className="py-3 px-4 text-[#1a1a1a] border-r border-[#b0b0b0] break-all">{item.description}</td>
                 <td className="py-3 px-4 text-center text-[#333333] border-r border-[#b0b0b0]">{item.quantity}</td>
                 <td className="py-3 px-4 text-right text-[#333333] border-r border-[#b0b0b0]">
-                  {currencySymbol}
-                  {item.price.toFixed(2)}
+                  {currencySymbol} {item.price.toFixed(2)}
                 </td>
                 <td className="py-3 px-4 text-right text-[#1a1a1a] font-semibold">
-                  {currencySymbol}
-                  {(item.quantity * item.price).toFixed(2)}
+                  {currencySymbol} {(item.quantity * item.price).toFixed(2)}
                 </td>
               </tr>
             ))}
@@ -1545,15 +1583,13 @@ export function ElegantTemplate({ logo, invoiceData, paymentDetails }: TemplateP
           <div className="flex justify-between py-2 px-4 bg-[#f8f8f8] border-b border-[#b0b0b0]">
             <span className="text-[#333333] font-semibold">Subtotal:</span>
             <span className="text-[#1a1a1a] font-semibold">
-              {currencySymbol}
-              {subtotal.toFixed(2)}
+              {currencySymbol} {subtotal.toFixed(2)}
             </span>
           </div>
           <div className="flex justify-between py-3 px-4 bg-gray-800">
             <span className="text-white font-bold text-lg">Total Due:</span>
             <span className="text-white font-bold text-xl">
-              {currencySymbol}
-              {total.toFixed(2)}
+              {currencySymbol} {total.toFixed(2)}
             </span>
           </div>
         </div>
@@ -1614,7 +1650,11 @@ export function ElegantTemplate({ logo, invoiceData, paymentDetails }: TemplateP
                           <span className="text-[#4a4a4a] font-semibold min-w-[120px]">Wallet Address:</span>
                         </div>
                         <div className="flex justify-center mb-2">
-                          <QRCode value={paymentDetails.cryptoDetails.walletAddress} size={100} />
+                          <QRCode
+                            value={paymentDetails.cryptoDetails.walletAddress || ''}
+                            size={100}
+                            style={{ height: 'auto', maxWidth: '100%', width: '100px' }}
+                          />
                         </div>
                         <p className="text-[#4a4a4a] text-xs text-center break-all font-mono mt-2">
                           {paymentDetails.cryptoDetails.walletAddress}
@@ -1652,7 +1692,7 @@ export function CattyTemplate({ logo: _logo, invoiceData, paymentDetails }: Temp
   const subtotal = invoiceData.items.reduce((sum, item) => sum + item.quantity * item.price, 0);
 
   return (
-    <div className="relative bg-[#f5f0e8] min-h-[297mm] p-[20mm]" style={{ fontFamily: 'monospace' }}>
+    <div className="relative bg-[#f5f0e8] min-h-full p-[20mm]" style={{ fontFamily: 'monospace' }}>
       {/* Header */}
       <div className="flex justify-between items-start mb-16">
         <div className="text-sm leading-relaxed">
@@ -1712,10 +1752,17 @@ export function CattyTemplate({ logo: _logo, invoiceData, paymentDetails }: Temp
           <div>
             <p className="text-[#4a4a4a] mb-1">Amount Due</p>
             <p className="font-medium text-lg">
-              {currencySymbol}
-              {subtotal.toFixed(0)}
+              {currencySymbol} {subtotal.toFixed(0)}
             </p>
           </div>
+
+          {/* Custom Fields */}
+          {invoiceData.customFields?.map((field, index) => (
+            <div key={`custom-${index}`}>
+              <p className="text-[#4a4a4a] mb-1">{field.label}</p>
+              <p className="font-medium">{field.value}</p>
+            </div>
+          ))}
         </div>
       </div>
 
@@ -1729,10 +1776,9 @@ export function CattyTemplate({ logo: _logo, invoiceData, paymentDetails }: Temp
         <div className="space-y-6">
           {invoiceData.items.map((item, index) => (
             <div key={index} className="grid grid-cols-2 gap-8 text-sm">
-              <p>{item.description}</p>
+              <p className="break-all">{item.description}</p>
               <p className="text-right font-medium">
-                {currencySymbol}
-                {(item.quantity * item.price).toFixed(0)}
+                {currencySymbol} {(item.quantity * item.price).toFixed(0)}
               </p>
             </div>
           ))}
@@ -1844,7 +1890,7 @@ export function FloralTemplate({ logo: _logo, invoiceData, paymentDetails }: Tem
   const subtotal = invoiceData.items.reduce((sum, item) => sum + item.quantity * item.price, 0);
 
   return (
-    <div className="relative bg-white text-[#1a1a1a] min-h-[297mm] p-[20mm]" style={{ fontFamily: 'monospace' }}>
+    <div className="relative bg-white text-[#1a1a1a] min-h-full p-[20mm]" style={{ fontFamily: 'monospace' }}>
       {/* Header */}
       <div className="flex justify-between items-start mb-16">
         <div className="text-sm leading-relaxed">
@@ -1908,10 +1954,16 @@ export function FloralTemplate({ logo: _logo, invoiceData, paymentDetails }: Tem
           <div>
             <p className="text-[#666666] mb-1">Amount Due</p>
             <p className="font-medium text-lg">
-              {currencySymbol}
-              {subtotal.toFixed(0)}
+              {currencySymbol} {subtotal.toFixed(0)}
             </p>
           </div>
+          {/* Custom Fields */}
+          {invoiceData.customFields?.map((field, index) => (
+            <div key={`custom-${index}`}>
+              <p className="text-[#666666] mb-1">{field.label}</p>
+              <p className="font-medium">{field.value}</p>
+            </div>
+          ))}
         </div>
       </div>
 
@@ -1925,10 +1977,9 @@ export function FloralTemplate({ logo: _logo, invoiceData, paymentDetails }: Tem
         <div className="space-y-6">
           {invoiceData.items.map((item, index) => (
             <div key={index} className="grid grid-cols-2 gap-8 text-sm">
-              <p>{item.description}</p>
+              <p className="break-all">{item.description}</p>
               <p className="text-right font-medium">
-                {currencySymbol}
-                {(item.quantity * item.price).toFixed(0)}
+                {currencySymbol} {(item.quantity * item.price).toFixed(0)}
               </p>
             </div>
           ))}
@@ -2040,7 +2091,7 @@ export function FloralDarkTemplate({ logo: _logo, invoiceData, paymentDetails }:
   const subtotal = invoiceData.items.reduce((sum, item) => sum + item.quantity * item.price, 0);
 
   return (
-    <div className="relative bg-[#1a1a1a] text-white min-h-[297mm] p-[20mm]" style={{ fontFamily: 'monospace' }}>
+    <div className="relative bg-[#1a1a1a] text-white min-h-full p-[20mm]" style={{ fontFamily: 'monospace' }}>
       {/* Header */}
       <div className="flex justify-between items-start mb-16">
         <div className="text-sm leading-relaxed">
@@ -2104,10 +2155,16 @@ export function FloralDarkTemplate({ logo: _logo, invoiceData, paymentDetails }:
           <div>
             <p className="text-[#888888] mb-1">Amount Due</p>
             <p className="font-medium text-lg">
-              {currencySymbol}
-              {subtotal.toFixed(0)}
+              {currencySymbol} {subtotal.toFixed(0)}
             </p>
           </div>
+          {/* Custom Fields */}
+          {invoiceData.customFields?.map((field, index) => (
+            <div key={`custom-${index}`}>
+              <p className="text-[#888888] mb-1">{field.label}</p>
+              <p className="font-medium">{field.value}</p>
+            </div>
+          ))}
         </div>
       </div>
 
@@ -2121,10 +2178,9 @@ export function FloralDarkTemplate({ logo: _logo, invoiceData, paymentDetails }:
         <div className="space-y-6">
           {invoiceData.items.map((item, index) => (
             <div key={index} className="grid grid-cols-2 gap-8 text-sm">
-              <p>{item.description}</p>
+              <p className="break-all">{item.description}</p>
               <p className="text-right font-medium">
-                {currencySymbol}
-                {(item.quantity * item.price).toFixed(0)}
+                {currencySymbol} {(item.quantity * item.price).toFixed(0)}
               </p>
             </div>
           ))}
@@ -2240,7 +2296,7 @@ export function PandaTemplate({ invoiceData, paymentDetails }: TemplateProps) {
   const fromPhone = fromAddressLines.find(line => line.match(/\+?\d/)) || '+91 00000 00000';
 
   return (
-    <div className="bg-[#f5f5f5] min-h-[297mm] p-[20mm]" style={{ fontFamily: 'system-ui, -apple-system, sans-serif' }}>
+    <div className="bg-[#f5f5f5] min-h-full p-[20mm]" style={{ fontFamily: 'system-ui, -apple-system, sans-serif' }}>
       {/* Header */}
       <div className="flex justify-between items-start mb-16">
         {/* Left Side - Panda Logo & Company Info */}
@@ -2282,6 +2338,13 @@ export function PandaTemplate({ invoiceData, paymentDetails }: TemplateProps) {
           <p className="text-xs font-semibold text-[#666666] uppercase tracking-wider mb-3">Due date</p>
           <p className="text-[#1a1a1a]">{invoiceData.dueDate || 'N/A'}</p>
         </div>
+        {/* Custom Fields */}
+        {invoiceData.customFields?.map((field, index) => (
+          <div key={`custom-${index}`}>
+            <p className="text-xs font-semibold text-[#666666] uppercase tracking-wider mb-3">{field.label}</p>
+            <p className="text-[#1a1a1a]">{field.value}</p>
+          </div>
+        ))}
       </div>
 
       {/* Amount Due - Highlighted Box */}
@@ -2318,11 +2381,11 @@ export function PandaTemplate({ invoiceData, paymentDetails }: TemplateProps) {
                 <p className="text-[#1a1a1a] font-medium">{index + 1}</p>
               </div>
               <div className="col-span-9">
-                <p className="font-medium text-[#1a1a1a] mb-1">{item.description}</p>
+                <p className="font-medium text-[#1a1a1a] mb-1 break-all">{item.description}</p>
                 <p className="text-sm text-[#666666]">01 Jul - 20 Jul • Hours log ↗</p>
               </div>
               <div className="col-span-2 text-right">
-                <p className="text-[#1a1a1a] font-medium">{currencySymbol}{(item.quantity * item.price).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                <p className="text-[#1a1a1a] font-medium">{currencySymbol} {(item.quantity * item.price).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
               </div>
             </div>
           ))}
@@ -2334,7 +2397,7 @@ export function PandaTemplate({ invoiceData, paymentDetails }: TemplateProps) {
         <div className="w-64">
           <div className="flex justify-between">
             <p className="font-semibold text-[#1a1a1a]">Total</p>
-            <p className="font-semibold text-[#1a1a1a]">{currencySymbol}{subtotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+            <p className="font-semibold text-[#1a1a1a]">{currencySymbol} {subtotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
           </div>
         </div>
       </div>
@@ -2433,7 +2496,7 @@ export function PinkMinimalTemplate({ invoiceData, paymentDetails }: TemplatePro
   const fromPhone = fromAddressLines.find(line => line.match(/\+?\d/)) || '+91 00000 00000';
 
   return (
-    <div className="bg-white min-h-[297mm] p-[20mm]" style={{ fontFamily: 'system-ui, -apple-system, sans-serif' }}>
+    <div className="bg-white min-h-full p-[20mm]" style={{ fontFamily: 'system-ui, -apple-system, sans-serif' }}>
       {/* Header */}
       <div className="flex justify-between items-start mb-12">
         <h1 className="text-5xl font-bold text-[#1a1a1a]">Invoice</h1>
@@ -2448,6 +2511,12 @@ export function PinkMinimalTemplate({ invoiceData, paymentDetails }: TemplatePro
           <p className="text-sm text-[#666666] mb-1">Dues {invoiceData.dueDate || 'N/A'}</p>
           <p className="text-sm text-[#666666] mb-1">Issued {invoiceData.date}</p>
           <p className="text-sm text-[#666666]">Ref. #{invoiceData.invoiceNumber}</p>
+          {/* Custom Fields */}
+          {invoiceData.customFields?.map((field, index) => (
+            <p key={`custom-${index}`} className="text-sm text-[#666666] mt-1">
+              {field.label}: <span className="text-[#4a4a4a]">{field.value}</span>
+            </p>
+          ))}
         </div>
 
         {/* Middle - Billed To */}
@@ -2495,7 +2564,7 @@ export function PinkMinimalTemplate({ invoiceData, paymentDetails }: TemplatePro
             {invoiceData.items.map((item, index) => (
               <div key={index} className="grid grid-cols-12 gap-4">
                 <div className="col-span-6">
-                  <p className="text-sm text-[#1a1a1a]">{item.description}</p>
+                  <p className="text-sm text-[#1a1a1a] break-all">{item.description}</p>
                 </div>
                 <div className="col-span-2 text-center">
                   <p className="text-sm text-[#1a1a1a]">{item.quantity}</p>
@@ -2619,7 +2688,7 @@ export function CompactPandaTemplate({ invoiceData, paymentDetails }: TemplatePr
   const total = subtotal + taxAmount;
 
   return (
-    <div className="bg-white min-h-[297mm] p-[20mm]" style={{ fontFamily: 'system-ui, -apple-system, sans-serif' }}>
+    <div className="bg-white min-h-full p-[20mm]" style={{ fontFamily: 'system-ui, -apple-system, sans-serif' }}>
       {/* Header */}
       <div className="flex justify-between items-start mb-12">
         {/* Left - Invoice Title */}
@@ -2647,6 +2716,14 @@ export function CompactPandaTemplate({ invoiceData, paymentDetails }: TemplatePr
           <p className="text-xs text-[#666666] uppercase mb-1">Due</p>
           <p className="text-sm text-[#1a1a1a]">{invoiceData.dueDate || 'N/A'}</p>
         </div>
+
+        {/* Custom Fields */}
+        {invoiceData.customFields?.map((field, index) => (
+          <div key={`custom-${index}`}>
+            <p className="text-xs text-[#666666] uppercase mb-1">{field.label}</p>
+            <p className="text-sm text-[#1a1a1a]">{field.value}</p>
+          </div>
+        ))}
 
         <div></div>
       </div>
@@ -2695,7 +2772,7 @@ export function CompactPandaTemplate({ invoiceData, paymentDetails }: TemplatePr
             <div key={index}>
               <div className="grid grid-cols-12 gap-4 mb-1">
                 <div className="col-span-6">
-                  <p className="text-sm font-medium text-[#1a1a1a]">{item.description}</p>
+                  <p className="text-sm font-medium text-[#1a1a1a] break-all">{item.description}</p>
                 </div>
                 <div className="col-span-2 text-center">
                   <p className="text-sm text-[#1a1a1a]">{item.quantity}</p>
@@ -2856,6 +2933,13 @@ export function CloudflareTemplate({ logo, invoiceData, paymentDetails }: Templa
               <span>Date due</span>
               <span className="font-normal">{invoiceData.dueDate ? new Date(invoiceData.dueDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : 'Upon receipt'}</span>
             </div>
+            {/* Custom Fields */}
+            {invoiceData.customFields?.map((field, index) => (
+              <div key={`custom-${index}`} className="grid grid-cols-[140px_1fr]">
+                <span>{field.label}</span>
+                <span className="font-normal">{field.value}</span>
+              </div>
+            ))}
           </div>
         </div>
 
@@ -2906,7 +2990,7 @@ export function CloudflareTemplate({ logo, invoiceData, paymentDetails }: Templa
         {invoiceData.items.map((item, index) => (
           <div key={index} className="grid grid-cols-12 gap-4 py-4 border-b border-gray-200 last:border-b-gray-300">
             <div className="col-span-6">
-              <div className="text-sm text-gray-900">{item.description}</div>
+              <div className="text-sm text-gray-900 break-all">{item.description}</div>
               {invoiceData.memo && index === 0 && (
                 <div className="text-xs text-gray-700 mt-0.5">{invoiceData.memo}</div>
               )}

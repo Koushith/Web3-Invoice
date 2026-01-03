@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ArrowLeft, Loader2 } from 'lucide-react';
+import { ArrowLeft, Loader2, Plus, Trash2 } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useGetCustomerQuery, useUpdateCustomerMutation } from '@/services/api.service';
 import { toast } from 'sonner';
@@ -51,6 +51,7 @@ export const EditCustomerScreen = () => {
       nextNumber: 1,
     },
     notes: '',
+    customFields: [] as { label: string; value: string }[],
   });
 
   // Populate form with customer data when loaded
@@ -76,6 +77,7 @@ export const EditCustomerScreen = () => {
           nextNumber: customer.invoiceSettings?.nextNumber || 1,
         },
         notes: customer.notes || '',
+        customFields: customer.customFields || [],
       });
     }
   }, [customer]);
@@ -96,6 +98,24 @@ export const EditCustomerScreen = () => {
       ...prev,
       invoiceSettings: { ...prev.invoiceSettings, [field]: value },
     }));
+  };
+
+  const handleAddCustomField = () => {
+    setFormData(prev => ({
+      ...prev,
+      customFields: [...prev.customFields, { label: '', value: '' }]
+    }));
+  };
+
+  const handleCustomFieldChange = (index: number, field: 'label' | 'value', value: string) => {
+    const newFields = [...formData.customFields];
+    newFields[index] = { ...newFields[index], [field]: value };
+    setFormData(prev => ({ ...prev, customFields: newFields }));
+  };
+
+  const handleRemoveCustomField = (index: number) => {
+    const newFields = formData.customFields.filter((_, i) => i !== index);
+    setFormData(prev => ({ ...prev, customFields: newFields }));
   };
 
   const handleSubmit = async (e: FormEvent) => {
@@ -122,6 +142,7 @@ export const EditCustomerScreen = () => {
           nextNumber: formData.invoiceSettings.nextNumber,
         } : undefined,
         notes: formData.notes || undefined,
+        customFields: formData.customFields.length > 0 ? formData.customFields.filter(f => f.label && f.value) : undefined,
       };
 
       await updateCustomer({ id: id!, data: customerData }).unwrap();
@@ -321,6 +342,59 @@ export const EditCustomerScreen = () => {
             </div>
           </div>
 
+          {/* Custom Fields Section */}
+          <div className="mb-8 pb-8 border-b border-gray-200">
+            <div className="mb-4">
+              <h2 className="text-base font-semibold text-gray-900">Custom fields</h2>
+            </div>
+            <p className="text-sm text-gray-600 mb-6">
+              Add custom fields to be automatically included in invoices for this customer.
+            </p>
+
+            <div className="space-y-4">
+              {formData.customFields.map((field, index) => (
+                <div key={index} className="flex gap-4 items-start">
+                  <div className="flex-1">
+                    <Input
+                      placeholder="Label (e.g. Tax ID, PO Ref)"
+                      value={field.label}
+                      onChange={(e) => handleCustomFieldChange(index, 'label', e.target.value)}
+                      className="h-8 text-sm"
+                    />
+                  </div>
+                  <div className="flex-1">
+                    <Input
+                      placeholder="Value"
+                      value={field.value}
+                      onChange={(e) => handleCustomFieldChange(index, 'value', e.target.value)}
+                      className="h-8 text-sm"
+                    />
+                  </div>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleRemoveCustomField(index)}
+                    className="h-8 w-8 p-0 text-gray-400 hover:text-red-500"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </div>
+              ))}
+
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={handleAddCustomField}
+                className="h-8 text-sm text-[#635BFF] hover:text-[#5045e5]"
+              >
+                <Plus className="w-3 h-3 mr-1" />
+                Add Custom Field
+              </Button>
+            </div>
+          </div>
+
           {/* Payment Preferences Section */}
           <div className="mb-8 pb-8 border-b border-gray-200">
             <div className="mb-4">
@@ -419,6 +493,8 @@ export const EditCustomerScreen = () => {
               </div>
             </div>
           </div>
+
+
 
           {/* Additional Information Section */}
           <div className="mb-8 pb-8 border-b border-gray-200">

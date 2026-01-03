@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ArrowLeft, Loader2, ChevronDown, ChevronUp } from 'lucide-react';
+import { ArrowLeft, Loader2, ChevronDown, ChevronUp, Plus, Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useCreateCustomerMutation } from '@/services/api.service';
 import { toast } from 'sonner';
@@ -18,6 +18,7 @@ export const NewCustomerScreen = () => {
     payment: false,
     invoiceSettings: false,
     notes: false,
+    customFields: false,
   });
 
   const toggleSection = (section: keyof typeof expandedSections) => {
@@ -45,6 +46,7 @@ export const NewCustomerScreen = () => {
       nextNumber: '',
     },
     notes: '',
+    customFields: [] as { label: string; value: string }[],
   });
 
   const handleInputChange = (field: string, value: string) => {
@@ -63,6 +65,24 @@ export const NewCustomerScreen = () => {
       ...prev,
       invoiceSettings: { ...prev.invoiceSettings, [field]: value },
     }));
+  };
+
+  const handleAddCustomField = () => {
+    setFormData(prev => ({
+      ...prev,
+      customFields: [...prev.customFields, { label: '', value: '' }]
+    }));
+  };
+
+  const handleCustomFieldChange = (index: number, field: 'label' | 'value', value: string) => {
+    const newFields = [...formData.customFields];
+    newFields[index] = { ...newFields[index], [field]: value };
+    setFormData(prev => ({ ...prev, customFields: newFields }));
+  };
+
+  const handleRemoveCustomField = (index: number) => {
+    const newFields = formData.customFields.filter((_, i) => i !== index);
+    setFormData(prev => ({ ...prev, customFields: newFields }));
   };
 
   const handleSubmit = async (e: FormEvent) => {
@@ -89,6 +109,7 @@ export const NewCustomerScreen = () => {
           nextNumber: formData.invoiceSettings.nextNumber ? parseInt(formData.invoiceSettings.nextNumber) : undefined,
         } : undefined,
         notes: formData.notes || undefined,
+        customFields: formData.customFields.length > 0 ? formData.customFields.filter(f => f.label && f.value) : undefined,
       };
 
       await createCustomer(customerData).unwrap();
@@ -286,6 +307,76 @@ export const NewCustomerScreen = () => {
             )}
           </div>
 
+          {/* Custom Fields Section - Collapsible */}
+          <div className="mb-8 pb-8 border-b border-gray-200">
+            <button
+              type="button"
+              onClick={() => toggleSection('customFields')}
+              className="w-full flex items-center justify-between mb-4 hover:bg-gray-50 -mx-2 px-2 py-2 rounded-lg transition-colors"
+            >
+              <div>
+                <h2 className="text-base font-semibold text-gray-900 text-left">Custom fields</h2>
+                <p className="text-sm text-gray-500 text-left mt-0.5">Optional</p>
+              </div>
+              {expandedSections.customFields ? (
+                <ChevronUp className="w-5 h-5 text-gray-400" />
+              ) : (
+                <ChevronDown className="w-5 h-5 text-gray-400" />
+              )}
+            </button>
+
+            {expandedSections.customFields && (
+              <>
+                <p className="text-sm text-gray-600 mb-6">
+                  Add custom fields to be automatically included in invoices for this customer.
+                </p>
+
+                <div className="space-y-4">
+                  {formData.customFields.map((field, index) => (
+                    <div key={index} className="flex gap-4 items-start">
+                      <div className="flex-1">
+                        <Input
+                          placeholder="Label (e.g. Tax ID, PO Ref)"
+                          value={field.label}
+                          onChange={(e) => handleCustomFieldChange(index, 'label', e.target.value)}
+                          className="h-8 text-sm"
+                        />
+                      </div>
+                      <div className="flex-1">
+                        <Input
+                          placeholder="Value"
+                          value={field.value}
+                          onChange={(e) => handleCustomFieldChange(index, 'value', e.target.value)}
+                          className="h-8 text-sm"
+                        />
+                      </div>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleRemoveCustomField(index)}
+                        className="h-8 w-8 p-0 text-gray-400 hover:text-red-500"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  ))}
+
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={handleAddCustomField}
+                    className="h-8 text-sm text-[#635BFF] hover:text-[#5045e5]"
+                  >
+                    <Plus className="w-3 h-3 mr-1" />
+                    Add Custom Field
+                  </Button>
+                </div>
+              </>
+            )}
+          </div>
+
           {/* Payment Preferences Section - Collapsible */}
           <div className="mb-8 pb-8 border-b border-gray-200">
             <button
@@ -375,34 +466,36 @@ export const NewCustomerScreen = () => {
                 </p>
 
                 <div className="space-y-4">
-              <div>
-                <label className="text-sm font-medium text-gray-700 block mb-1.5">Invoice prefix</label>
-                <Input
-                  placeholder="ACME"
-                  value={formData.invoiceSettings.prefix}
-                  onChange={(e) => handleInvoiceSettingsChange('prefix', e.target.value.toUpperCase())}
-                  className="h-8 text-sm uppercase"
-                  maxLength={10}
-                />
-                <p className="text-xs text-gray-500 mt-1.5">Custom prefix for invoices (e.g., ACME-001)</p>
-              </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-700 block mb-1.5">Invoice prefix</label>
+                    <Input
+                      placeholder="ACME"
+                      value={formData.invoiceSettings.prefix}
+                      onChange={(e) => handleInvoiceSettingsChange('prefix', e.target.value.toUpperCase())}
+                      className="h-8 text-sm uppercase"
+                      maxLength={10}
+                    />
+                    <p className="text-xs text-gray-500 mt-1.5">Custom prefix for invoices (e.g., ACME-001)</p>
+                  </div>
 
-              <div>
-                <label className="text-sm font-medium text-gray-700 block mb-1.5">Starting invoice number</label>
-                <Input
-                  type="number"
-                  placeholder="1"
-                  min="1"
-                  value={formData.invoiceSettings.nextNumber}
-                  onChange={(e) => handleInvoiceSettingsChange('nextNumber', e.target.value)}
-                  className="h-8 text-sm"
-                />
-                <p className="text-xs text-gray-500 mt-1.5">The next invoice number for this customer</p>
-              </div>
-            </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-700 block mb-1.5">Starting invoice number</label>
+                    <Input
+                      type="number"
+                      placeholder="1"
+                      min="1"
+                      value={formData.invoiceSettings.nextNumber}
+                      onChange={(e) => handleInvoiceSettingsChange('nextNumber', e.target.value)}
+                      className="h-8 text-sm"
+                    />
+                    <p className="text-xs text-gray-500 mt-1.5">The next invoice number for this customer</p>
+                  </div>
+                </div>
               </>
             )}
           </div>
+
+
 
           {/* Additional Information Section - Collapsible */}
           <div className="mb-8 pb-8 border-b border-gray-200">
@@ -441,6 +534,8 @@ export const NewCustomerScreen = () => {
               </>
             )}
           </div>
+
+
 
           {/* Action Buttons */}
           <div className="flex items-center justify-end gap-3">

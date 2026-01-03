@@ -20,6 +20,7 @@
     "@requestnetwork/types": "^0.54.0",
     "@simplewebauthn/browser": "^13.2.2",
     "@simplewebauthn/server": "^13.2.2",
+    "@types/node-cron": "^3.0.11",
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",
     "ethers": "^5.8.0",
@@ -27,6 +28,7 @@
     "express-rate-limit": "^8.2.1",
     "firebase-admin": "^13.6.0",
     "mongoose": "^8.19.3",
+    "node-cron": "^4.2.1",
     "resend": "^6.4.2"
   },
   "devDependencies": {

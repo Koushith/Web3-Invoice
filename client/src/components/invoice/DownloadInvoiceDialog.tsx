@@ -70,7 +70,7 @@ export const DownloadInvoiceDialog = ({ open, onClose, invoice, logo }: Download
     toAddress: invoice.customer?.address
       ? `${invoice.customer.address.street || ''}\n${invoice.customer.address.city || ''}, ${invoice.customer.address.state || ''} ${invoice.customer.address.postalCode || ''}\n${invoice.customer.address.country || ''}`
       : '',
-    items: invoice.items?.map(item => ({
+    items: invoice.lineItems?.map(item => ({
       description: item.description,
       quantity: item.quantity,
       price: item.unitPrice,
@@ -249,8 +249,8 @@ export const DownloadInvoiceDialog = ({ open, onClose, invoice, logo }: Download
               <div className="flex justify-center">
                 <div
                   style={{
-                    width: '210mm',
-                    minHeight: '297mm',
+                    width: '1123px',
+                    minHeight: '1588px',
                     transform: `scale(${previewZoom})`,
                     transformOrigin: 'top center',
                     transition: 'transform 0.2s ease',
@@ -262,6 +262,7 @@ export const DownloadInvoiceDialog = ({ open, onClose, invoice, logo }: Download
                       "shadow-sm",
                       selectedTemplate === 'cloudflare' ? 'bg-[#F5F5F0]' : 'bg-white'
                     )}
+                    style={{ width: '1123px', minHeight: '1588px' }}
                   >
                     {renderTemplate()}
                   </div>

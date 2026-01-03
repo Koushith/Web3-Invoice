@@ -1,5 +1,5 @@
 import mongoose, { Document, Schema } from 'mongoose';
-import { InvoiceStatus, Currency, InvoiceLineItem } from '../types';
+import { Currency, InvoiceLineItem, InvoiceStatus } from '../types';
 
 export interface IInvoice extends Document {
   organizationId: mongoose.Types.ObjectId;
@@ -10,6 +10,7 @@ export interface IInvoice extends Document {
   dueDate: Date;
   currency: Currency;
   lineItems: InvoiceLineItem[];
+  customFields?: { label: string; value: string }[];
   subtotal: number;
   taxRate: number;
   taxAmount: number;
@@ -41,6 +42,8 @@ export interface IInvoice extends Document {
   isRecurring: boolean;
   recurringInterval?: 'weekly' | 'monthly' | 'quarterly' | 'yearly';
   recurringEndDate?: Date;
+  lastRecurringAt?: Date;
+  nextRecurringAt?: Date;
   parentInvoiceId?: mongoose.Types.ObjectId;
 
   createdBy: mongoose.Types.ObjectId;
@@ -113,6 +116,10 @@ const InvoiceSchema: Schema = new Schema(
         min: 0,
         max: 100,
       },
+    }],
+    customFields: [{
+      label: String,
+      value: String
     }],
     subtotal: {
       type: Number,
@@ -204,6 +211,13 @@ const InvoiceSchema: Schema = new Schema(
     },
     recurringEndDate: {
       type: Date,
+    },
+    lastRecurringAt: {
+      type: Date,
+    },
+    nextRecurringAt: {
+      type: Date,
+      index: true,
     },
     parentInvoiceId: {
       type: Schema.Types.ObjectId,

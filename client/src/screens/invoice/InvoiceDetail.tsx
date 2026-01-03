@@ -443,16 +443,16 @@ export const InvoiceDetailScreen = () => {
                 <table className="w-full min-w-[500px]">
                   <thead>
                     <tr className="border-b border-gray-200">
-                      <th className="pb-3 text-left text-xs font-semibold text-gray-700">Description</th>
-                      <th className="pb-3 text-right text-xs font-semibold text-gray-700">Qty</th>
-                      <th className="pb-3 text-right text-xs font-semibold text-gray-700">Unit price</th>
-                      <th className="pb-3 text-right text-xs font-semibold text-gray-700">Amount</th>
+                      <th className="py-3 text-left text-xs font-semibold text-gray-700">Description</th>
+                      <th className="py-3 text-right text-xs font-semibold text-gray-700 w-20">Qty</th>
+                      <th className="py-3 text-right text-xs font-semibold text-gray-700 w-32">Unit Price</th>
+                      <th className="py-3 text-right text-xs font-semibold text-gray-700 w-32">Amount</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {invoice.items?.map((item) => (
+                    {invoice.lineItems?.map((item) => (
                       <tr key={item.id} className="border-b border-gray-100">
-                        <td className="py-3 text-sm text-gray-900">{item.description}</td>
+                        <td className="py-3 text-sm text-gray-900 break-all">{item.description}</td>
                         <td className="py-3 text-sm text-gray-600 text-right">{item.quantity}</td>
                         <td className="py-3 text-sm text-gray-600 text-right">${item.unitPrice.toLocaleString()}</td>
                         <td className="py-3 text-sm text-gray-900 text-right">${item.amount.toLocaleString()}</td>

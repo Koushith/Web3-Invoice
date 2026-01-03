@@ -101,6 +101,10 @@ const CustomerSchema: Schema = new Schema(
       type: Boolean,
       default: true,
     },
+    customFields: [{
+      label: String,
+      value: String
+    }],
   },
   {
     timestamps: true,

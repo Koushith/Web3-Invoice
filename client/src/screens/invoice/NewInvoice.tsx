@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Trash2, Plus, ArrowLeft, Loader2, Printer, Download, ChevronDown, ChevronUp, UserPlus, Check } from 'lucide-react';
+import { Trash2, Plus, ArrowLeft, Loader2, Printer, Download, ChevronDown, ChevronUp, UserPlus, Check, CalendarClock } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useNavigate, useParams } from 'react-router-dom';
@@ -64,6 +64,7 @@ interface InvoiceData {
   terms: string;
   currency?: string;
   taxRate?: number;
+  customFields?: { label: string; value: string }[];
 }
 
 type PaymentMethod = 'bank' | 'crypto' | 'other';
@@ -139,6 +140,7 @@ export const NewInvoice = () => {
     items: [] as InvoiceItem[],
     notes: '',
     terms: '',
+    customFields: [] as { label: string; value: string }[],
   });
   const [paymentDetails, setPaymentDetails] = useState<PaymentDetails>({
     method: 'bank',
@@ -155,6 +157,12 @@ export const NewInvoice = () => {
     },
     otherDetails: '',
   });
+
+  // Recurring Invoice State
+  const [isRecurring, setIsRecurring] = useState(false);
+  const [recurringInterval, setRecurringInterval] = useState<'weekly' | 'monthly' | 'quarterly' | 'yearly'>('monthly');
+  const [recurringEndDate, setRecurringEndDate] = useState('');
+  const [showRecurringDetails, setShowRecurringDetails] = useState(false);
 
   const printRef = useRef<HTMLDivElement>(null);
 
@@ -233,19 +241,26 @@ export const NewInvoice = () => {
   }, [currencyType]);
 
   // Update invoice prefix and number when customer with custom settings is selected
+  // Update invoice prefix and number when customer with custom settings is selected
   useEffect(() => {
-    if (!isEditMode && selectedCustomer?.invoiceSettings) {
-      // Customer has custom invoice settings
-      if (selectedCustomer.invoiceSettings.prefix) {
+    if (!isEditMode && selectedCustomer) {
+      if (selectedCustomer.invoiceSettings?.prefix) {
         setInvoicePrefix(selectedCustomer.invoiceSettings.prefix);
       }
-      if (selectedCustomer.invoiceSettings.nextNumber) {
-        const nextNumber = String(selectedCustomer.invoiceSettings.nextNumber).padStart(3, '0');
-        setInvoiceData((prev) => ({
-          ...prev,
-          invoiceNumber: nextNumber,
-        }));
-      }
+      
+      setInvoiceData((prev) => {
+        const updates: any = {};
+        
+        if (selectedCustomer.invoiceSettings?.nextNumber) {
+          updates.invoiceNumber = String(selectedCustomer.invoiceSettings.nextNumber).padStart(3, '0');
+        }
+
+        if (selectedCustomer.customFields && selectedCustomer.customFields.length > 0) {
+          updates.customFields = selectedCustomer.customFields;
+        }
+        
+        return { ...prev, ...updates };
+      });
     }
   }, [selectedCustomerId, selectedCustomer, isEditMode]);
 
@@ -362,13 +377,14 @@ export const NewInvoice = () => {
         toAddress: existingInvoice.customer?.address?.street
           ? `${existingInvoice.customer.address.street}\n${existingInvoice.customer.address.city}, ${existingInvoice.customer.address.state} ${existingInvoice.customer.address.postalCode}\n${existingInvoice.customer.address.country}`
           : '',
-        items: existingInvoice.items?.map(item => ({
+        items: existingInvoice.lineItems?.map(item => ({
           description: item.description,
           quantity: item.quantity,
           price: item.unitPrice,
         })) || [{ description: '', quantity: 1, price: 0 }],
         notes: existingInvoice.notes || '',
         terms: existingInvoice.terms || '',
+        customFields: existingInvoice.customFields || [],
       });
     }
   }, [isEditMode, existingInvoice]);
@@ -542,6 +558,10 @@ export const NewInvoice = () => {
         })),
         taxRate: taxRate,
         templateStyle: invoiceStyle, // Save the selected template style
+        isRecurring: isRecurring,
+        recurringInterval: isRecurring ? recurringInterval : undefined,
+        recurringEndDate: isRecurring && recurringEndDate ? recurringEndDate : undefined,
+        customFields: invoiceData.customFields,
       };
 
       // Add status for draft saves
@@ -1412,6 +1432,103 @@ export const NewInvoice = () => {
               )}
             </div>
 
+            {/* Recurring Invoice Section */}
+            <div className="bg-white border border-gray-200 rounded-lg">
+              <button
+                type="button"
+                onClick={() => setShowRecurringDetails(!showRecurringDetails)}
+                className="w-full p-5 flex items-center justify-between hover:bg-gray-50 transition-colors"
+              >
+                <div className="flex-1 text-left">
+                  <div className="flex items-center gap-2">
+                    <h2 className="text-sm font-semibold text-gray-900">Recurring invoice</h2>
+                    <span className="text-[10px] text-gray-500 bg-gray-100 px-2 py-0.5 rounded">Optional</span>
+                  </div>
+                  {!showRecurringDetails && isRecurring && (
+                    <p className="text-xs text-gray-600 mt-1">
+                      Repeats {recurringInterval} {recurringEndDate ? `until ${new Date(recurringEndDate).toLocaleDateString()}` : 'forever'}
+                    </p>
+                  )}
+                  {!showRecurringDetails && !isRecurring && (
+                    <p className="text-xs text-gray-600 mt-1">One-time invoice</p>
+                  )}
+                </div>
+                {showRecurringDetails ? (
+                  <ChevronUp className="w-4 h-4 text-gray-400" />
+                ) : (
+                  <ChevronDown className="w-4 h-4 text-gray-400" />
+                )}
+              </button>
+
+              {showRecurringDetails && (
+                <div className="px-5 pb-5 border-t border-gray-100">
+                  <div className="space-y-4 mt-4">
+                    <div className="flex items-center justify-between">
+                      <div className="space-y-0.5">
+                        <Label className="text-sm font-medium text-gray-900">Enable recurring</Label>
+                        <p className="text-xs text-gray-500">Automatically generate this invoice on a schedule</p>
+                      </div>
+                      <div
+                        className={cn(
+                          "relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 cursor-pointer",
+                          isRecurring ? "bg-[#635BFF]" : "bg-gray-200"
+                        )}
+                        onClick={() => setIsRecurring(!isRecurring)}
+                      >
+                        <span
+                          className={cn(
+                            "pointer-events-none block h-4 w-4 rounded-full bg-white shadow-lg ring-0 transition-transform",
+                            isRecurring ? "translate-x-6" : "translate-x-1"
+                          )}
+                        />
+                      </div>
+                    </div>
+
+                    {isRecurring && (
+                      <div className="space-y-4 pt-2">
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <Label className="text-xs text-gray-600 mb-1.5 block">Repeat frequency</Label>
+                            <Select
+                              value={recurringInterval}
+                              onValueChange={(value: any) => setRecurringInterval(value)}
+                            >
+                              <SelectTrigger className="h-9 text-sm">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="weekly">Weekly</SelectItem>
+                                <SelectItem value="monthly">Monthly</SelectItem>
+                                <SelectItem value="quarterly">Quarterly</SelectItem>
+                                <SelectItem value="yearly">Yearly</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div>
+                            <Label className="text-xs text-gray-600 mb-1.5 block">End date (Optional)</Label>
+                            <Input
+                              type="date"
+                              value={recurringEndDate}
+                              onChange={(e) => setRecurringEndDate(e.target.value)}
+                              className="h-9 text-sm"
+                              min={new Date().toISOString().split('T')[0]}
+                            />
+                            <p className="text-[10px] text-gray-500 mt-1">Leave empty to repeat forever</p>
+                          </div>
+                        </div>
+                        <div className="bg-blue-50 border border-blue-100 rounded-lg p-3 flex items-start gap-2">
+                          <CalendarClock className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
+                          <div className="text-xs text-blue-700">
+                            <strong>Summary:</strong> This invoice will be automatically generated and sent <strong>{recurringInterval}</strong> starting on {new Date(invoiceData.date).toLocaleDateString()}.
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+
             {/* Additional Options - Collapsible */}
             <div className="bg-white border border-gray-200 rounded-lg">
               <button
@@ -1440,6 +1557,79 @@ export const NewInvoice = () => {
               {showAdditionalOptions && (
                 <div className="px-5 pb-5 border-t border-gray-100">
                   <div className="space-y-4 mt-4">
+                    {/* Custom Fields */}
+                    <div>
+                      <div className="flex items-center justify-between mb-2">
+                        <Label className="text-xs text-gray-600 block">
+                          Custom Fields
+                        </Label>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            setInvoiceData({
+                              ...invoiceData,
+                              customFields: [...(invoiceData.customFields || []), { label: '', value: '' }]
+                            });
+                          }}
+                          className="h-6 text-xs text-[#635BFF] hover:text-[#5045e5] px-2"
+                        >
+                          <Plus className="w-3 h-3 mr-1" />
+                          Add Field
+                        </Button>
+                      </div>
+
+                      <div className="space-y-2">
+                        {invoiceData.customFields?.map((field, index) => (
+                          <div key={index} className="flex gap-2 items-start">
+                            <div className="flex-1">
+                              <Input
+                                placeholder="Label (e.g., P.O. #)"
+                                value={field.label}
+                                onChange={(e) => {
+                                  const newFields = [...(invoiceData.customFields || [])];
+                                  newFields[index].label = e.target.value;
+                                  setInvoiceData({ ...invoiceData, customFields: newFields });
+                                }}
+                                className="h-8 text-xs"
+                              />
+                            </div>
+                            <div className="flex-1">
+                              <Input
+                                placeholder="Value"
+                                value={field.value}
+                                onChange={(e) => {
+                                  const newFields = [...(invoiceData.customFields || [])];
+                                  newFields[index].value = e.target.value;
+                                  setInvoiceData({ ...invoiceData, customFields: newFields });
+                                }}
+                                className="h-8 text-xs"
+                              />
+                            </div>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => {
+                                const newFields = [...(invoiceData.customFields || [])];
+                                newFields.splice(index, 1);
+                                setInvoiceData({ ...invoiceData, customFields: newFields });
+                              }}
+                              className="h-8 w-8 text-red-500 hover:text-red-600 hover:bg-red-50"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        ))}
+                        {(!invoiceData.customFields || invoiceData.customFields.length === 0) && (
+                          <p className="text-xs text-gray-400 italic">No custom fields added</p>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="border-t border-gray-100 my-4" />
+
                     <div>
                       <Label htmlFor="notes" className="text-xs text-gray-600 mb-1.5 block">
                         Memo

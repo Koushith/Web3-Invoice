@@ -219,6 +219,7 @@ export interface Customer extends BaseEntity, SoftDeletable {
   totalInvoices?: number;
   totalRevenue?: number;
   outstandingBalance?: number;
+  customFields?: { label: string; value: string }[];
 }
 
 export interface Address {
@@ -243,7 +244,7 @@ export interface Invoice extends BaseEntity, SoftDeletable {
   issueDate: Date | string;
   dueDate?: Date | string;
   paidDate?: Date | string;
-  items: InvoiceItem[];
+  lineItems: InvoiceItem[];
   subtotal: number;
   taxAmount: number;
   taxRate: number;
@@ -259,6 +260,7 @@ export interface Invoice extends BaseEntity, SoftDeletable {
   requestNetworkId?: string;
   publicId?: string;
   metadata?: Record<string, any>;
+  customFields?: { label: string; value: string }[];
   templateStyle?: 'standard' | 'modern' | 'minimal' | 'artistic' | 'gradient' | 'glass' | 'elegant' | 'catty' | 'floral' | 'floraldark' | 'panda' | 'pinkminimal' | 'compactpanda';
 }
 
@@ -284,6 +286,7 @@ export interface CreateInvoiceDTO {
   currency: Currency;
   notes?: string;
   terms?: string;
+  customFields?: { label: string; value: string }[];
 }
 
 export interface UpdateInvoiceDTO extends Partial<CreateInvoiceDTO> {
